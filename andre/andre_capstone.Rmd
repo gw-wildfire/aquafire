@@ -5,6 +5,8 @@ date: "2023-03-15"
 output: html_document
 ---
 
+## Load Libraries
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
@@ -15,24 +17,36 @@ library(readxl)
 library(tmap)
 library(stars)
 library(ggplot2)
+library(mapview)
 ```
 
-## R Markdown
+## Read In Wildfire Paremeter Data 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
+#Load data
+cali <- read_sf(here("andre", "data", "CA_Boundaries")) %>%
+  clean_names()
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+wf_parameter <- read_sf(here("andre", "data", "wildfire_perimeters"))
 
-```{r cars}
-summary(cars)
+#california <- tigris::counties("CA")
+
+wf_fire <- ggplot() +
+  geom_sf(data = cali,
+          fill = NA) +
+  geom_sf(data = wf_parameter,
+          fill = 'red',
+          col = 'yellow',
+          lwd = 0.3) +
+  coord_sf() +
+  theme_void()
 ```
 
-## Including Plots
+```{r}
+grid = st_as_stars(st_bbox(cali), dx = 30000, dy = 30000)
+grid = st_as_sf(grid) # convert grid to polygon
+grid = grid[cali, ] # crop grid to cali polygon
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+plot(st_geometry(grid), axes = TRUE, reset = FALSE) # plot the grid
+plot(st_geometry(wf_parameter), border = "red", add = TRUE)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
