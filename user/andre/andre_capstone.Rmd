@@ -24,22 +24,26 @@ library(mapview)
 
 ```{r}
 #Load data
-cali <- read_sf(here("andre", "data", "CA_Boundaries")) %>%
+cali <- read_sf(here("user", "andre", "data", "CA_Boundaries")) %>%
   clean_names()
 
-wf_parameter <- read_sf(here("andre", "data", "wildfire_perimeters"))
+wf_perimeter <- read_sf(here("user", "andre", "data", "California_Fire_Perimeters"))
 
 #california <- tigris::counties("CA")
 
 wf_fire <- ggplot() +
-  geom_sf(data = cali,
-          fill = NA) +
   geom_sf(data = wf_parameter,
           fill = 'red',
           col = 'yellow',
-          lwd = 0.3) +
-  coord_sf() +
+          lwd = 0.1) +
+    coord_sf() +
+    geom_sf(data = cali,
+          fill = NA,
+          col = 'black',
+          lwd = 0.1) +
   theme_void()
+
+wf_fire
 ```
 
 ```{r}
