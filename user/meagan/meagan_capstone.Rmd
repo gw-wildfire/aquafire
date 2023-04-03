@@ -1,6 +1,6 @@
 ---
-title: "Load Data"
-author: "Andre Dextre"
+title: "Meagan Capstone"
+author: "Meagan Brown"
 date: "2023-04-03"
 output: html_document
 ---
