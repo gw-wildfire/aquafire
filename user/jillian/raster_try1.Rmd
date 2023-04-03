@@ -1,0 +1,17 @@
+
+```{r}
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3309") %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform("EPSG: 3309")
+
+sb_county <- ca_counties %>% 
+  filter(name == "Santa Barbara")
+```
+
