@@ -1,0 +1,54 @@
+---
+title: "Load Data"
+author: "Andre Dextre"
+date: "2023-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Libraries
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+```
+
+## Load Boundaries
+```{r}
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3309") %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+
+# Filter sb county
+sb_county <- ca_counties %>% 
+  filter(name == "Santa Barbara")
+```
+
+## Load GDE Data
+```{r}
+# load GDE data
+gde <- read_sf(here('data',
+                    'i02_naturalcommunitiescommonlyassociatedwithgroundwater')) %>% 
+  clean_names() %>% 
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+```
+
+## Load Fire Data
+```{r}
+fire_perimeters_all <- sf::read_sf(here('data', 
+                                        'California_Fire_Perimeters_all')) %>% 
+  clean_names() %>% 
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+```
+
