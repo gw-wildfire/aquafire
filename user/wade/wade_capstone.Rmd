@@ -15,6 +15,9 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
+library(tmap)
+library(rmapshaper)
+library(stars)
 ```
 
 ## Load Boundaries
@@ -37,23 +40,26 @@ sb_county <- ca_counties %>%
 
 ## Load GDE Data
 ```{r}
-# # read in groundwater dependent ecosystem shapefile + clean names
-# gde_veg <- read_sf(here('data',
-#                         'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
-#                         'i02_NCCAG_Vegetation.shp')) %>% 
-#   clean_names() %>% 
-#   st_transform("EPSG: 3309") # NAD27 / California Albers
-# 
-# gde_wetlands <- read_sf(here('data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>% 
-#   clean_names()  %>% 
-#   st_transform("EPSG: 3309") # NAD27 / California Albers
-# 
-# gde <- st_join(gde_veg, gde_wetlands)
-# 
-# gde_ndvi <- st_read(here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb')) %>% 
-#   st_transform("EPSG: 3309") %>% 
-#   clean_names() %>% 
-#   st_cast(gde_ndvi, "MULTIPOLYGON")
+# read in groundwater dependent ecosystem shapefile + clean names
+gde_veg <- read_sf(here('data',
+                        'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
+                        'i02_NCCAG_Vegetation.shp')) %>%
+  clean_names() %>%
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+
+gde_wetlands <- read_sf(here('user', 'wade', 'data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>%
+  clean_names()  %>%
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+
+gde <- st_join(gde_veg, gde_wetlands)
+
+gde_ndvi <- st_read(here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb')) %>%
+  st_transform("EPSG: 3309") %>%
+  clean_names() %>%
+  st_cast(gde_ndvi, "MULTIPOLYGON")
+
+test <- st_read(here('user', 'wade', 'data', 'gdes', 'Groundwater_dependent_ecosystems_summary.shp'))
+
 ```
 
 ## Load Fire Data
@@ -70,13 +76,82 @@ class(eco_regions)
 class(fire_perimeters_all)
 
 head(ca_counties)
+head(eco_regions)
 
+tm_shape(eco_regions) +
+  tm_polygons()
+
+head(fire_perimeters_all$gis_acres)
+
+median(fire_perimeters_all$gis_acres)
+
+
+
+fire_perimeters <- fire_perimeters_all %>% filter(gis_acres > 20000)
+
+fire_perimeters_simp <- ms_simplify(fire_perimeters, keep = 0.05)
+counties_simp <- ms_simplify(ca_counties, keep = 0.05)
+
+tm_shape(counties_simp) +
+  tm_borders() +
+  tm_shape(a_simp) +
+  tm_fill(col = "gis_acres")
+
+
+fire_perimeters_raster <- st_rasterize(fire_perimeters_simp)
+
+tm_shape(counties_simp) +
+  tm_borders() +
+  tm_shape(b) +
+  tm_raster(col = "gis_acres")
 
 ```
 
+To do - filter by county and do overlap of wildfires for just GDEs in SBC
+
+
+```{r}
+sb_county <- ca_counties %>% clean_names() %>% filter(name == "Santa Barbara")
+sb_county
+tm_shape(sb_county) +
+  tm_polygons()
+
+fire_sb_county <- st_filter(fire_perimeters_simp, sb_county)
+
+tm_shape(fire_sb_county) +
+  tm_polygons(alpha = 0.9)
+  tm_shape(sb_county) +
+  tm_fill(alpha = 0.3)
+  
+test
+
+# Extracting values - chatGPT
+raster_layer <- raster(extent(fire_perimeters_simp), crs = st_crs(fire_perimeters_simp))
+raster_layer <- rasterize(fire_perimeters_simp, raster_layer)
+
+year_layer <- raster_layer
+year_layer[] <- apply(st_extract(st_as_sf(year_layer), fire_perimeters_simp, "max"), 1, max)
+
+fire_perimeters_raster
+tslb <- st_extract(fire_perimeters_raster, fire_perimeters_simp)
+
+# ----
+class(fire_perimeters_simp)
+raster_layer <- raster(extent(fire_perimeters_simp), crs = st_crs(fire_perimeters_simp))
+raster_layer[] <- rasterize(fire_perimeters_simp, raster_layer, field = "year")
+
+tm_shape(raster_layer) +
+  tm_raster()
 
 
 
+
+class(tslb)
+
+tm_shape(tslb) +
+  tm_polygons()
+
+```
 
 
 
