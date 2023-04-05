@@ -20,16 +20,21 @@ library(rmapshaper)
 library(stars)
 ```
 
+```{r}
+# set working directory
+setwd(here('~/Desktop/bren_meds/courses/capstone/aquafire'))
+```
+
 ## Load Boundaries
 ```{r}
 # Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('user', 'wade', 'data', 'ca_eco_l3', 'ca_eco_l3.shp')) %>% 
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3', 'ca_eco_l3.shp')) %>% 
   janitor::clean_names()  %>% 
   st_transform("EPSG: 3309") %>% 
   rename(region = us_l3name)
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('user', 'wade', 'data', 'CA_Counties', 'CA_Counties_TIGER2016.shp')) %>% 
+ca_counties <- read_sf(here::here('data', 'CA_Counties', 'CA_Counties_TIGER2016.shp')) %>% 
   janitor::clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
 
@@ -94,7 +99,7 @@ counties_simp <- ms_simplify(ca_counties, keep = 0.05)
 
 tm_shape(counties_simp) +
   tm_borders() +
-  tm_shape(a_simp) +
+  tm_shape(fire_perimeters_simp) +
   tm_fill(col = "gis_acres")
 
 

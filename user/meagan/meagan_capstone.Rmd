@@ -17,11 +17,13 @@ library(here)
 library(janitor)
 ```
 
-## Load Boundaries
 ```{r}
 # set working directory
 setwd(here('~', 'meds', 'capstone', 'aquafire'))
+```
 
+## Load Boundaries
+```{r}
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
