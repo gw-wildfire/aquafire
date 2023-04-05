@@ -1,0 +1,120 @@
+---
+title: "Load Data"
+author: "Andre Dextre"
+date: "2023-04-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set
+setwd("~/aquafire/user/andre")
+```
+
+## Load Libraries
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(tmap)
+library(ggplot2)
+library(raster)
+library(fasterize)
+```
+
+## Load Boundaries
+```{r}
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data','ca_eco_I3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3309") %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+
+# Filter sb county
+sb_county <- ca_counties %>% 
+  filter(county_nam == "Santa Barbara")
+
+sb_county
+```
+
+## Load GDE Data
+```{r}
+# # read in groundwater dependent ecosystem shapefile + clean names
+# gde_veg <- read_sf(here('data',
+#                         'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
+#                         'i02_NCCAG_Vegetation.shp')) %>% 
+#   clean_names() %>% 
+#   st_transform("EPSG: 3309") # NAD27 / California Albers
+# 
+# gde_wetlands <- read_sf(here('data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>% 
+#   clean_names()  %>% 
+#   st_transform("EPSG: 3309") # NAD27 / California Albers
+# 
+# gde <- st_join(gde_veg, gde_wetlands)
+# 
+# gde_ndvi <- st_read(here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb')) %>% 
+#   st_transform("EPSG: 3309") %>% 
+#   clean_names() %>% 
+#   st_cast(gde_ndvi, "MULTIPOLYGON")
+```
+
+## Load Fire Data
+```{r}
+fire_perimeters_all <- sf::read_sf(here('data', 'California_Fire_Perimeters_all', 
+                                        "California_Fire_Perimeters_all" )) %>% 
+  clean_names() %>% 
+  st_transform("EPSG: 3309") # NAD27 / California Albers
+```
+
+```{r}
+fires_sb <- st_crop(fire_perimeters_all, sb_county) %>%
+  mutate(val = 1)
+
+ext <- extent(fires_sb)
+
+r <- raster(ext, resolution = 30) 
+crs(r) <- "+init=epsg:3309"
+
+# CHECK FOR DUPLICATES!!!!! 
+testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val", fun = "sum", background = 0)
+
+plot(testr)
+```
+
+
+```{r}
+# irrelevant, was just trying something 
+hollister <- fires_sb %>%
+  filter(fire_name == "HOLLISTER")
+
+hollister_r <- fasterize(hollister, r)
+```
+
+```{r}
+# Load in fire perimeter data (did earlier), and mutate to create a value column. each fire has a value of 1. This will be used for summing fires. 
+fire_perimeters_all <- fire_perimeters_all %>%
+  mutate(val = 1)
+
+# Crop to California
+fires_ca <- st_crop(fire_perimeters_all, ca_counties) %>%
+  mutate(val = 1)
+
+# Create raster layer template for CA 
+library(raster)
+## Set extent
+ca_ext <- extent(fires_ca)
+## Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
+crs(r) <- "+init=epsg:3309" # set crs
+
+# Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
+fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
+
+plot(fire_count_raster)
+```
+
