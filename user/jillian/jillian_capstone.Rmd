@@ -81,6 +81,8 @@ crs(r) <- "+init=epsg:3309"
 
 ```{r}
 library(fasterize)
+
+# irrelevant, was just trying something 
 hollister <- fires_sb %>%
   filter(fire_name == "HOLLISTER")
 
@@ -88,12 +90,36 @@ hollister_r <- fasterize(hollister, r)
 ```
 
 ```{r}
+# CHECK FOR DUPLICATES!!!!! 
 testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val", fun = "sum", background = 0)
-
-POLY <- st_collection_extract(fires_sb, "POLYGON")
 ```
 
 ```{r}
 plot(testr)
+```
+
+```{r}
+# Load in fire perimeter data (did earlier), and mutate to create a value column. each fire has a value of 1. This will be used for summing fires. 
+fire_perimeters_all <- fire_perimeters_all %>%
+  mutate(val = 1)
+
+# Crop to California
+fires_ca <- st_crop(fire_perimeters_all, ca_counties) %>%
+  mutate(val = 1)
+
+# Create raster layer template for CA 
+library(raster)
+## Set extent
+ca_ext <- extent(fires_ca)
+## Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
+crs(r) <- "+init=epsg:3309" # set crs
+
+# Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
+fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
+
+plot(fire_count_raster)
+
+
 ```
 
