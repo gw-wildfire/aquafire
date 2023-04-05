@@ -25,7 +25,7 @@ library(fasterize)
 ## Load Boundaries
 ```{r}
 # Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('data','ca_eco_I3')) %>% 
+eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform("EPSG: 3309") %>% 
   rename(region = us_l3name)
@@ -116,5 +116,12 @@ crs(r) <- "+init=epsg:3309" # set crs
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 
 plot(fire_count_raster)
+```
+#Load California Eco-regions
+```{r}
+eco_regions <- eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3309") %>% 
+  rename(region = us_l3name)
 ```
 
