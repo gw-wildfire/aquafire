@@ -63,9 +63,7 @@ sb_county <- ca_counties %>%
 
 ## Load Fire Data
 ```{r}
-fire_perimeters_all <- sf::read_sf(here('user', 
-                                        'jillian',
-                                        'data', 
+fire_perimeters_all <- sf::read_sf(here('data', 
                                         'California_Fire_Perimeters_all')) %>% 
   clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
