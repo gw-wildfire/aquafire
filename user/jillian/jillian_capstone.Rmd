@@ -20,13 +20,13 @@ library(janitor)
 ## Load Boundaries
 ```{r}
 # Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+eco_regions <- read_sf(here::here('user','jillian','data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform("EPSG: 3309") %>% 
   rename(region = us_l3name)
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+ca_counties <- read_sf(here::here('user','jillian','data', 'CA_Counties')) %>% 
   janitor::clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
 
@@ -64,5 +64,36 @@ fire_perimeters_all <- sf::read_sf(here('user',
                                         'California_Fire_Perimeters_all')) %>% 
   clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
+```
+
+```{r}
+fires_sb <- st_crop(fire_perimeters_all, sb_county) %>%
+  mutate(val = 1)
+```
+
+```{r}
+library(raster)
+ext <- extent(fires_sb)
+
+r <- raster(ext, resolution = 30) 
+crs(r) <- "+init=epsg:3309"
+```
+
+```{r}
+library(fasterize)
+hollister <- fires_sb %>%
+  filter(fire_name == "HOLLISTER")
+
+hollister_r <- fasterize(hollister, r)
+```
+
+```{r}
+testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val", fun = "sum", background = 0)
+
+POLY <- st_collection_extract(fires_sb, "POLYGON")
+```
+
+```{r}
+plot(testr)
 ```
 
