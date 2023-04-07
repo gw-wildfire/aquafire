@@ -103,6 +103,7 @@ testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val",
 plot(testr)
 ```
 
+## FIRE COUNTS FOR ALL OF CALIFORNIA 
 ```{r}
 # Load in fire perimeter data (did earlier), and mutate to create a value column. each fire has a value of 1. This will be used for summing fires. 
 fire_perimeters_all <- fire_perimeters_all %>%
