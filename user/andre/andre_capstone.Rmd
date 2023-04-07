@@ -24,10 +24,10 @@ library(mapview)
 
 ```{r}
 #Load data
-cali <- read_sf(here("user", "andre", "data", "CA_Boundaries")) %>%
+cali <- read_sf(here("data", "CA_Boundaries")) %>%
   clean_names()
 
-wf_perimeter <- read_sf(here("user", "andre", "data", "California_Fire_Perimeters"))
+wf_perimeter <- read_sf(here("data", "California_Fire_Perimeters"))
 
 #california <- tigris::counties("CA")
 

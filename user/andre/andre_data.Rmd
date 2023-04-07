@@ -1,12 +1,13 @@
 ---
-title: "Jillian Capstone"
-author: "Jillian Allison"
+title: "Load Data"
+author: "Andre Dextre"
 date: "2023-04-03"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set
+setwd("~/aquafire/user/andre")
 ```
 
 ## Load Libraries
@@ -15,17 +16,16 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
-```
-
-```{r}
-# set working directory
-setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+library(tmap)
+library(ggplot2)
+library(raster)
+library(fasterize)
 ```
 
 ## Load Boundaries
 ```{r}
 # Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform("EPSG: 3309") %>% 
   rename(region = us_l3name)
@@ -37,7 +37,9 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 
 # Filter sb county
 sb_county <- ca_counties %>% 
-  filter(name == "Santa Barbara")
+  filter(county_nam == "Santa Barbara")
+
+sb_county
 ```
 
 ## Load GDE Data
@@ -63,8 +65,8 @@ sb_county <- ca_counties %>%
 
 ## Load Fire Data
 ```{r}
-fire_perimeters_all <- sf::read_sf(here('data', 
-                                        'California_Fire_Perimeters_all')) %>% 
+fire_perimeters_all <- sf::read_sf(here('data', 'California_Fire_Perimeters_all', 
+                                        "California_Fire_Perimeters_all" )) %>% 
   clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
 ```
@@ -72,19 +74,20 @@ fire_perimeters_all <- sf::read_sf(here('data',
 ```{r}
 fires_sb <- st_crop(fire_perimeters_all, sb_county) %>%
   mutate(val = 1)
-```
 
-```{r}
-library(raster)
 ext <- extent(fires_sb)
 
 r <- raster(ext, resolution = 30) 
 crs(r) <- "+init=epsg:3309"
+
+# CHECK FOR DUPLICATES!!!!! 
+testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val", fun = "sum", background = 0)
+
+plot(testr)
 ```
 
-```{r}
-library(fasterize)
 
+```{r}
 # irrelevant, was just trying something 
 hollister <- fires_sb %>%
   filter(fire_name == "HOLLISTER")
@@ -92,16 +95,6 @@ hollister <- fires_sb %>%
 hollister_r <- fasterize(hollister, r)
 ```
 
-```{r}
-# CHECK FOR DUPLICATES!!!!! 
-testr <- fasterize(st_collection_extract(fires_sb, "POLYGON"), r, field = "val", fun = "sum", background = 0)
-```
-
-```{r}
-plot(testr)
-```
-
-## FIRE COUNTS FOR ALL OF CALIFORNIA 
 ```{r}
 # Load in fire perimeter data (did earlier), and mutate to create a value column. each fire has a value of 1. This will be used for summing fires. 
 fire_perimeters_all <- fire_perimeters_all %>%
@@ -123,7 +116,12 @@ crs(r) <- "+init=epsg:3309" # set crs
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 
 plot(fire_count_raster)
-
-
+```
+#Load California Eco-regions
+```{r}
+eco_regions <- eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3309") %>% 
+  rename(region = us_l3name)
 ```
 
