@@ -164,9 +164,13 @@ tm_shape(tslb) +
 
 my_data <- readOGR(dsn = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data", layer = "fthrt14_2-1.gdb")
 
+# below is able to read first layer, but not all and it is not saved
 my_data <- readOGR("fthrt14_2-1.gdb")
 
 my_data <- readOGR(layer = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb")
+
+
+
 
 
 ```
