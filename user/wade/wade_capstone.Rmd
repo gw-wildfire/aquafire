@@ -22,7 +22,7 @@ library(stars)
 
 ```{r}
 # set working directory
-setwd(here('~/Desktop/bren_meds/courses/capstone/aquafire'))
+setwd(here('~/Desktop/bren_meds/courses/capstone/aquafire/data'))
 ```
 
 ## Load Boundaries
@@ -149,8 +149,6 @@ tm_shape(raster_layer) +
   tm_raster()
 
 
-
-
 class(tslb)
 
 tm_shape(tslb) +
@@ -158,6 +156,20 @@ tm_shape(tslb) +
 
 ```
 
+### Modeled fire threat layer attempt
+
+```{r}
+
+
+
+my_data <- readOGR(dsn = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data", layer = "fthrt14_2-1.gdb")
+
+my_data <- readOGR("fthrt14_2-1.gdb")
+
+my_data <- readOGR(layer = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb")
+
+
+```
 
 
 
