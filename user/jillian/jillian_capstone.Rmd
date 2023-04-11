@@ -123,7 +123,43 @@ crs(r) <- "+init=epsg:3309" # set crs
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 
 plot(fire_count_raster)
+```
 
 
+## TSLF Based on YEAR column for all of California 
+Data was most recently updated in November 2022. 
+Steps: 
+1) Create a raster layer with each cell = most recent fire's year in that cell. if no fire, then value = NA
+2) Create RL of 2022 - recent fire 
+
+```{r}
+fires_ca <- fires_ca %>%
+  mutate(year = as.numeric(year))
+
+# Use fasterize::fasterize() to create a raster layer where each cell is equal to the maximum year value for that cell. 
+most_recent_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "year", fun = "max", background = NA)
+```
+
+```{r}
+plot(most_recent_raster)
+```
+
+```{r}
+# Subtract the raster layer containing the most recent fire from 2022- this will give the number of years since the most recent fire in each cell. 
+tslf_raster <- 2022 - most_recent_raster
+```
+
+```{r}
+plot(tslf_raster)
+```
+
+
+### For sharing plots
+```{r}
+plot(fire_count_raster)
+```
+
+```{r}
+plot(tslf_raster)
 ```
 
