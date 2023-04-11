@@ -117,11 +117,20 @@ fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_ra
 
 plot(fire_count_raster)
 ```
-#Load California Eco-regions
+#California Eco-regions
 ```{r}
-eco_regions <- eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
+eco_regions <- read_sf(here::here('data','ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform("EPSG: 3309") %>% 
   rename(region = us_l3name)
+
+ca_ecoreg <- tm_shape(fire_count_raster) +
+  tm_raster(col = "layer") +
+  tm_shape(eco_regions) +
+  tm_borders() 
+  
+
+ca_ecoreg
+
 ```
 

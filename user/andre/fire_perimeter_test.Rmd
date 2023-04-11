@@ -1,0 +1,73 @@
+---
+title: "Fire Occurrence Test"
+author: "Andre Dextre"
+date: "2023-04-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(sf)
+library(raster)
+library(fasterize)
+library(ggplot2)
+library(tmap)
+```
+
+## Load Fire Data
+```{r}
+#Load All Fire Perimeter data
+all_fire_perimeters <- read_sf(here("data", "California_Fire_Perimeters_all")) %>%
+  clean_names()
+#Adjust projections
+fire_perimeters <- all_fire_perimeters %>%
+  st_transform("EPSG: 3309")
+```
+
+## Get California Ecoregion Boundaries
+```{r} 
+CA_ecoregs <- read_sf(here("data", "ca_eco_l3")) %>%
+  clean_names() %>%
+  st_transform("EPSG: 3309")
+
+tm_shape(CA_ecoregs) +
+  tm_borders()
+```
+
+## Crop CA Ecoregion Boundaries to Fire Perimeters
+```{r}
+CA_fires <- st_crop(fire_perimeters, CA_ecoregs) %>%
+  mutate(val = 1)
+
+plot(CA_fires)
+```
+
+## Adjust Extend  
+```{r}
+#Get extend of fire perimeters
+CA_fire_ext <- raster::extent(CA_fires)     
+
+#rasterize
+r_fire <- raster(CA_fire_ext, resolution = 30) 
+crs(r_fire) <- "+init=epsg:3309"
+```
+
+## Test CA Fire perimeter raster
+```{r}
+CA_fires_r <- fasterize(st_collection_extract(CA_fires, "POLYGON"), r_fire, field = "val", background = 0)
+plot(CA_fires_r)
+```
+
+## Create a CA Boundary Raster
+```{r}
+CA_mask <- fasterize(CA_ecoregs, r_fire)
+
+CA_fires_masked <- CA_fires_r * CA_mask
+
+plot(CA_fires_masked, legend = FALSE)
+plot(CA_mask, add = TRUE, legend = FALSE, alpha = 0.15)
+
+```

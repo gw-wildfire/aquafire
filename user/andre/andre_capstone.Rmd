@@ -27,12 +27,12 @@ library(mapview)
 cali <- read_sf(here("data", "CA_Boundaries")) %>%
   clean_names()
 
-wf_perimeter <- read_sf(here("data", "California_Fire_Perimeters"))
+wf_perimeter <- read_sf(here("data", "California_Fire_Perimeters_all", "California_Fire_Perimeters_all"))
 
 #california <- tigris::counties("CA")
 
 wf_fire <- ggplot() +
-  geom_sf(data = wf_parameter,
+  geom_sf(data = wf_perimeter,
           fill = 'red',
           col = 'yellow',
           lwd = 0.1) +
@@ -52,5 +52,5 @@ grid = st_as_sf(grid) # convert grid to polygon
 grid = grid[cali, ] # crop grid to cali polygon
 
 plot(st_geometry(grid), axes = TRUE, reset = FALSE) # plot the grid
-plot(st_geometry(wf_parameter), border = "red", add = TRUE)
+plot(st_geometry(wf_perimeter), border = "red", add = TRUE)
 ```
