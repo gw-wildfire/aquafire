@@ -169,10 +169,15 @@ my_data <- readOGR("fthrt14_2-1.gdb")
 
 my_data <- readOGR(layer = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb")
 
+a <- vect("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb", layer = "fras_blk_fthrt14_2")
 
 
+tm_shape(a) +
+  tm_polygons()
+plot(a)
+class(a)
 
-
+head(a)
 ```
 
 
