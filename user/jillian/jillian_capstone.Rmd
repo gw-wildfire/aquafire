@@ -158,8 +158,9 @@ plot(tslf_raster)
 ```{r}
 plot(fire_count_raster)
 ```
+pick cutoff date (1950) vvv there too
 
 ```{r}
 plot(tslf_raster)
 ```
-
+* examine seasonal differences (try grouping by season) 
