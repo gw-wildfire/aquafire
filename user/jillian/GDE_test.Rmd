@@ -1,0 +1,61 @@
+---
+title: "GDE_Test"
+author: "Andre Dextre"
+date: "2023-04-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+library(sf)
+library(raster)
+library(fasterize)
+library(ggplot2)
+library(tmap)
+```
+
+## Load Data
+```{r}
+#Read in GDE dataset
+GDEs <- read_sf(here("data", "i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb")) %>%
+  clean_names() %>% 
+   st_transform("EPSG: 3309")
+
+#Read in CA state Boundaries
+CA_bounds <- read_sf(here("data", "CA_State_Boundaries")) %>%
+  clean_names() %>%
+  st_transform("EPSG: 3309")
+
+```
+
+
+## Play with Data
+```{r}
+GDEs <- GDEs %>%
+  mutate(val = 1)
+
+GDEs_extent <- raster::extent(GDEs)
+
+r_GDEs <- raster(GDEs_extent, resolution = 30)
+
+crs(r_GDEs) <- "+init=epsg:3309"
+```
+
+```{r}
+# Create a raster template with desired resolution
+res <- 30
+ras <- raster(extent(GDEs), res)
+
+# Rasterize the GDEs into a raster using the "val" attribute as the field to fill
+r_GDEs <- rasterize(GDEs, ras, field = "val")
+
+# Mask the raster using the CA state boundaries
+r_GDEs_masked <- mask(r_GDEs, CA_bounds)
+
+# Plot the resulting raster
+plot(r_GDEs_masked)
+```
+
