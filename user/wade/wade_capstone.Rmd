@@ -209,12 +209,7 @@ a <- st_layers("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/dat
 
 a <- st_drivers(what = "raster")
 
-plot(a)
-class(a$block_key)
 
-head(a)
-
-str(a)
 
 ```
 
