@@ -18,6 +18,8 @@ library(janitor)
 library(tmap)
 library(rmapshaper)
 library(stars)
+library(terra)
+library(raster)
 ```
 
 ```{r}
@@ -171,11 +173,19 @@ my_data <- readOGR(layer = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/
 
 a <- vect("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb", layer = "fras_blk_fthrt14_2")
 
+a <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/fras_blk_fthrt14_2")
 
-tm_shape(a) +
+a <- rast("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/a0000000a.gdbtable")
+
+plot(a$rasterband_id)
+
+tm_shape(a$rasterband_id) +
   tm_polygons()
+
+
+
 plot(a)
-class(a)
+class(a$block_key)
 
 head(a)
 ```
