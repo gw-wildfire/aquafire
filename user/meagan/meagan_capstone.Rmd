@@ -15,6 +15,7 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
+library(fasterize)
 ```
 
 ```{r}
@@ -42,15 +43,44 @@ sb_county <- ca_counties %>%
 
 ## Load GDE Data
 ```{r}
+veg_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+                     layer = 'i02_NCCAG_Vegetation_2_0') %>% 
+  st_transform("EPSG: 3309")
+
+wetland_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+                     layer = 'i02_NCCAG_Wetlands_2_0')
+
+wetland_layer <- wetland_layer %>% 
+  mutate('val' = 1)
+
+gde <- gde %>% 
+  mutate('val' = 1)
+
+ca <- st_crop(gde_veg, ca_counties) %>%
+  mutate(val = 1)
+
+ca_ext <- extent(ca)
+ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
+crs(ca_rast) <- "+init=epsg:3309" # set crs
+
+fasterize(st_collection_extract(gde_layer, "LINESTRING"), ca_rast, field = 'val', background = 0)
+
+fasterize(gde_layer, ca_rast, field = "val", fun="sum")
+
+gde_raster <- fasterize(sf = gde_layer,
+                        raster = ca_rast,
+                        field = NULL,
+                        fun = "count")
+
 # # read in groundwater dependent ecosystem shapefile + clean names
 # gde_veg <- read_sf(here('data',
 #                         'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
-#                         'i02_NCCAG_Vegetation.shp')) %>% 
-#   clean_names() %>% 
+#                         'i02_NCCAG_Vegetation.shp')) %>%
+#   clean_names() %>%
 #   st_transform("EPSG: 3309") # NAD27 / California Albers
 # 
-# gde_wetlands <- read_sf(here('data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>% 
-#   clean_names()  %>% 
+# gde_wetlands <- read_sf(here('data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>%
+#   clean_names()  %>%
 #   st_transform("EPSG: 3309") # NAD27 / California Albers
 # 
 # gde <- st_join(gde_veg, gde_wetlands)
@@ -67,5 +97,162 @@ fire_perimeters_all <- sf::read_sf(here('data',
                                         'California_Fire_Perimeters_all')) %>% 
   clean_names() %>% 
   st_transform("EPSG: 3309") # NAD27 / California Albers
+```
+
+## Burn Severity
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+# METHOD 1
+```{r}
+# get a list of the raster file names
+filenames <- paste0("mtbs_CA_", 1984:2021, ".tif")
+
+# create an empty list to store the rast objects
+burnarea_list <- list()
+
+# loop through the list of filenames and read in the rasters
+for (i in seq_along(filenames)) {
+  burnarea_list[[i]] <- rast(here("data", "MTBS_BSmosaics", filenames[i]))
+}
+
+# want to make all rasters have same CRS
+crs(burnarea_list)
+burnarea_list <- lapply(burnarea_list, function(x) crs('epsg:4326'))
+burnarea_list
+
+should be vector of character 
+list.files (vector of file names use where you read in the raster)
+feed it vector of file names
+# want to get list into a stack
+# for terra use c()
+```
+
+# METHOD 2
+```{r}
+# plot the combined raster
+# get a list of the raster file names
+filenames <- paste0("mtbs_CA_", 1984:2021, ".tif")
+
+# create an empty list to store the rast objects
+burnarea_list <- list()
+
+# loop through the list of filenames and read in the rasts
+for (i in seq_along(filenames)) {
+  rast_obj <- raster(here("data", "MTBS_BSmosaics", filenames[i]))
+  crs(rast_obj) <- "+init=epsg:3309"
+  burnarea_list[[i]] <- rast_obj
+}
+
+plot(rast_obj)
+```
+
+
+```{r}
+burn_1 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1984.tif"))
+burn_2 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1985.tif"))
+burn_3 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1986.tif"))
+burn_4 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1987.tif"))
+burn_5 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1988.tif"))
+burn_6 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1989.tif"))
+burn_7 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1990.tif"))
+burn_8 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1991.tif"))
+burn_9 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1992.tif"))
+burn_10 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1993.tif"))
+burn_11 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1994.tif"))
+burn_12 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1995.tif"))
+burn_13 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1996.tif"))
+burn_14 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1997.tif"))
+burn_15 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1998.tif"))
+burn_16 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_1999.tif"))
+burn_17 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2000.tif"))
+burn_18 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2001.tif"))
+burn_19 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2002.tif"))
+burn_20 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2003.tif"))
+burn_21 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2004.tif"))
+burn_22 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2005.tif"))
+burn_23 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2006.tif"))
+burn_24 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2007.tif"))
+burn_25 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2008.tif"))
+burn_26 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2009.tif"))
+burn_27 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2010.tif"))
+burn_28 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2011.tif"))
+burn_29 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2012.tif"))
+burn_30 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2013.tif"))
+burn_31 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2014.tif"))
+burn_32 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2015.tif"))
+burn_33 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2016.tif"))
+burn_34 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2017.tif"))
+burn_35 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2018.tif"))
+burn_36 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2019.tif"))
+burn_37 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2020.tif"))
+burn_38 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2021.tif"))
+
+rast <- c(burn_1,
+          burn_2,
+          burn_3)
+          # burn_4,
+          # burn_5,
+          # burn_6,
+          # burn_7,
+          # burn_8,
+          # burn_9,
+          # burn_10
+          # burn_11,
+          # burn_12,
+          # burn_13,
+          # burn_14,
+          # burn_15,
+          # burn_16,
+          # burn_17,
+          # burn_18,
+          # burn_19,
+          # burn_20,
+          # burn_21,
+          # burn_22,
+          # burn_23,
+          # burn_24,
+          # burn_25,
+          # burn_26,
+          # burn_27,
+          # burn_28,
+          # burn_29,
+          # burn_30,
+          # burn_31,
+          # burn_32,
+          # burn_33,
+          # burn_34,
+          # burn_35,
+          # burn_36,
+          # burn_37,
+          # burn_38)
+
+plot(burn_1)
+```
+
+```{r}
+#Loading data
+
+filenames <- paste0("mtbs_CA_", 1984:2021, ".tif")
+
+# create an empty list to store the rast objects
+burnarea_list <- list()
+
+# loop through the list of filenames and read in the rasts
+for (i in seq_along(filenames)) {
+  burnarea_list[[i]] <- rast(here("data", "MTBS_BSmosaics", filenames[i]))
+}
+
+
 ```
 

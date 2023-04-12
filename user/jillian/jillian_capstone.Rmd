@@ -42,6 +42,16 @@ sb_county <- ca_counties %>%
 
 ## Load GDE Data
 ```{r}
+veg_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+                     layer = 'i02_NCCAG_Vegetation_2_0') %>% 
+  st_transform("EPSG: 3309")
+
+wetland_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+                     layer = 'i02_NCCAG_Wetlands_2_0')
+
+
+
+
 # # read in groundwater dependent ecosystem shapefile + clean names
 # gde_veg <- read_sf(here('data',
 #                         'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
