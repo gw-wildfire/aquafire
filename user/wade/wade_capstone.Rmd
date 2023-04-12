@@ -20,6 +20,7 @@ library(rmapshaper)
 library(stars)
 library(terra)
 library(raster)
+library(rgdal)
 ```
 
 ```{r}
@@ -162,19 +163,30 @@ tm_shape(tslb) +
 
 ```{r}
 
+fire_threat <- st_read(dsn = here('data', 'fthrt14_2-1.gdb'))
 
+
+a <- fasterize::fasterize("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/fras_blk_fthrt14_2")
+
+class(fire_threat)
 
 my_data <- readOGR(dsn = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data", layer = "fthrt14_2-1.gdb")
 
 # below is able to read first layer, but not all and it is not saved
 my_data <- readOGR("fthrt14_2-1.gdb")
 
-my_data <- readOGR(layer = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb")
+my_data <- readOGR(dsn = "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb", layer = "a0000000a.gdbtable")
 
+# tried with st_read
+c <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb", layer = "fras_blk_fthrt14_2")
+
+# was able to read it in as a SpatVector and Terra object, but it has no geometries
 a <- vect("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb", layer = "fras_blk_fthrt14_2")
 
-a <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/fras_blk_fthrt14_2")
+# tried with raster::raster
+a <- rasterize("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/fras_blk_fthrt14_2")
 
+# tried with terra::rast
 a <- rast("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/a0000000a.gdbtable")
 
 plot(a$rasterband_id)
@@ -182,12 +194,17 @@ plot(a$rasterband_id)
 tm_shape(a$rasterband_id) +
   tm_polygons()
 
+a <- st_layers("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/fthrt14_2-1.gdb/fras_blk_fthrt14_2")
 
+a <- st_drivers(what = "raster")
 
 plot(a)
 class(a$block_key)
 
 head(a)
+
+str(a)
+
 ```
 
 
