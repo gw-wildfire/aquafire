@@ -42,13 +42,13 @@ sb_county <- ca_counties %>%
 
 ## Load GDE Data
 ```{r}
-veg_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
-                     layer = 'i02_NCCAG_Vegetation_2_0') %>% 
-  st_transform("EPSG: 3309")
-
-wetland_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
-                     layer = 'i02_NCCAG_Wetlands_2_0')
-
+# veg_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+#                      layer = 'i02_NCCAG_Vegetation_2_0') %>% 
+#   st_transform("EPSG: 3309")
+# 
+# wetland_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
+#                      layer = 'i02_NCCAG_Wetlands_2_0')
+# 
 
 
 
@@ -115,7 +115,8 @@ plot(testr)
 ```{r}
 # Load in fire perimeter data (did earlier), and mutate to create a value column. each fire has a value of 1. This will be used for summing fires. 
 fire_perimeters_all <- fire_perimeters_all %>%
-  mutate(val = 1)
+  mutate(val = 1) %>%
+  filter(year >= 1950)
 
 # Crop to California
 fires_ca <- st_crop(fire_perimeters_all, ca_counties) %>%
@@ -159,10 +160,6 @@ plot(most_recent_raster)
 tslf_raster <- 2022 - most_recent_raster
 ```
 
-```{r}
-plot(tslf_raster)
-```
-
 
 ### For sharing plots
 ```{r}
@@ -174,3 +171,18 @@ pick cutoff date (1950) vvv there too
 plot(tslf_raster)
 ```
 * examine seasonal differences (try grouping by season) 
+
+```{r}
+# Lets mask the layers we made here
+fire_count_raster_masked <- mask(fire_count_raster, ca_counties)
+
+tslf_raster_masked <- mask(tslf_raster, ca_counties)
+```
+
+```{r}
+# Write files 
+# writeRaster(fire_count_raster_masked, "firecount.tif")
+# writeRaster(tslf_raster_masked, "tslf.tif")
+```
+
+
