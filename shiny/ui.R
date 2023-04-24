@@ -44,6 +44,10 @@ ui <- fluidPage(
                       mainPanel(leafletOutput(outputId = "map",
                                               width = 800,
                                               height = 500), position = c("right")),
+                      # toggle layer on and off
+                      checkboxInput(inputId = "overlay", label = "Toggle layer on/off", value = TRUE),
+                      # toggle layer opacity
+                      sliderInput(inputId = "opacity", label = "Layer opacity", value = 1, min = 0, max = 1, step = 0.1)
                       
                       
              ), # End tabPanel
