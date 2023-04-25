@@ -129,7 +129,10 @@ ca_ext <- extent(fires_ca)
 ## Create valueless raster layer w/ 30 (unit is something) resolution 
 ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
 crs(ca_rast) <- "+init=epsg:3309" # set crs
+```
 
+
+```{r}
 # Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 
@@ -160,6 +163,24 @@ plot(most_recent_raster)
 tslf_raster <- 2022 - most_recent_raster
 ```
 
+### GDE Layer 
+```{r}
+# Read in GDE data
+gde_data <- sf::read_sf("data/gde") 
+
+gde_data <- gde_data %>% 
+  mutate(gde = 1) # creating a column so we can have a raster with GDE = 1, not GDE = 0
+```
+
+```{r}
+# Fasterize to rasterize, extent to match others 
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+
+# Mask to california
+gde_masked <- mask(gde_raster, ca_counties)
+```
+
+
 
 ### For sharing plots
 ```{r}
@@ -185,25 +206,38 @@ tslf_raster_masked <- mask(tslf_raster, ca_counties)
 # writeRaster(tslf_raster_masked, "tslf.tif")
 ```
 
-
-### GDE Layer 
 ```{r}
-# Read in GDE data
-gde_data <- sf::read_sf("data/gde") 
-
-gde_data <- gde_data %>% 
-  mutate(gde = 1)
+# writeRaster(gde_masked, "gde_boundaries.tif")
 ```
 
+### Land use data
 ```{r}
-gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+# I'm using the fed data package because NLCD data was in .img format and .... ew 
+library(FedData)
 
-gde_masked <- mask(gde_raster, ca_counties)
-```
+nlcd <- FedData::get_nlcd(template = ca_rast, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") 
+
+nlcd <- raster::setExtent(nlcd, ca_rast)
+
+crs(nlcd) <- "+init=epsg:3309"
+
+# crop 
+nlcd <- crop(nlcd, ca_rast)
+
+# resample so that cells align
+test <- raster::resample(nlcd, ca_rast, method = "ngb")
+
+# mask 
+test_masked <- mask(test, ca_counties)
+
+# plot and view
+plot(nlcd)
+# nlcd_colors() and pal_nlcd() return legend and color palette
+nlcd_colors()
+pal_nlcd()
 
 
-```{r}
-writeRaster(gde_masked, "gde_boundaries.tif")
+
 ```
 
 
