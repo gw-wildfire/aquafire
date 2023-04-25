@@ -128,7 +128,7 @@ library(raster)
 ca_ext <- extent(fires_ca)
 ## Create valueless raster layer w/ 30 (unit is something) resolution 
 ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
-crs(r) <- "+init=epsg:3309" # set crs
+crs(ca_rast) <- "+init=epsg:3309" # set crs
 
 # Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
@@ -184,5 +184,28 @@ tslf_raster_masked <- mask(tslf_raster, ca_counties)
 # writeRaster(fire_count_raster_masked, "firecount.tif")
 # writeRaster(tslf_raster_masked, "tslf.tif")
 ```
+
+
+### GDE Layer 
+```{r}
+# Read in GDE data
+gde_data <- sf::read_sf("data/gde") 
+
+gde_data <- gde_data %>% 
+  mutate(gde = 1)
+```
+
+```{r}
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+
+gde_masked <- mask(gde_raster, ca_counties)
+```
+
+
+```{r}
+writeRaster(gde_masked, "gde_boundaries.tif")
+```
+
+
 
 
