@@ -3,7 +3,7 @@ ui <- fluidPage(
   titlePanel(""),
   fluidPage(
     fluidRow(column(6,
-                    h1("Aquafire")),
+                    h1("GDEs & Wildfires")),
              column(6,
                     HTML("<a href='https://www.tnc.org/'><img src='tnc_logo.png' align= 'right' height= '60' width = '180' alt='This is The Nature Conservancy logo'/></a>")))),
   
@@ -38,7 +38,7 @@ ui <- fluidPage(
              
              # California Map ----
              tabPanel(title = "California", icon = icon("map"),
-                      h1("Hello"),
+                      h1("TSLB Map"),
                       
                       # BELOW IS OUTPUT OF MAP
                       mainPanel(leafletOutput(outputId = "map",
@@ -72,10 +72,7 @@ ui <- fluidPage(
                                  #                                  ), # End sidebarLayout ----
                         ), # End tabPanel
                         
-                        
-             ), # End mainPanel
-             
-             tabPanel(title = "Santa Barbara County Statistics",
+                        tabPanel(title = "Santa Barbara County Statistics",
                       
                       # sidebarLayout for county map----
                       #                                 sidebarLayout(
@@ -98,7 +95,7 @@ ui <- fluidPage(
                       ),
                       
              ), # End tabPanel                       
-             
+             ), # End mainPanel      
   ), # End navbarMenu for Statistical Analysis
   
   

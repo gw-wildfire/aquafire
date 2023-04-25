@@ -4,6 +4,7 @@ server <- function(input, output) {
   r <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/raster_layer.tif")
   
   
+  
   output$map <- renderLeaflet({
     leaflet() %>% 
       addProviderTiles("Esri.WorldImagery") %>%
