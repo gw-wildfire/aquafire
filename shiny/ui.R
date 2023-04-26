@@ -3,7 +3,7 @@ ui <- fluidPage(
   titlePanel(""),
   fluidPage(
     fluidRow(column(6,
-                    h1("GDEs & Wildfires")),
+                    h1("Aquafire")),
              column(6,
                     HTML("<a href='https://www.tnc.org/'><img src='tnc_logo.png' align= 'right' height= '60' width = '180' alt='This is The Nature Conservancy logo'/></a>")))),
   
@@ -38,17 +38,18 @@ ui <- fluidPage(
              
              # California Map ----
              tabPanel(title = "California", icon = icon("map"),
-                      h1("TSLB Map"),
+                      h3("Map of Time Since Last Burn:"),
                       
-                      # BELOW IS OUTPUT OF MAP
+                      # interactive map of TSLB
                       mainPanel(leafletOutput(outputId = "map",
                                               width = 800,
-                                              height = 500), position = c("right")),
-                      # toggle layer on and off
-                      checkboxInput(inputId = "overlay", label = "Toggle layer on/off", value = TRUE),
-                      # toggle layer opacity
-                      sliderInput(inputId = "opacity", label = "Layer opacity", value = 1, min = 0, max = 1, step = 0.1)
-                      
+                                              height = 500), position = c("right"),
+                                # toggle layer on and off
+                                checkboxInput(inputId = "overlay", label = "Toggle layer on/off", value = TRUE),
+                                # toggle layer opacity
+                                sliderInput(inputId = "opacity", label = "Layer opacity", value = 1, min = 0, max = 1, step = 0.1)
+                                
+                      ), # End Leaflet panel
                       
              ), # End tabPanel
              
@@ -73,29 +74,31 @@ ui <- fluidPage(
                         ), # End tabPanel
                         
                         tabPanel(title = "Santa Barbara County Statistics",
-                      
-                      # sidebarLayout for county map----
-                      #                                 sidebarLayout(
-                      
-                      
-                      sidebarPanel(width = 3,
+                                 
+                                 # sidebarLayout for county map----
+                                 #                                 sidebarLayout(
+                                 
+                                 
+                                 sidebarPanel(width = 3,
+                                              
+                                              
+                                              # Put inputs & vartiables here
+                                              "For County-level statistical analysis inputs"
+                                              
+                                 ),
+                                 #                                 ), # End sidebarLayout
+                                 #                                  position = ("left"),
+                                 
+                                 mainPanel(
                                    
+                                   "County Statistical Analysis"
                                    
-                                   # Put inputs & vartiables here
-                                   "For County-level statistical analysis inputs"
-                                   
-                      ),
-                      #                                 ), # End sidebarLayout
-                      #                                  position = ("left"),
-                      
-                      mainPanel(
-                        
-                        "County Statistical Analysis"
-                        
-                      ),
-                      
-             ), # End tabPanel                       
-             ), # End mainPanel      
+                                 ),
+                                 
+                        ), # End tabPanel
+             ), # End mainPanel
+             
+             
   ), # End navbarMenu for Statistical Analysis
   
   
