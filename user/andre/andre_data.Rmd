@@ -143,3 +143,20 @@ ca_ecoreg
 
 ```
 
+
+### GDE Layer 
+```{r}
+# Read in GDE data
+gde_data <- sf::read_sf("data/gde") 
+
+gde_data <- gde_data %>% 
+  mutate(gde = 1) # creating a column so we can have a raster with GDE = 1, not GDE = 0
+```
+
+```{r}
+# Fasterize to rasterize, extent to match others 
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+
+# Mask to california
+gde_masked <- mask(gde_raster, ca_counties)
+```
