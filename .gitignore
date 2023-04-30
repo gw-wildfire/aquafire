@@ -43,3 +43,5 @@ vignettes/*.pdf
 *data_raw
 
 *shiny/www
+
+*raster_output

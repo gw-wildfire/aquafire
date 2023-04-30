@@ -17,6 +17,7 @@ library(here)
 library(janitor)
 library(raster)
 library(rgdal)
+library(fasterize)
 ```
 
 ```{r}
@@ -64,6 +65,11 @@ crs(ca_rast) <- crs_ca$wkt
 ```
 
 ```{r}
+# Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
+fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 
+fire_count_raster_masked <- mask(fire_count_raster, ca_counties)
+
+writeRaster(fire_count_raster_masked, "raster_output/fire_count.tif") 
 ```
 
