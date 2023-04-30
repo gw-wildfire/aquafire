@@ -221,6 +221,7 @@ nlcd <- raster::setExtent(nlcd, ca_rast)
 
 crs(nlcd) <- "+init=epsg:3309"
 
+# TRY st_intersection(input, clip)
 # crop 
 nlcd <- crop(nlcd, ca_rast)
 

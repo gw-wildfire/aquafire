@@ -1,0 +1,24 @@
+---
+title: 'TSLF Raster'
+author: "Jillian Allison"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Libraries
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+```
+
+```{r}
+# set working directory
+setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+```
+
