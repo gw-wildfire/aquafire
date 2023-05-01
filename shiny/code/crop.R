@@ -1,5 +1,4 @@
 ## Load Libraries
-```{r}
 library(tidyverse)
 library(sf)
 library(here)
@@ -7,11 +6,9 @@ library(janitor)
 library(raster)
 library(rgdal)
 library(fasterize)
-```
 
 # set working directory
-setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
-```
+#setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
 ## Load ecoregions and counties shapefiles 
 
