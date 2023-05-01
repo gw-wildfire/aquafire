@@ -44,7 +44,7 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 ## Load GDE Data
 ```{r}
 # Read in GDE data
-gde_data <- sf::read_sf("data/gde") 
+gde_data <- sf::read_sf(here::here("data", "gde") )
 
 gde_data <- gde_data %>%
   st_transform(crs_ca) %>%
@@ -70,5 +70,5 @@ gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), c
 gde_masked <- mask(gde_raster, ca_counties)
 
 # Create raster file 
-writeRaster(gde_masked, "raster_output/gdes_updated430.tif")
+#writeRaster(gde_masked, here::here("raster_output", "gdes_updated430.tif"))
 ```

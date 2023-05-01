@@ -127,10 +127,48 @@ tif_files <- list.files(pattern = "\\.tif$")
 
 # Use a loop to read the .tif files into a list of Raster* objects
 raster_list <- list()
+
 for (i in 1:length(tif_files)) {
-  raster_list[[i]] <- rast(tif_files[i])
+  raster_list[[i]] <- raster(tif_files[i])
 }
 
+plot(raster_list[[1]])
 ```
+
+```{r}
+library(raster)
+library(rgdal)
+
+# Set your working directory to the folder containing the .tif files
+setwd("~/meds/capstone/aquafire/data/MTBS_BSmosaics")
+
+# List all .tif files in the directory
+tif_files <- list.files(pattern = "\\.tif$")
+
+# Read in the .tif files as RasterLayer objects
+raster_list <- lapply(tif_files, raster)
+
+# If your files are vector files, you need to convert them to raster files first.
+# Load your vector files (e.g., shapefiles) and use the rasterize function.
+# Make sure to replace 'YOUR_VECTOR_LAYER' and 'YOUR_RASTER_TEMPLATE' with the actual objects or filenames.
+vector_list <- lapply(tif_files, readOGR)
+raster_list <- mapply(rasterize, vector_list, raster_list, SIMPLIFY = FALSE)
+
+# Define the target CRS (use the appropriate EPSG code or proj4string)
+target_crs <- "+init=epsg:4326"  # WGS 84 (latitude/longitude) as an example
+
+# Reproject each raster in the list to the target CRS
+raster_list_reprojected <- lapply(raster_list, function(x) projectRaster(x, crs = target_crs))
+
+# Combine the reprojected rasters into a single raster stack
+raster_stack <- stack(raster_list_reprojected)
+
+# Plot the raster stack using the plot function from the raster package
+plot(raster_stack)
+
+
+```
+
+
 
 
