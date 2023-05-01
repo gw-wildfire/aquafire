@@ -27,7 +27,7 @@ setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
 ## Load ecoregions and counties shapefiles 
 ```{r}
-crs_ca <- st_crs(3309)
+crs_ca <- st_crs(3310)
 
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
@@ -58,10 +58,9 @@ fires_ca <- st_crop(fire_perimeters_all, ca_counties)
 This valueless raster has a resolution of 30 x 30. We'll be using it to rasterize the fire perimeters layer. 
 ```{r}
 ## Set extent
-ca_ext <- terra::ext(ca_counties)
+ca_ext <- extent(ca_counties)
 ## Create valueless raster layer w/ 30 (unit is something) resolution 
-ca_rast <- terra::rast(ca_ext, resolution = 30) %>%
-  raster()
+ca_rast <- raster(ca_ext, resolution = 30)
 crs(ca_rast) <- crs_ca$wkt
 ```
 

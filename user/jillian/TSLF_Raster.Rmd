@@ -27,7 +27,7 @@ setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
 ## Load ecoregions and counties shapefiles 
 ```{r}
-crs_ca <- st_crs(3309)
+crs_ca <- st_crs(3310)
 
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 

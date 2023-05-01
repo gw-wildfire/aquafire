@@ -27,7 +27,7 @@ setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
 ## Load ecoregions and counties shapefiles 
 ```{r}
-crs_ca <- st_crs(3309)
+crs_ca <- st_crs(3310)
 
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
@@ -64,7 +64,7 @@ crs(ca_rast) <- crs_ca$wkt
 
 ```{r}
 # Fasterize to rasterize, extent to match others 
-gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
 
 # Mask to california
 gde_masked <- mask(gde_raster, ca_counties)
