@@ -15,9 +15,60 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
 ```
 
 ```{r}
 # set working directory
 setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+```
+
+## Load ecoregions and counties shapefiles 
+```{r}
+crs_ca <- st_crs(3309)
+
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) # NAD27 / California Albers
+```
+ 
+## Load GDE Data
+```{r}
+# Read in GDE data
+gde_data <- sf::read_sf("data/gde") 
+
+gde_data <- gde_data %>%
+  st_transform(crs_ca) %>%
+  mutate(gde = 1) # creating a column so we can have a raster with GDE = 1, not GDE = 0
+
+# Crop to California
+# gdes_ca <- st_crop(gde_data, ca_counties)
+```
+# Create empty raster layer to use as template
+```{r}
+## Set extent
+ca_ext <- extent(ca_counties)
+## Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30)
+crs(ca_rast) <- crs_ca$wkt
+```
+
+```{r}
+# Fasterize to rasterize, extent to match others 
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = NA)
+
+# Mask to california
+gde_masked <- mask(gde_raster, ca_counties)
+
+# Create raster file 
+writeRaster(gde_masked, "raster_output/gdes_updated430.tif")
 ```

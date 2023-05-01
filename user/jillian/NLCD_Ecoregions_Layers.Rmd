@@ -15,9 +15,71 @@ library(tidyverse)
 library(sf)
 library(here)
 library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(FedData)
+library(terra)
 ```
 
 ```{r}
 # set working directory
 setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 ```
+
+## Load ecoregions and counties shapefiles 
+```{r}
+crs_ca <- st_crs(3309)
+
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) # NAD27 / California Albers
+```
+
+## Create an empty raster to use as a template
+This valueless raster has a resolution of 30 x 30. We'll be using it to rasterize the fire perimeters layer. 
+```{r}
+## Set extent
+ca_ext <- extent(ca_counties)
+## Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rasterra <- raster(ca_ext, resolution = 30) %>%
+  rast()
+crs(ca_rasterra) <- crs_ca$wkt 
+```
+
+### Land use data
+```{r}
+# I'm using the fed data package because NLCD data was in .img format and .... ew 
+library(FedData)
+
+nlcd <- FedData::get_nlcd(template = ca_rasterra, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") %>%
+  rast() %>%
+  terra::project(y = crs_ca$wkt) # takes several minutes to run, but it will! 
+
+
+nlcd_resampled <- terra::resample(nlcd, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+
+nlcd_masked <- mask(nlcd_resampled, ca_counties)
+
+nlcd_rasterlayer <- raster(nlcd_masked)
+
+# plot and view
+plot(nlcd)
+# nlcd_colors() and pal_nlcd() return legend and color palette
+nlcd_colors()
+pal_nlcd()
+
+test <- raster(ca_rasterra)
+```
+
+APRIL 30: END OF THE NIGHT AND THE EXTENTS ARE *ALMOSTTT* THE SAME BUT THEY'RE NOT. BUT THEYRE SO CLOSE. MUST RESOLVE ASAP
+USE COMPARERASTER() TO CHECK HOW ALL RASTER LAYERS LINE UP 
+
+
