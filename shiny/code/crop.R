@@ -1,0 +1,73 @@
+## Load Libraries
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+```
+
+# set working directory
+setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+```
+
+## Load ecoregions and counties shapefiles 
+
+crs_ca <- st_crs(3309)
+
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) # NAD27 / California Albers
+
+
+## Load fire perimeters data and filter, set CRS, crop to California 
+
+fire_perimeters_all <- sf::read_sf(here('data', 
+                                        'California_Fire_Perimeters_all')) %>% 
+  clean_names() %>% 
+  st_transform(crs_ca) %>% # NAD27 / California Albers
+  mutate(val = 1) %>% # Create a column containing a value: this means each fire has a value of 1
+  filter(year >= 1950) # Filter for only fires after 1950: this is when the dataset becomes reliable. 
+
+# Crop to California
+fires_ca <- st_crop(fire_perimeters_all, ca_counties) %>%
+  mutate(year = as.numeric(year))
+
+
+## Create an empty raster to use as a template
+This valueless raster has a resolution of 30 x 30. 
+
+## Set extent
+ca_ext <- extent(fires_ca)
+## Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30)
+crs(ca_rast) <- crs_ca$wkt
+
+# Use fasterize::fasterize() to create a raster layer where each cell is equal to the maximum year value for that cell. 
+most_recent_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "year", fun = "max", background = NA)
+
+# Subtract the raster layer containing the most recent fire from 2022- this will give the number of years since the most recent fire in each cell. 
+tslf_raster <- 2022 - most_recent_raster
+
+# Mask to California's boundary
+tslf_raster_masked <- mask(tslf_raster, ca_counties)
+
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)
+
+central <- eco_regions[4,]
+
+crop <- crop(tslf_raster_masked, central)
+plot(crop)

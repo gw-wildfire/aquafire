@@ -172,3 +172,21 @@ plot(raster_stack)
 
 
 
+
+
+
+
+# ECOREGIONS
+```{r}
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)
+
+central <- eco_regions[4,]
+
+crop <- crop(tslf_raster_masked, central)
+plot(crop)
+```
+
