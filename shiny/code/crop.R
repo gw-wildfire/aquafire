@@ -61,13 +61,30 @@ tslf_raster <- 2022 - most_recent_raster
 # Mask to California's boundary
 tslf_raster_masked <- mask(tslf_raster, ca_counties)
 
-# Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
-  janitor::clean_names() %>% 
-  st_transform(crs_ca) %>% 
-  rename(region = us_l3name)
+coast_range <- eco_regions[1,]
+central_basin <- eco_regions[2,]
+mojave_basin <- eco_regions[3,]
+cascades <- eco_regions[4,]
+sierra_nevada <- eco_regions[5,]
+central_foothills_coastal_mountains <- eco_regions[6,]
+central_valley <- eco_regions[7,]
+klamath_mountains <- eco_regions[8,]
+southern_mountains <- eco_regions[9,]
+northern_basin <- eco_regions[10,]
+sonoran_basin <- eco_regions[11,]
+socal_norbaja_coast <- eco_regions[12,]
+eastern_cascades_slopes_foothills <- eco_regions[13,]
 
-central <- eco_regions[4,]
-
-crop <- crop(tslf_raster_masked, central)
-plot(crop)
+coast_range_crop <- crop(tslf_raster_masked, central)
+central_basin_crop <- crop(tslf_raster_masked, central)
+mojave_basin_crop <- crop(tslf_raster_masked, central)
+cascades_crop <- crop(tslf_raster_masked, central)
+sierra_nevada_crop <- crop(tslf_raster_masked, central)
+central_foothills_coastal_mountains_crop <- crop(tslf_raster_masked, central)
+central_valley_crop <- crop(tslf_raster_masked, central)
+klamath_mountains_crop <- crop(tslf_raster_masked, central)
+southern_mountains_crop <- crop(tslf_raster_masked, central)
+northern_basin_crop <- crop(tslf_raster_masked, central)
+sonoran_basin_crop <- crop(tslf_raster_masked, central)
+socal_norbaja_coast_crop <- crop(tslf_raster_masked, central)
+eastern_cascades_slopes_foothills_crop <- crop(tslf_raster_masked, central)
