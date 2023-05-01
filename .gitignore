@@ -45,3 +45,5 @@ vignettes/*.pdf
 *shiny/www
 
 *raster_output
+
+*.RData
