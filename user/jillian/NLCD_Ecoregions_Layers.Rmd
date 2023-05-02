@@ -29,7 +29,7 @@ setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
 ## Load ecoregions and counties shapefiles 
 ```{r}
-crs_ca <- st_crs(3309)
+crs_ca <- st_crs(3310)
 
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
@@ -50,7 +50,7 @@ This valueless raster has a resolution of 30 x 30. We'll be using it to rasteriz
 ca_ext <- extent(ca_counties)
 ## Create valueless raster layer w/ 30 (unit is something) resolution 
 ca_rasterra <- raster(ca_ext, resolution = 30) %>%
-  rast()
+  terra::rast()
 crs(ca_rasterra) <- crs_ca$wkt 
 ```
 
@@ -70,13 +70,11 @@ nlcd_masked <- mask(nlcd_resampled, ca_counties)
 
 nlcd_rasterlayer <- raster(nlcd_masked)
 
-# plot and view
-plot(nlcd)
-# nlcd_colors() and pal_nlcd() return legend and color palette
-nlcd_colors()
-pal_nlcd()
-
-test <- raster(ca_rasterra)
+# # plot and view
+# plot(nlcd)
+# # nlcd_colors() and pal_nlcd() return legend and color palette
+# nlcd_colors()
+# pal_nlcd()
 ```
 
 APRIL 30: END OF THE NIGHT AND THE EXTENTS ARE *ALMOSTTT* THE SAME BUT THEY'RE NOT. BUT THEYRE SO CLOSE. MUST RESOLVE ASAP
