@@ -7,7 +7,7 @@ sidebarPanel(width = 3,
              # GDEs, Wildfire Hazard
              "For California spatial analysis inputs"
              
-),
+)# ,
 #                                  ), # End sidebarLayout ----
 
 # ABOVE AFTER LEAFLET MAP

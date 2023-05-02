@@ -1,3 +1,5 @@
+
+start <- Sys.time()
 ## Load Libraries
 library(tidyverse)
 library(sf)
@@ -10,9 +12,12 @@ library(fasterize)
 # set working directory
 #setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
 
-## Load ecoregions and counties shapefiles 
+## Load ecoregions and counties and gde shapefiles 
 
 crs_ca <- st_crs(3309)
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca)
 
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
@@ -24,6 +29,10 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
 ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
   janitor::clean_names() %>% 
   st_transform(crs_ca) # NAD27 / California Albers
+
+# Load gde .tif file
+gde <- raster("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
+crs(gde) <- "EPSG:3310"
 
 
 ## Load fire perimeters data and filter, set CRS, crop to California 
@@ -41,7 +50,8 @@ fires_ca <- st_crop(fire_perimeters_all, ca_counties) %>%
 
 
 ## Create an empty raster to use as a template
-This valueless raster has a resolution of 30 x 30. 
+# This valueless raster has a resolution of 30 x 30. 
+
 
 ## Set extent
 ca_ext <- extent(fires_ca)
@@ -57,6 +67,8 @@ tslf_raster <- 2022 - most_recent_raster
 
 # Mask to California's boundary
 tslf_raster_masked <- mask(tslf_raster, ca_counties)
+
+
 
 coast_range <- eco_regions[1,]
 central_basin <- eco_regions[2,]
@@ -85,3 +97,23 @@ northern_basin_crop <- crop(tslf_raster_masked, northern_basin)
 sonoran_basin_crop <- crop(tslf_raster_masked, sonoran_basin)
 socal_norbaja_coast_crop <- crop(tslf_raster_masked, socal_norbaja_coast)
 eastern_cascades_slopes_foothills_crop <- crop(tslf_raster_masked, eastern_cascades_slopes_foothills)
+
+end <- Sys.time()
+print(end - start)
+beepr::beep()
+
+# crop gdes by county
+gde_crop <- crop(gde, socal_norbaja_coast)
+# crop tslf within that county by gde layer
+gde_tslf_crop <- crop(socal_norbaja_coast_crop, gde_crop)
+# cropping tslf with gde raster
+
+leaflet() %>% addTiles() %>% addRasterImage(gde_tslf_crop)
+plot(gde_crop)
+plot(gde_tslf_crop)
+class(socal_norbaja_coast)
+
+
+
+
+
