@@ -113,19 +113,28 @@ gde_crop <- crop(gde, socal_norbaja_coast)
 # crop tslf within that county by gde layer - get fire perimeters and tslf within all gdes
 gde_tslf_crop <- crop(socal_norbaja_coast_crop, gde_crop)
 # using mask
-crs(socal_norbaja_coast_crop) <- "EPSG:3010"
-crs(gde_crop) <- "EPSG:3010"
+crs(socal_norbaja_coast_crop) <- "EPSG:3310"
+crs(gde_crop) <- "EPSG:3310"
 tslf_masked <- mask(x = socal_norbaja_coast_crop, mask = gde_crop)
 
 # crop tslf outside of the gde layer to get fire perimeters and tslf outside of gde boundaries
 
 # intersect
 
-extent(gde_crop)
-extent(socal_norbaja_coast_crop)
+crs(tslf_masked)
+# Crop the time since last burn layer to the extent of the groundwater-dependent ecosystem layer
 
-crs(tslf_masked) <- "EPSG:3010"
 
+
+tm_shape(gde_crop) +
+  tm_raster()
+
+tm_shape(tslf_masked) +
+  tm_raster()
+
+
+crs(tslf_masked) <- "EPSG:3310"
+crs(tslf_masked)
 plot(tslf_masked)
 start <- Sys.time()
 leaflet() %>% addTiles() %>% addRasterImage(tslf_masked)
