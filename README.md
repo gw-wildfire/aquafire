@@ -36,25 +36,26 @@ the data: No external funding was needed for data collection for this project
 
 2\. Links to publications that cite or use the data:
 
-Wildfire Perimeters: https://gis.data.cnra.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all-1/explore?location=38.742598%2C-120.133468%2C6.82
-Groundwater Dependent Ecosystems (GDEs): https://gde.codefornature.org/#/data
-California' Ecoregions: https://www.epa.gov/eco-research/ecoregion-download-files-state-region-9
+California Fire Perimeters (all): https://gis.data.cnra.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all-1/explore?location=38.742598%2C-120.133468%2C6.82 \
+GDE Pulse (TNC): https://gde.codefornature.org/#/data \
+California' Ecoregions: https://www.epa.gov/eco-research/ecoregion-download-files-state-region-9 
 
-6\. Recommended citation for the project: Allison, J. Brown, M. Dextre, A. Easterday, K. Moritz, M. Sedgwick, W. (2023) Assessing Fire in Groundwater-Dependent Ecosystems. 
+6\. Recommended citation for the project:\
+Allison, J. Brown, M. Dextre, A. Easterday, K. Moritz, M. Sedgwick, W. (2023) Assessing Fire in Groundwater-Dependent Ecosystems. https://github.com/gw-wildfire/aquafire.
 
 **DATA & FILE OVERVIEW**
 
-1\. File List: \<list all files (or folders, as appropriate for dataset
-organization) contained in the dataset, with a brief description of their content\>
+1\. File List:
 
-2\. Relationship between files, if important:
+California Wildfire Perimeters (All): Data obtained through CAL FIRE Wildfire Perimeters and Prescribed Burns. The service includes layers that are data subsets symbolized by size and year of wildfire area, burn date, and size.
 
-3\. Additional related data collected that was not included in the
-current data package:
+Groundwater Dependent Ecosystems (GDEs): Data obtained through The Nature Conservancy's (TNC) GDE Pulse dashboard. Represents areas in California deemed most likely to be GDEs according to criteria described in Klausmeyer et al., 2018.
 
-4\. Are there multiple versions of the dataset? \<A. If yes, name
-of file(s) that was updated: i. Why was the file updated? ii. When was
-the file updated?\>
+California Ecoregions: Data obtained through the Environmental Protection Agency (EPA). Dataset includes name, area, longitude, and latitude of California's 13 ecoregions.
+
+California Counties: Data obtained through California's Open Data portal. Dataset containes California country information such as name, longitute, latitude, and shape (area).
+
+2\. There are two versions of the California Ecoregion available. For this project, we used version 3 (v.III) of California's ecoregion dataset which cointains 13 ecoregions within California. All other datasets only contain one version. 
 
 **METHODOLOGICAL INFORMATION**
 
