@@ -2,41 +2,45 @@ This README.txt file was generated on 2023-05-03 by AQUAFIRE
 
 **GENERAL INFORMATION**
 
-1\. Title of the Project: 
+1\. Project Title: Assessing Fire in Groundwater-Dependent Ecosystems
 
-2\. Author Information 
+2\. Author Information:
 
-A. Principal Investigator Contact Information
-Name: Institution: Address: Email:
+Jillian Allison (jilliannallison@bren.ucsb.edu)\
+Meagan Brown (meagan_brown@bren.ucsb.edu)\
+Andre Dextre (adextre@ucsb.edu)\
+Wade Sedgwick (wsedgwick@ucsb.edu)
 
-B. Associate or Co-investigator Contact Information Name: Institution:
-Address: Email:
+B\. Client Information:
 
-C. Alternate Contact Information Name: Institution: Address: Email:
+Name: Kelly Easterday\
+Institution: The Nature Conservancy (TNC)\
+Email: kelly.easterday@tnc.org
 
-3\. Date of data collection or obtaining (single date, range, approximate date)
-\<suggested format YYYY-MM-DD. If multiple data files, list it accordingly\>:
+C. Faculty Advisor:
 
-4\. Geographic location of data collection: \<latitude, longitude, or
-city/region, State, Country, as appropriate. Again, if multiple data sources, specify accordingly\>:
+Name: Max Moritz\
+Institution: UC Santa Barbara, Bren School of Environmental Science & Management\
+Email: mmoritz@bren.ucsb.edu
+
+3\. Date of data collection: The data used for this project and analysis was collected approximately between 2023-01-15-2023-03-15 
+
+4\. Geographic location of data collection: Data for this project was collected for the State of California
 
 5\. Information about funding sources that supported the collection of
-the data:
+the data: No external funding was needed for data collection for this project
 
 **SHARING/ACCESS INFORMATION**
 
-1\. Licenses/restrictions placed on the data: 
+1\. Licenses/restrictions placed on the data:  There are no restrictions or licenses required to access the data used for this project.
 
 2\. Links to publications that cite or use the data:
 
-3\. Links to other publicly accessible locations of the data:
+Wildfire Perimeters: https://gis.data.cnra.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all-1/explore?location=38.742598%2C-120.133468%2C6.82
+Groundwater Dependent Ecosystems (GDEs): https://gde.codefornature.org/#/data
+California' Ecoregions: https://www.epa.gov/eco-research/ecoregion-download-files-state-region-9
 
-4\. Links/relationships to ancillary data sets: \<any supplementary data sources that support analysis or classification of the datasets, eg., plant taxonomy table.)\>
-
-5\. Was data derived from another source? If yes, list
-source(s): \<list citations to original sources\> 
-
-6\. Recommended citation for the project:
+6\. Recommended citation for the project: Allison, J. Brown, M. Dextre, A. Easterday, K. Moritz, M. Sedgwick, W. (2023) Assessing Fire in Groundwater-Dependent Ecosystems. 
 
 **DATA & FILE OVERVIEW**
 
