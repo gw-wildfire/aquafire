@@ -1,0 +1,124 @@
+---
+title: "percent_burned"
+author: "Meagan Brown"
+date: "2023-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+# load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+library(tictoc)
+library(tmap)
+```
+
+```{r}
+cascades <- cascades %>% 
+  st_transform("EPSG: 3310") 
+
+fire_perimeters_all <- sf::read_sf(here('data', 'California_Fire_Perimeters_all')) %>% 
+  clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  filter(year > 1950)
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here('data', 'CA_Counties')) %>% 
+  clean_names() %>% 
+  st_transform("EPSG: 3310")
+
+sb_county <- ca_counties %>% 
+  filter(name == "Santa Barbara")
+
+polygon1 <- gde_polygon[sb_county,]
+polygon2 <- fire_perimeters_all[sb_county,]
+
+
+
+library(sf)
+library(lwgeom)
+library(dplyr)
+
+# Replace this with your actual polygons data frame
+# polygons_df <- ...
+
+# Correct invalid geometries
+polygon2 <- polygon2 %>%
+  mutate(geometry = st_make_valid(geometry))
+
+# Dissolve overlapping polygons based on the 'group' attribute
+fire_perimeters_dissolved <- polygon2 %>%
+  group_by(objectid) %>%
+  summarize(geometry = st_combine(geometry)) %>% 
+  st_cast("POLYGON") %>%
+  ungroup() %>%
+
+  # union polygons
+  st_union()
+
+plot(fire_perimeters_dissolved)
+```
+
+
+```{r}
+# Compute the intersection of the two polygons
+intersection <- st_intersection(polygon1, fire_perimeters_dissolved)
+
+# Calculate the areas of the intersection and the original polygon
+intersection_area <- st_area(intersection)
+polygon1_area <- st_area(polygon1)
+
+# Calculate the percentage of area overlap
+overlap_percentage <- (intersection_area / polygon1_area) * 100
+
+# Print the result
+print(overlap_percentage)
+```
+
+
+
+
+
+
+
+
+```{r}
+# read in groundwater dependent ecosystem shapefile + clean names
+gde_polygon <- read_sf(here('data', 'gde', 'gde.shp')) %>% 
+  clean_names() %>% 
+  st_transform("EPSG: 3310") 
+  
+```
+
+```{r}
+plot(cascades_crop)
+
+# Define the target CRS as an EPSG code
+target_crs <- "EPSG:3310"
+
+# Transform the raster CRS to the target CRS
+output_raster <- projectRaster(cascades_crop, crs = target_crs)
+
+# Check the CRS of the output raster
+crs(output_raster)
+```
+
+```{r}
+# Crop the raster to the polygon
+cropped_raster <- mask(cascades_crop, gde_polygon)
+
+# Plot the cropped raster
+plot(cropped_raster, main = "Cropped Raster")
+```
+
