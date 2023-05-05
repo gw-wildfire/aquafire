@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
 ## Load Libraries
@@ -113,6 +113,61 @@ library(raster)
 library(terra)
 ```
 
+```{r}
+# Load the necessary library
+library(terra)
+
+# Read the raster files
+burn_2020 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2020.tif"))
+burn_2021 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2021.tif"))
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+# Project both rasters to the target CRS
+burn_2020_new_crs <- project(burn_2020, target_crs)
+burn_2021_new_crs <- project(burn_2021, target_crs)
+
+# Plot the rasters on top of each other
+plot(burn_2020_new_crs)
+
+```
+
+# 2020
+```{r}
+# burn severity 2020 ----
+burn_2020 <- rast(here("data", 
+                          "MTBS_BSmosaics", 
+                          "mtbs_CA_2020.tif"))
+
+target_crs <- "EPSG:3310" # Replace this with the desired CRS
+
+# Project the raster to the new CRS
+burn_2020_new_crs <- project(burn_2020, target_crs)
+
+# Check the new CRS
+crs(burn_2020_new_crs)
+
+# burn severity 2021 ----
+burn_2021 <- rast(here("data", 
+                          "MTBS_BSmosaics", 
+                          "mtbs_CA_2021.tif")) 
+
+# Resample burn_2021 to match the resolution of burn_2020
+burn_2021_resampled <- resample(burn_2021, burn_2020, method = "near")
+
+# Merge the rasters
+merged_raster <- merge(burn_2020, 
+                   burn_2021_resampled)
+
+stack_raster <- c(burn_2020,
+                  burn_2021_resampled)
+
+plot(merged_raster)
+plot(stack_raster)
+```
+
+
 # METHOD 1
 
 ```{r}
@@ -124,6 +179,8 @@ setwd("~/meds/capstone/aquafire/data/MTBS_BSmosaics")
 
 # Get a list of .tif files in the directory
 tif_files <- list.files(pattern = "\\.tif$")
+
+raster(tif_files)
 
 # Use a loop to read the .tif files into a list of Raster* objects
 raster_list <- list()
@@ -167,81 +224,5 @@ raster_stack <- stack(raster_list_reprojected)
 plot(raster_stack)
 
 
-```
-
-
-
-
-
-
-
-
-# ECOREGIONS
-```{r}
-# Load in ecoregions shapefile
-eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
-  janitor::clean_names() %>% 
-  st_transform(crs_ca) %>% 
-  rename(region = us_l3name)
-
-central <- eco_regions[4,]
-
-crop <- crop(tslf_raster_masked, central)
-plot(crop)
-```
-
-# LOOP
-```{r}
-coast_range <- eco_regions[1,]
-central_basin <- eco_regions[2,]
-mojave_basin <- eco_regions[3,]
-cascades <- eco_regions[4,]
-sierra_nevada <- eco_regions[5,]
-central_foothills_coastal_mountains <- eco_regions[6,]
-central_valley <- eco_regions[7,]
-klamath_mountains <- eco_regions[8,]
-southern_mountains <- eco_regions[9,]
-northern_basin <- eco_regions[10,]
-sonoran_basin <- eco_regions[11,]
-socal_norbaja_coast <- eco_regions[12,]
-eastern_cascades_slopes_foothills <- eco_regions[13,]
-
-coast_range_crop <- crop(tslf_raster_masked, central)
-central_basin_crop <- crop(tslf_raster_masked, central)
-mojave_basin_crop <- crop(tslf_raster_masked, central)
-cascades_crop <- crop(tslf_raster_masked, central)
-sierra_nevada_crop <- crop(tslf_raster_masked, central)
-central_foothills_coastal_mountains_crop <- crop(tslf_raster_masked, central)
-central_valley_crop <- crop(tslf_raster_masked, central)
-klamath_mountains_crop <- crop(tslf_raster_masked, central)
-southern_mountains_crop <- crop(tslf_raster_masked, central)
-northern_basin_crop <- crop(tslf_raster_masked, central)
-sonoran_basin_crop <- crop(tslf_raster_masked, central)
-socal_norbaja_coast_crop <- crop(tslf_raster_masked, central)
-eastern_cascades_slopes_foothills_crop <- crop(tslf_raster_masked, central)
-
-```
-
-```{r}
-# Define a function to crop the raster for a given ecoregion
-crop_ecoregion <- function(raster, ecoregion) {
-  cropped_raster <- crop(raster, ecoregion)
-  return(cropped_raster)
-}
-
-# Create a list to store cropped raster objects
-cropped_rasters <- list()
-
-# Loop through the ecoregions
-for (i in 1:nrow(eco_regions)) {
-  # Extract the current ecoregion
-  current_ecoregion <- eco_regions[i,]
-  
-  # Crop the raster to the current ecoregion using the function
-  cropped_raster <- crop_ecoregion(tslf_raster_masked, current_ecoregion)
-  
-  # Store the cropped raster in the list
-  cropped_rasters[[i]] <- cropped_raster
-}
 ```
 

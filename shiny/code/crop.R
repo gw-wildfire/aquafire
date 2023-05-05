@@ -32,6 +32,8 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 
 # Load gde .tif file
 gde <- raster("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
+gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
+
 crs(gde) <- "EPSG:3310"
 
 
@@ -102,17 +104,49 @@ end <- Sys.time()
 print(end - start)
 beepr::beep()
 
+plot(gde_crop)
+
+
+
 # crop gdes by county
 gde_crop <- crop(gde, socal_norbaja_coast)
-# crop tslf within that county by gde layer
+# crop tslf within that county by gde layer - get fire perimeters and tslf within all gdes
 gde_tslf_crop <- crop(socal_norbaja_coast_crop, gde_crop)
-# cropping tslf with gde raster
+# using mask
+crs(socal_norbaja_coast_crop) <- "EPSG:3310"
+crs(gde_crop) <- "EPSG:3310"
+tslf_masked <- mask(x = socal_norbaja_coast_crop, mask = gde_crop)
 
-leaflet() %>% addTiles() %>% addRasterImage(gde_tslf_crop)
+# crop tslf outside of the gde layer to get fire perimeters and tslf outside of gde boundaries
+
+# intersect
+
+crs(tslf_masked)
+# Crop the time since last burn layer to the extent of the groundwater-dependent ecosystem layer
+
+
+
+tm_shape(gde_crop) +
+  tm_raster()
+
+tm_shape(tslf_masked) +
+  tm_raster()
+
+
+crs(tslf_masked) <- "EPSG:3310"
+crs(tslf_masked)
+plot(tslf_masked)
+start <- Sys.time()
+leaflet() %>% addTiles() %>% addRasterImage(tslf_masked)
+end <- Sys.time()
+print(end - start)
+
 plot(gde_crop)
 plot(gde_tslf_crop)
 class(socal_norbaja_coast)
 
+tm_shape(tslf_masked) +
+  tm_raster()
 
 
 

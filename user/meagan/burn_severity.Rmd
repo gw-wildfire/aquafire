@@ -1,0 +1,93 @@
+---
+title: "Burn Severity"
+author: "Meagan Brown"
+date: "2023-05-03"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{r}
+# load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+library(tictoc)
+library(tmap)
+```
+
+
+```{r}
+# set working directory
+setwd(here('~', 'meds', 'capstone', 'aquafire'))
+```
+
+# Burn Severity 2021
+```{r}
+# Read the raster files
+burn_2021 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2021.tif"))
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+tic()
+# Project both rasters to the target CRS
+burn_2020_new_crs <- project(burn_2021, target_crs)
+toc()
+
+# Plot 2021 raster
+plot(burn_2021_new_crs, main = "Burn Severity 2021")
+```
+
+# Burn Severity 2020
+```{r}
+# Read the raster files
+burn_2020 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2020.tif"))
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+tic()
+# Project both rasters to the target CRS
+burn_2020_new_crs <- project(burn_2020, target_crs)
+toc()
+
+# Plot 2020 raster
+plot(burn_2020_new_crs, main = "Burn Severity 2020")
+```
+
+# Burn Severity 2019
+```{r}
+# Read the raster files
+burn_2020 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2019.tif"))
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+tic()
+# Project both rasters to the target CRS
+burn_2020_new_crs <- project(burn_2019, target_crs)
+toc()
+
+# Plot 2019 raster
+plot(burn_2020_new_crs, main = "Burn Severity 2019")
+```
+
+```{r}
+# Read in California boundary
+cali <- read_sf(here('data', 'ca-state-boundary')) %>% # read in California polygon
+  clean_names()  %>% 
+  st_transform("EPSG: 3310") # NAD28 / California Albers
+```
+
+
+
+
