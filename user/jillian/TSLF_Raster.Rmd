@@ -82,4 +82,3 @@ tslf_raster_masked <- mask(tslf_raster, ca_counties)
 ```
 
 
-

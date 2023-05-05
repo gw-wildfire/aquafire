@@ -1,5 +1,5 @@
 ---
-title: "NLCD & Ecoregions, Cropping Raster Layers"
+title: "Fire Threat Raster Layer"
 author: "Jillian Allison"
 date: "`r Sys.Date()`"
 output: html_document
@@ -18,7 +18,6 @@ library(janitor)
 library(raster)
 library(rgdal)
 library(fasterize)
-library(FedData)
 library(terra)
 ```
 
@@ -54,44 +53,17 @@ ca_rasterra <- raster(ca_ext, resolution = 30) %>%
 crs(ca_rasterra) <- crs_ca$wkt 
 ```
 
-### Land use data
+## Load in Fire Threat Raster
 ```{r}
-# I'm using the fed data package because NLCD data was in .img format and .... ew 
-library(FedData)
-
-nlcd <- FedData::get_nlcd(template = ca_rasterra, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") %>%
+fire_threat <- raster(here::here("data", "fire_threat.tif")) %>%
   rast() %>%
-  terra::project(y = crs_ca$wkt) # takes several minutes to run, but it will! 
+  terra::project(y = crs_ca$wkt)
+  
 
+fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra) # uses nearest neighbors approach for for categorical values 
 
-nlcd_resampled <- terra::resample(nlcd, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+fire_threat_masked <- mask(fire_threat_resampled, ca_counties)
 
-nlcd_masked <- mask(nlcd_resampled, ca_counties)
-
-nlcd_rasterlayer <- raster(nlcd_masked)
-
-# # plot and view
-# plot(nlcd)
-# # nlcd_colors() and pal_nlcd() return legend and color palette
-# nlcd_colors()
-# pal_nlcd()
-
-library(tmap)
-color_palette <- pal_nlcd()
-
-tm_raster <- tm_raster(nlcd_rasterlayer, palette = color_palette)
-# Add a legend to the plot
-
-tm_raster_legend <- tm_legend(show = TRUE, legend.format = list(
-  text.separator = " - ",
-  text.align = c("left", "left"),
-  text.valign = c("bottom", "bottom"),
-  text.size = 1.2,
-  text.fontface = "plain",
-  text.color = "black",
-  title = "Legend Title"
-))
-
+fire_threat_rasterlayer <- raster(fire_threat_masked)
 ```
-
 

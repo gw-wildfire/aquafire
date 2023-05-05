@@ -18,6 +18,7 @@ library(janitor)
 library(raster)
 library(rgdal)
 library(fasterize)
+library(exactextractr)
 ```
 
 ```{r}
@@ -69,9 +70,11 @@ crs(ca_rast) <- crs_ca$wkt
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 # Mask to California's boundary
 fire_count_raster_masked <- mask(fire_count_raster, ca_counties) 
-crs(fire_count_raster_masked) <- crs_ca$wkt
+#crs(fire_count_raster_masked) <- crs_ca$wkt
 
 # Write raster file
 #writeRaster(fire_count_raster_masked, "raster_output/firecount_updated430.tif", overwrite = TRUE)
 ```
+
+
 

@@ -46,12 +46,11 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 # Read in GDE data
 gde_data <- sf::read_sf(here::here("data", "gde") )
 
-gde_data <- gde_data %>%
+gde_polygons <- gde_data %>%
   st_transform(crs_ca) %>%
-  mutate(gde = 1) # creating a column so we can have a raster with GDE = 1, not GDE = 0
-
-# Crop to California
-# gdes_ca <- st_crop(gde_data, ca_counties)
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # may also want to remove semipermanently flooded or all lacustrine
+  mutate(area = st_area(geometry)) %>%
+  mutate(gde = 1)# creating a column so we can have a raster with GDE = 1, not GDE = 0
 ```
 # Create empty raster layer to use as template
 ```{r}
@@ -64,7 +63,7 @@ crs(ca_rast) <- crs_ca$wkt
 
 ```{r}
 # Fasterize to rasterize, extent to match others 
-gde_raster <- fasterize::fasterize(st_collection_extract(gde_data, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
 
 # Mask to california
 gde_masked <- mask(gde_raster, ca_counties)
@@ -72,3 +71,24 @@ gde_masked <- mask(gde_raster, ca_counties)
 # Create raster file 
 #writeRaster(gde_masked, here::here("raster_output", "gdes_updated430.tif"))
 ```
+
+## Add fire count and TSLF data to GDE polygon data for shiny app
+Must run Fire_Count_Raster.rmd and TSLF_Raster.rmd first before running this code: 
+```{r}
+# Find the maximum number of times that a GDE polygon has burned since 1950 using the fire count raster layer. Find maximum number of times a cell has burned in that GDE
+gde_fire_count <- exactextractr::exact_extract(fire_count_raster_masked, gde_polygons, fun = "max")
+
+# Create a polygon layer with both fire count and TSLF data stored for each GDE. Find the minimum TSLF in that GDE. 
+gde_tslf <- exactextractr::exact_extract(tslf_raster_masked, gde_polygons, fun = "min")
+```
+
+```{r}
+gde_fc_tslf <- gde_polygons %>%
+  mutate(max_fire_count = gde_fire_count, 
+         min_tslf = gde_tslf)
+```
+
+```{r}
+sf::st_write(gde_fc_tslf, "raster_output/gde_firecount_tslf.shp", delete_layers = c("area", "gde"), append = FALSE)
+```
+
