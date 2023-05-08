@@ -34,7 +34,11 @@ crs_ca <- st_crs(3310)
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform(crs_ca) %>% 
-  rename(region = us_l3name)
+  rename(region = us_l3name)  %>%
+  mutate(code = as.numeric(us_l3code)) 
+
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
 
 # Read in CA county boundaries
 ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
@@ -70,11 +74,112 @@ crs(ca_rast) <- crs_ca$wkt
 fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
 # Mask to California's boundary
 fire_count_raster_masked <- mask(fire_count_raster, ca_counties) 
-#crs(fire_count_raster_masked) <- crs_ca$wkt
+crs(fire_count_raster_masked) <- crs_ca$wkt
 
 # Write raster file
 #writeRaster(fire_count_raster_masked, "raster_output/firecount_updated430.tif", overwrite = TRUE)
 ```
 
+```{r}
+# Making a dataframe containing GDEs, which ecoregion they're in, and what the max fire count was in that GDE. Not quite what I was trying to make though... just had to see it to realize that. 
+## I don't think this is really necessary, but I just wanna keep the code just in case. 
+sb_county <- ca_counties %>% 
+  filter(name == "Santa Barbara")
 
+gde_polygons_val <- st_make_valid(gde_polygons)
+
+sb_gdes <- st_intersection(gde_polygons_val, sb_county)
+
+sb_ecoregions <- st_intersection(eco_regions, sb_county)
+
+sb_gdes_eco <- st_join(sb_gdes, sb_ecoregions) %>%
+  subset(select = c(1:12, 31, 32, 42))
+
+sb_fire_count_extract <- exactextractr::exact_extract(sb_fire_count, sb_gdes_eco, fun = "max")
+
+sb_gde_eco_fc <- sb_gdes_eco %>%
+  mutate(fire_count = sb_fire_count_extract)
+```
+
+
+```{r}
+# The other one was weird, I'm gonna try with a new sb county shapefile 
+sb_county <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
+  janitor::clean_names() %>% 
+  filter(objectid == 42) %>%
+  st_transform(crs_ca) 
+
+# Crop existing rasters to SB County Boundary
+sb_fire_count <- crop(fire_count_raster_masked, sb_county)
+sb_gde_raster <- crop(gde_masked, sb_county)
+sb_eco_regions <- crop(eco_region_raster, sb_county) # ecoregion raster is in NLCD_Ecoregions_Layers.Rmd file 
+
+# Make data frame containing how many times each cell has burned and a data frame that says if a cell is a GDE (1) or not (0) --- this does not contain info on ecoregion. BASIC REGRESSION INCOMING! 
+sb_fire_count_df <- as.data.frame(sb_fire_count)
+
+sb_gde_df <- as.data.frame(sb_gde_raster) 
+
+sb_eco_regions_df <- as.data.frame(sb_eco_regions)
+
+# Create index column in each DF for merging
+cell_number <- 1:nrow(sb_fire_count_df)
+
+sb_fire_count_df <- sb_fire_count_df %>%
+  mutate(cell = cell_number)
+
+sb_gde_df <- sb_gde_df %>%
+  mutate(cell = cell_number,
+         layer = as.factor(layer))
+
+sb_eco_regions_df <- sb_eco_regions_df %>%
+  mutate(cell = cell_number)
+
+# Merge
+sb_gde_fc_df <- merge(sb_fire_count_df, sb_gde_df, by = "cell") %>% 
+  rename(fire_count = layer.x,
+         gde = layer.y)
+
+sb_gde_fc_er_df <- merge(sb_gde_fc_df, sb_eco_regions_df, by = "cell") %>%
+  mutate(us_l3code = as.factor(layer)) %>%
+  subset(select = -c(layer))%>%
+  left_join(., eco_regions_names, by = "us_l3code")
+
+# Group by ecoregion 
+
+# Central CA Foothills and Coastal Mountains
+gde_fc_6 <- sb_gde_fc_er_df %>%
+  filter(us_l3code == 6)
+
+# Central CA Valley
+gde_fc_7 <- sb_gde_fc_er_df %>%
+  filter(us_l3code == 7)
+
+# Southern CA Mountains
+gde_fc_8 <- sb_gde_fc_er_df %>%
+  filter(us_l3code == 8)
+
+# Southern CA / Northern Baja Coast
+gde_fc_85 <- sb_gde_fc_er_df %>%
+  filter(us_l3code == 85)
+
+
+# Regress
+summary(lm(fire_count ~ gde, data = sb_gde_fc_er_df))
+
+## Central CA Foothills and Coastal Mountains
+summary(lm(fire_count ~ gde, data = gde_fc_6)) 
+
+## Central CA Valley 
+## THERE WERE 0 FIRES HERE SO REMEMBER TO REMOVE AREAS THAT DON'T BURN! 
+summary(lm(fire_count ~ gde, data = gde_fc_7)) 
+
+## Southern CA Mountains
+summary(lm(fire_count ~ gde, data = gde_fc_8)) 
+
+## Southern CA / Northern Baja Coast
+summary(lm(fire_count ~ gde, data = gde_fc_85))
+
+
+
+```
 

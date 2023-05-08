@@ -35,7 +35,9 @@ crs_ca <- st_crs(3310)
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform(crs_ca) %>% 
-  rename(region = us_l3name)
+  rename(region = us_l3name) %>% 
+  mutate(us_l3code = as.numeric(us_l3code))
+  
 
 # Read in CA county boundaries
 ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
@@ -53,6 +55,12 @@ ca_rasterra <- raster(ca_ext, resolution = 30) %>%
   terra::rast()
 crs(ca_rasterra) <- crs_ca$wkt 
 ```
+### Ecoregions 
+```{r}
+# Fasterize to rasterize, extent to match others 
+eco_region_raster <- fasterize(eco_regions, ca_rast, field = "us_l3code")
+```
+
 
 ### Land use data
 ```{r}
