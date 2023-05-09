@@ -1,5 +1,17 @@
 ui <- fluidPage(
   
+  theme = bs_theme(bootswatch = "sandstone",
+                   bg = "#F7EDE2", # light blue
+                   fg = "#0076a0", # MCR dark blue from bottom of page
+                   primary = "#a9a9a9", # MCR dark blue font
+                   secondary = "#0f4d76", # blue controls the clear buttons
+                   success = "#397B1E", # light green
+                   info = "#EEA419", # light blue from bar
+                   warning = "#C3512C",# yellow
+                   danger = "#FACE00", # orange red
+                   base_font = font_google("Open Sans"), 
+                   heading_font = font_google("Source Sans Pro")),
+  
   titlePanel(""),
   fluidPage(
     fluidRow(column(6,
@@ -21,14 +33,35 @@ ui <- fluidPage(
                         h1("Background"),
                         
                         fluidRow(
-                          column(12, p("Although there has been extensive research on both groundwater dependent ecosystems and wildfire hazard, little research has been done to understand and quantify the relationship between the two."),
+                          column(12, p("Eight of the largest 10 wildfires in California have occured in the past five years. And although there has been extensive research on wildfire hazard, little research has been done to understand and quantify the relationship between the two. (Groundwater-Dependent Ecosystems are ecosystems that are dependent on groundwater year-round.) As climate change gets worse, it is imperitive to understand all factors contributing to worsening wildfires."),
                           )
                         ), # End Background
                         
                         h1("Significance"),
                         
                         fluidRow(
-                          column(12, p("This App was designed to display statistical and spatial relationships between Groundwater-Dependent Ecosystems and Wildfires. It may be used as a tool to understand how Groundwater-Dependent Ecosystems.."),
+                          column(12, p("This App was designed to display statistical and spatial relationships between Groundwater-Dependent Ecosystems and Wildfires. It may be used as a tool to understand how Groundwater-Dependent Ecosystems play a role in lessening the severity of a wildfire or may even act as a natural fire break."),
+                          )
+                        ), # End Significance
+                        
+                        h1("Contact"),
+                        
+                        fluidRow(
+                          column(12, p("..."),
+                          )
+                        ), # End Contact
+                        
+                        h1("Data Policy Information"),
+                        
+                        fluidRow(
+                          column(12, p("Maybe make a graph for displaying the data and metadata?"),
+                          )
+                        ), # End Data Policy Info
+                        
+                        h1("About Us"),
+                        
+                        fluidRow(
+                          column(12, p("We are Jillian Allison, Meagan Brown, Andre Dextre, and Wade Sedgwick. This App was designed during our Master in Environmental Data Science Program for use by the Dangermond Preserve, owned by The Nature Conservancy."),
                           )
                         ), # End Significance
                         
@@ -38,18 +71,42 @@ ui <- fluidPage(
              
              # California Map ----
              tabPanel(title = "California", icon = icon("map"),
-                      h3("Map of Time Since Last Burn:"),
+                      
+                      
+                      sidebarLayout(
+                        
+                        sidebarPanel(width = 3,
+                                     
+                                     checkboxGroupInput(inputId = "map",
+                                                        label = "Select fire layers:",
+                                                        choices = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"),
+                                                        selected = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"))
+                                     
+                        ), # End sidebarPanel
+                        
+                      
                       
                       # interactive map of TSLB
-                      mainPanel(leafletOutput(outputId = "map",
-                                              width = 800,
-                                              height = 500), position = c("right"),
-                                # toggle layer on and off
-                                checkboxInput(inputId = "overlay", label = "Toggle layer on/off", value = TRUE),
-                                # toggle layer opacity
-                                sliderInput(inputId = "opacity", label = "Layer opacity", value = 1, min = 0, max = 1, step = 0.1)
+                      mainPanel(
+                        
+                        # TMAP UI
+                        
+                        tmapOutput("map")
+                        
+                        
+                        # LEAFLET UI
+                        
+                        # leafletOutput(outputId = "map",
+                        #                       width = 800,
+                        #                       height = 500), position = c("right"),
+                        #         # toggle layer on and off
+                        #         checkboxInput(inputId = "overlay", label = "Toggle layer on/off", value = TRUE),
+                        #         # toggle layer opacity
+                        #         sliderInput(inputId = "opacity", label = "Layer opacity", value = 1, min = 0, max = 1, step = 0.1)
                                 
-                      ), # End Leaflet panel
+                      )#, # End Leaflet main panel
+                      
+                      )#, # End sidebarLayout
                       
              ), # End tabPanel
              

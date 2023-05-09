@@ -32,7 +32,7 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 
 # Load gde .tif file
 gde <- raster("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
-gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
+ gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
 
 crs(gde) <- "EPSG:3310"
 
@@ -70,6 +70,7 @@ tslf_raster <- 2022 - most_recent_raster
 # Mask to California's boundary
 tslf_raster_masked <- mask(tslf_raster, ca_counties)
 
+beepr::beep()
 
 
 coast_range <- eco_regions[1,]
@@ -129,7 +130,7 @@ crs(tslf_masked)
 tm_shape(gde_crop) +
   tm_raster()
 
-tm_shape(tslf_masked) +
+tm_shape(tslf_masked, raster.downsample = FALSE) +
   tm_raster()
 
 
