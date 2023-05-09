@@ -32,7 +32,7 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
 
 # Load gde .tif file
 gde <- raster("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
- gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
+# gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
 
 crs(gde) <- "EPSG:3310"
 
@@ -106,6 +106,8 @@ print(end - start)
 beepr::beep()
 
 plot(gde_crop)
+
+writeRaster(coast_range_crop, "coast_range_crop.tif", format = "GTiff")
 
 
 

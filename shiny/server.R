@@ -22,24 +22,31 @@ server <- function(input, output) {
     map_1 <- tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
     tm_raster()
     
-    map_2 <- tm_shape(southern_mountains_crop, raster.downsample = TRUE) +
+    map_2 <- tm_shape(southern_mountains_gdes, raster.downsample = TRUE) +
       tm_raster()
   
   output$map <- renderTmap({
 
-    tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
-      tm_raster() # +
+    if ("socal_norbaja_coast_gdes" %in% input$map) {
+      map_1
+    } else if ("southern_mountains_gdes" %in% input$map) {
+      map_2
+    }
+    
+    # tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
+    #   tm_raster() # +
       # tm_shape(southern_mountains_gdes) +
       # tm_raster()
   })
 
 #  Update map whenever selection is made
   observe({
-
+    
+    
     if ("socal_norbaja_coast_gdes" %in% input$map) {
-      map$layers[[1]]$visible <- TRUE
+      map_1@layers[[1]]$visible <- TRUE
     } else {
-      map$layers[[1]]$visible <- FALSE
+      map_2@layers[[1]]$visible <- FALSE
     }
 
     # if ("southern_mountains_gdes" %in% input$map) {
