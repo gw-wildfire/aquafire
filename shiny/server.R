@@ -1,5 +1,6 @@
 server <- function(input, output) {
   
+  proxy <- leafletProxy("map")
   # Load the raster layer
   
   # NOTES - INSTEAD OF 13 FIELDS, ONLY USE 1
@@ -13,49 +14,63 @@ server <- function(input, output) {
   
   # data reading in
   
-  socal_norbaja_coast <- eco_regions[12,]
-  socal_norbaja_coast_gdes <- crop(r, socal_norbaja_coast)
-  
-  southern_mountains <- eco_regions[9,]
-  southern_mountains_gdes <- crop(r, southern_mountains)
-  
-    map_1 <- tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
-    tm_raster()
+  # socal_norbaja_coast <- eco_regions[12,]
+  # socal_norbaja_coast_gdes <- crop(r, socal_norbaja_coast)
+  # 
+  # southern_mountains <- eco_regions[9,]
+  # southern_mountains_gdes <- crop(r, southern_mountains)
+  # 
+  #   map_1 <- tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
+  #   tm_raster()
+  #   
+  #   map_2 <- tm_shape(southern_mountains_gdes, raster.downsample = TRUE) +
+  #     tm_raster()
+  #   
+  #   tm <- tm_shape(socal_norbaja_coast_gdes) +
+  #     tm_raster() +
+  #     tm_shape(southern_mountains_gdes) +
+  #     tm_raster()
     
-    map_2 <- tm_shape(southern_mountains_gdes, raster.downsample = TRUE) +
-      tm_raster()
   
   output$map <- renderTmap({
 
-    if ("socal_norbaja_coast_gdes" %in% input$map) {
-      map_1
-    } else if ("southern_mountains_gdes" %in% input$map) {
-      map_2
-    }
+    tm
     
-    # tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
-    #   tm_raster() # +
-      # tm_shape(southern_mountains_gdes) +
-      # tm_raster()
-  })
-
-#  Update map whenever selection is made
-  observe({
-    
-    
-    if ("socal_norbaja_coast_gdes" %in% input$map) {
-      map_1@layers[[1]]$visible <- TRUE
-    } else {
-      map_2@layers[[1]]$visible <- FALSE
-    }
-
-    # if ("southern_mountains_gdes" %in% input$map) {
-    #   map@layers[[2]]$visible <- TRUE
-    # } else {
-    #   map@layers[[2]]$visible <- FALSE
+    # if ("socal_norbaja_coast_gdes" %in% input$map) {
+    #   map_1
+    # } else if ("southern_mountains_gdes" %in% input$map) {
+    #   map_2
     # }
 
   })
+
+#  Update map whenever selection is made
+  # observe({
+  #   
+  #   if (input$socal_norbaja_coast_gdes) {
+  #     tm$layers[1]$visible <- TRUE
+  #   } else {
+  #     tm$layers[1]$visible <- FALSE
+  #   }
+  #   if (input$southern_mountains_gdes) {
+  #     tm$layers[2]$visible <- TRUE
+  #   } else {
+  #     tm$layers[2]$visible <- FALSE
+  #   }
+  #   
+  #   # if ("socal_norbaja_coast_gdes" %in% input$map) {
+  #   #   map_1@layers[[1]]$visible <- TRUE
+  #   # } else {
+  #   #   map_2@layers[[1]]$visible <- FALSE
+  #   # }
+  # 
+  #   # if ("southern_mountains_gdes" %in% input$map) {
+  #   #   map@layers[[2]]$visible <- TRUE
+  #   # } else {
+  #   #   map@layers[[2]]$visible <- FALSE
+  #   # }
+  # 
+  # })
 
 }
 

@@ -1,18 +1,18 @@
 ui <- fluidPage(
   
   theme = bs_theme(bootswatch = "sandstone",
-                   bg = "#F7EDE2", # light blue
-                   fg = "#0076a0", # MCR dark blue from bottom of page
+                   bg = "#BC4749", # light blue
+                   fg = "#F7EDE2", # MCR dark blue from bottom of page
                    primary = "#a9a9a9", # MCR dark blue font
                    secondary = "#0f4d76", # blue controls the clear buttons
                    success = "#397B1E", # light green
-                   info = "#EEA419", # light blue from bar
+                   info = "#0076a0", # light blue from bar
                    warning = "#C3512C",# yellow
                    danger = "#FACE00", # orange red
                    base_font = font_google("Open Sans"), 
                    heading_font = font_google("Source Sans Pro")),
   
-  titlePanel(""),
+  titlePanel(""), #BC4749 F7EDE2
   fluidPage(
     fluidRow(column(6,
                     h1("Aquafire")),
@@ -77,10 +77,13 @@ ui <- fluidPage(
                         
                         sidebarPanel(width = 3,
                                      
-                                     checkboxGroupInput(inputId = "map",
-                                                        label = "Select fire layers:",
-                                                        choices = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"),
-                                                        selected = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"))
+                                     checkboxInput("socal_norbaja_coast_gdes", "So Cal GDEs", value = TRUE),
+                                     checkboxInput("southern_mountains_gdes", "So Cal Mountain GDEs", value = TRUE),
+                                     
+                                     # checkboxGroupInput(inputId = "map",
+                                     #                    label = "Select fire layers:",
+                                     #                    choices = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"),
+                                     #                    selected = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"))
                                      
                         ), # End sidebarPanel
                         
