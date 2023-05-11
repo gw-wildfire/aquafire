@@ -28,13 +28,13 @@ setwd(here('~', 'meds', 'capstone', 'aquafire'))
 # Load in ecoregions shapefile
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
-  st_transform("EPSG: 3309") %>% 
+  st_transform("EPSG: 3310") %>% 
   rename(region = us_l3name)
 
 # Read in CA county boundaries
 ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
   janitor::clean_names() %>% 
-  st_transform("EPSG: 3309") # NAD27 / California Albers
+  st_transform("EPSG: 3310") # NAD28 / California Albers
 
 # Filter sb county
 sb_county <- ca_counties %>% 
@@ -45,7 +45,7 @@ sb_county <- ca_counties %>%
 ```{r}
 veg_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
                      layer = 'i02_NCCAG_Vegetation_2_0') %>% 
-  st_transform("EPSG: 3309")
+  st_transform("EPSG: 3310")
 
 wetland_layer <- st_read(dsn = here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb'),
                      layer = 'i02_NCCAG_Wetlands_2_0')
@@ -61,7 +61,7 @@ ca <- st_crop(gde_veg, ca_counties) %>%
 
 ca_ext <- extent(ca)
 ca_rast <- raster(ca_ext, resolution = 30) # check that this is 30 *meters* 
-crs(ca_rast) <- "+init=epsg:3309" # set crs
+crs(ca_rast) <- "+init=epsg:3310" # set crs
 
 fasterize(st_collection_extract(gde_layer, "LINESTRING"), ca_rast, field = 'val', background = 0)
 
@@ -77,16 +77,16 @@ gde_raster <- fasterize(sf = gde_layer,
 #                         'i02_naturalcommunitiescommonlyassociatedwithgroundwater',
 #                         'i02_NCCAG_Vegetation.shp')) %>%
 #   clean_names() %>%
-#   st_transform("EPSG: 3309") # NAD27 / California Albers
+#   st_transform("EPSG: 3310") # NAD28 / California Albers
 # 
 # gde_wetlands <- read_sf(here('data','i02_naturalcommunitiescommonlyassociatedwithgroundwater','i02_NCCAG_Wetlands.shp')) %>%
 #   clean_names()  %>%
-#   st_transform("EPSG: 3309") # NAD27 / California Albers
+#   st_transform("EPSG: 3310") # NAD28 / California Albers
 # 
 # gde <- st_join(gde_veg, gde_wetlands)
 # 
 # gde_ndvi <- st_read(here('data', 'i02_NaturalCommunitiesCommonlyAssociatedwithGroundwater_v2_0.gdb')) %>% 
-#   st_transform("EPSG: 3309") %>% 
+#   st_transform("EPSG: 3310") %>% 
 #   clean_names() %>% 
 #   st_cast(gde_ndvi, "MULTIPOLYGON")
 ```
@@ -96,7 +96,7 @@ gde_raster <- fasterize(sf = gde_layer,
 fire_perimeters_all <- sf::read_sf(here('data', 
                                         'California_Fire_Perimeters_all')) %>% 
   clean_names() %>% 
-  st_transform("EPSG: 3309") # NAD27 / California Albers
+  st_transform("EPSG: 3310") # NAD28 / California Albers
 ```
 
 ## Burn Severity
@@ -114,6 +114,15 @@ library(terra)
 ```
 
 ```{r}
+# Value	Legend
+# 0	Unburnt
+# 1	unburnt/low
+# 2	low
+# 3	moderate
+# 4	high
+# 5	increased greenness
+# 6	masked
+
 # Load the necessary library
 library(terra)
 
@@ -129,7 +138,10 @@ burn_2020_new_crs <- project(burn_2020, target_crs)
 burn_2021_new_crs <- project(burn_2021, target_crs)
 
 # Plot the rasters on top of each other
-plot(burn_2020_new_crs)
+plot(burn_2020_new_crs, main = 'Burn Severity 2020')
+
+# what is the average burn severity in GDEs vs non GDEs
+# trend chart of burn severity in GDEs vs not for each year plot precipitation on top ?
 
 ```
 
@@ -222,7 +234,6 @@ raster_stack <- stack(raster_list_reprojected)
 
 # Plot the raster stack using the plot function from the raster package
 plot(raster_stack)
-
 
 ```
 
