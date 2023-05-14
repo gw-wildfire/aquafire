@@ -35,13 +35,12 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
   janitor::clean_names()  %>% 
   st_transform(crs_ca) %>% 
   rename(region = us_l3name)  %>%
-  mutate(code = as.numeric(us_l3code)) 
-
+  mutate(code = as.numeric(us_l3code))
 eco_regions_names <- as.data.frame(eco_regions) %>%
   subset(select = c("us_l3code", "region"))
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
   janitor::clean_names() %>% 
   st_transform(crs_ca) # NAD27 / California Albers
 ```
@@ -84,7 +83,7 @@ crs(fire_count_raster_masked) <- crs_ca$wkt
 # Making a dataframe containing GDEs, which ecoregion they're in, and what the max fire count was in that GDE. Not quite what I was trying to make though... just had to see it to realize that. 
 ## I don't think this is really necessary, but I just wanna keep the code just in case. 
 sb_county <- ca_counties %>% 
-  filter(name == "Santa Barbara")
+  filter(county_nam == "Santa Barbara")
 
 gde_polygons_val <- st_make_valid(gde_polygons)
 
@@ -178,8 +177,47 @@ summary(lm(fire_count ~ gde, data = gde_fc_8))
 
 ## Southern CA / Northern Baja Coast
 summary(lm(fire_count ~ gde, data = gde_fc_85))
+```
 
+Boxplot 
+```{r}
+ggplot(sb_gde_fc_er_df, aes(x = region, y = fire_count, fill = gde)) +
+  geom_boxplot() +
+  labs(x = "Ecoregion", y = "Fire count", fill = "GDE") +
+  scale_fill_discrete(name = "GDE", labels = c("Non-GDE", "GDE")) +
+  theme_bw()
+```
 
+## Dividing raster into ecoregions
+I also wrote a function to do this based on this code, so hopefully this step is super easy! 
+
+function is called raster_to_ecoregions
+```{r}
+# Crop raster to extent of shapefile
+fc_cropped <- crop(fire_count_raster_masked, eco_regions)
+
+# Convert shapefile to SpatialPolygonsDataFrame
+eco_regions_sp <- as_Spatial(eco_regions) %>%
+  SpatialPolygonsDataFrame(., data.frame(ID=1:nrow(eco_regions)))
+
+# Loop through each eco region and crop raster to that region
+for(i in 1:nrow(eco_regions)){
+  # Subset shapefile to current eco region
+  eco_region_subset <- eco_regions_sp[eco_regions_sp$ID == i,]
+  
+  # Crop raster to extent of eco region
+  fc_eco_crop <- crop(fc_cropped, eco_region_subset)
+  
+  fc_subset <- mask(fc_eco_crop, eco_region_subset)
+  
+  # Write out raster to file
+  writeRaster(fc_subset, filename = paste0("raster_output/fire_count_", eco_regions$us_l3code[i], ".tif"), format = "GTiff", overwrite = TRUE)
+}
 
 ```
+
+```{r}
+fire_count_final <- remove_ag_urban(fire_count_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+```
+
 

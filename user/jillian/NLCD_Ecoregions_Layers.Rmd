@@ -40,7 +40,7 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
   
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
   janitor::clean_names() %>% 
   st_transform(crs_ca) # NAD27 / California Albers
 ```
@@ -84,22 +84,9 @@ nlcd_rasterlayer <- raster(nlcd_masked)
 # nlcd_colors()
 # pal_nlcd()
 
-library(tmap)
-color_palette <- pal_nlcd()
-
-tm_raster <- tm_raster(nlcd_rasterlayer, palette = color_palette)
-# Add a legend to the plot
-
-tm_raster_legend <- tm_legend(show = TRUE, legend.format = list(
-  text.separator = " - ",
-  text.align = c("left", "left"),
-  text.valign = c("bottom", "bottom"),
-  text.size = 1.2,
-  text.fontface = "plain",
-  text.color = "black",
-  title = "Legend Title"
-))
-
+nlcd_colors()
 ```
+
+
 
 

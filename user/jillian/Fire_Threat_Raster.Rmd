@@ -37,7 +37,7 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
   rename(region = us_l3name)
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
   janitor::clean_names() %>% 
   st_transform(crs_ca) # NAD27 / California Albers
 ```

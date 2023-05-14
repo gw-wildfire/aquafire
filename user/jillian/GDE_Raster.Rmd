@@ -33,10 +33,10 @@ crs_ca <- st_crs(3310)
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform(crs_ca) %>% 
-  rename(region = us_l3name)
+  rename(region = us_l3name) 
 
 # Read in CA county boundaries
-ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>% 
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
   janitor::clean_names() %>% 
   st_transform(crs_ca) # NAD27 / California Albers
 ```
@@ -76,7 +76,7 @@ gde_masked <- mask(gde_raster, ca_counties)
 Must run Fire_Count_Raster.rmd and TSLF_Raster.rmd first before running this code: 
 ```{r}
 # Find the maximum number of times that a GDE polygon has burned since 1950 using the fire count raster layer. Find maximum number of times a cell has burned in that GDE
-gde_fire_count <- exactextractr::exact_extract(fire_count_raster_masked, gde_polygons, fun = "max")
+gde_fire_count <- exactextractr::exact_extract(fire_count_raster_masked, gde_polygons, fun = "mean")
 
 # Create a polygon layer with both fire count and TSLF data stored for each GDE. Find the minimum TSLF in that GDE. 
 gde_tslf <- exactextractr::exact_extract(tslf_raster_masked, gde_polygons, fun = "min")
@@ -89,6 +89,6 @@ gde_fc_tslf <- gde_polygons %>%
 ```
 
 ```{r}
-sf::st_write(gde_fc_tslf, "raster_output/gde_firecount_tslf.shp", delete_layers = c("area", "gde"), append = FALSE)
+# sf::st_write(gde_fc_tslf, "raster_output/gde_firecount_tslf.shp", delete_layers = c("area", "gde"), append = FALSE)
 ```
 
