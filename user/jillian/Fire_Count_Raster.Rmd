@@ -19,6 +19,7 @@ library(raster)
 library(rgdal)
 library(fasterize)
 library(exactextractr)
+library(dplyr)
 ```
 
 ```{r}
@@ -218,6 +219,47 @@ for(i in 1:nrow(eco_regions)){
 
 ```{r}
 fire_count_final <- remove_ag_urban(fire_count_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+writeRaster(fire_count_final, "raster_output/fire_count_final.tif")
 ```
+
+```{r}
+raster_to_ecoregions(fire_count_final, "fire_count", write_to_file = FALSE)
+```
+
+## Actual Stats
+```{r}
+# Coast Range 
+fire_count_1_sample <- stratified_sample(fire_count_1, gde_1, n = 1000)
+fire_count_1_gdes <- fire_count_1_sample %>%
+  filter(gde == 1)
+fire_count_1_nongdes <- fire_count_1_sample %>%
+  filter(gde == 0)
+
+fire_count_1_stats <- fire_count_stats(fire_count_1_sample)
+
+
+# Plot density curves for GDEs and non-GDEs
+library(ggplot2)
+# Create violin plot
+ggplot(fire_count_1_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") + 
+  xlab("GDE Status") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") + 
+  theme_minimal()
+
+
+ggplot(fire_count_1_sample, aes(x = value, color = gde)) + 
+  stat_ecdf() +
+  scale_color_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") +
+  xlab("Fire Count") +
+  ylab("Cumulative Proportion") +
+  ggtitle("Cumulative Distribution of Fire Counts in GDEs vs Non-GDEs") + 
+  theme_minimal()
+
+```
+
 
 

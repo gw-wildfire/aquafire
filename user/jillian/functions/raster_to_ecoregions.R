@@ -1,14 +1,15 @@
 #' Divide a raster layer into eco regions and write files (California only) 
 #' 
-#' @param raster_layer Formal Class RasterLayer. The layer that you'd like to divide into ecoregions. CRS must be 
-#' @param file_name Root file name to be used when naming exported raster layers. The ecoregion US level 3 code will be appended to the end of this file name. 
+#' @param raster_layer Formal Class RasterLayer. The layer that you'd like to divide into eco regions. CRS must be 
+#' @param file_name Root file name to be used when naming exported raster layers. The eco region US level 3 code will be appended to the end of this file name. 
 #' @param crs Default is 3310. Four number CRS code- should match the CRS of raster_layer input. 
+#' @param write_to_file If set to TRUE, will write each eco region  as a file. If FALSE, will assign each eco region as an object. 
 #'
 #' @return 
 #' @export 
 #'
 #' @examples
-raster_to_ecoregions <- function(raster_layer, file_name, crs = 3310){
+raster_to_ecoregions <- function(raster_layer, file_name, crs = 3310, write_to_file){
 
   crs <- st_crs(crs)
   
@@ -36,10 +37,14 @@ raster_to_ecoregions <- function(raster_layer, file_name, crs = 3310){
     
     raster_subset <- mask(raster_region_crop, eco_region_subset)
     
-    # Write out raster to file
-    writeRaster(raster_subset, filename = paste0("raster_output/", file_name, "_", eco_regions$us_l3code[i], ".tif"), format = "GTiff", overwrite = TRUE)
-    
-   paste0("Completed writing file ", i, "out of 13.")
+    if (write_to_file){
+      # Write out raster to file
+      writeRaster(raster_subset, filename = paste0("raster_output/", file_name, "_", eco_regions$us_l3code[i], ".tif"), format = "GTiff", overwrite = TRUE)
+    } else {
+      assign(paste0(file_name, "_", eco_regions$us_l3code[i]), raster_subset, envir = .GlobalEnv)
+    }
+
+   paste0("Completed writing file or object", i, "out of 13.")
   }
   
 }
