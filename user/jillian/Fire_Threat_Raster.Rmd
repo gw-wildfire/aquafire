@@ -19,6 +19,9 @@ library(raster)
 library(rgdal)
 library(fasterize)
 library(terra)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
 ```
 
 ```{r}
@@ -65,5 +68,12 @@ fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra) # uses neares
 fire_threat_masked <- mask(fire_threat_resampled, ca_counties)
 
 fire_threat_rasterlayer <- raster(fire_threat_masked)
+
+# Remove ag and urban areas 
+fire_threat_final <- remove_ag_urban(fire_threat_rasterlayer) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+writeRaster(tslf_final, "raster_output/fire_threat_final.tif")
+
+# raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
 ```
 

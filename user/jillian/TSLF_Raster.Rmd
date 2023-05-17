@@ -18,6 +18,9 @@ library(janitor)
 library(raster)
 library(rgdal)
 library(fasterize)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
 ```
 
 ```{r}
@@ -75,6 +78,15 @@ tslf_raster <- 2022 - most_recent_raster
 # Mask to California's boundary
 tslf_raster_masked <- mask(tslf_raster, ca_counties)
 crs(tslf_raster_masked) <- crs_ca$wkt
+
+# Remove ag and urban areas 
+tslf_final <- remove_ag_urban(tslf_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
+
+# writeRaster(tslf_final, "raster_output/tslf_final.tif")
+
+
 ```
 
 ```{r}

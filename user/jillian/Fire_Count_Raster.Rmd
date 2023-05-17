@@ -20,6 +20,9 @@ library(rgdal)
 library(fasterize)
 library(exactextractr)
 library(dplyr)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
 ```
 
 ```{r}
@@ -261,5 +264,83 @@ ggplot(fire_count_1_sample, aes(x = value, color = gde)) +
 
 ```
 
+```{r}
+# Northern basin and range
+fire_count_80_sample <- stratified_sample(fire_count_80, gde_80, n = 1000)
+
+fire_count_80_stats <- fire_count_stats(fire_count_80_sample)
+
+# Create violin plot
+ggplot(fire_count_80_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("#DDA15E", "#A3B18A")) +
+  scale_x_discrete(labels = c('Non-GDE', 'GDE')) +
+  xlab("") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") +
+  theme_classic() +
+  coord_flip() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,
+                                  size = 15),
+        axis.text = element_text(size = 13,
+                                 color = 'black'),
+        axis.title = element_text(size = 15,
+                                  color = 'black'),
+        axis.title.x = element_text(vjust = -1.1),
+        axis.text.x = element_text(vjust = -1.5))
+
+
+  
+```
+
+```{r}
+gde_6 <- raster("raster_output/gde_6.tif")
+fire_count_6 <- raster("raster_output/fire_count_6.tif")
+source("user/jillian/functions/stratified_sample.R")
+source("user/jillian/functions/fire_count_stats.R")
+
+set.seed(123)
+
+# Central CA Foothills and Coastal Mountains
+fire_count_6_sample <- stratified_sample(fire_count_6, gde_6, n = 1000)
+
+fire_count_6_stats <- fire_count_stats(fire_count_6_sample)
+
+# Create violin plot
+ggplot(fire_count_6_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("#DDA15E", "#A3B18A")) +
+  scale_x_discrete(labels = c('Non-GDE', 'GDE')) +
+  xlab("") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") +
+  theme_classic() +
+  coord_flip() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,
+                                  size = 15),
+        axis.text = element_text(size = 13,
+                                 color = 'black'),
+        axis.title = element_text(size = 15,
+                                  color = 'black'),
+        axis.title.x = element_text(vjust = -1.1),
+        axis.text.x = element_text(vjust = -1.5))
+
+ggplot(fire_count_6_sample, aes(x = value, color = gde)) + 
+  stat_ecdf() +
+  scale_color_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") +
+  xlab("Fire Count") +
+  ylab("Cumulative Proportion") +
+  ggtitle("Cumulative Distribution of Fire Counts in GDEs vs Non-GDEs") + 
+  theme_minimal()
+  
+```
+
+```{r}
+# fire_count_sample <- stratified_sample(fire_count_raster, gde_raster, n = 1000)
+
+# write.csv(fire_count_sample, "user/jillian/csv213/fire_count_sample.csv", row.names=FALSE)
+```
 
 

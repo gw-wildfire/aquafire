@@ -68,10 +68,12 @@ gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons, "POLYGON"
 # Mask to california
 gde_masked <- mask(gde_raster, ca_counties)
 
+source("user/jillian/functions/remove_ag_urban.R")
+
 gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer = nlcd_rasterlayer)
 
 # Create raster file 
-writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
+# writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
 
 # Create GDE Objects divided into ecoregions 
 raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)

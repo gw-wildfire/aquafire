@@ -1,0 +1,213 @@
+---
+title: "Raster Layer Code"
+author: "Jillian Allison"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(dplyr)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
+```
+
+```{r}
+# set working directory
+setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+```
+
+# Read in data
+
+## Load ecoregions and counties shapefiles
+
+```{r}
+crs_ca <- st_crs(3310)
+
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)  %>%
+  mutate(code = as.numeric(us_l3code))
+# Create file containing eco region names 
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
+
+# Read in CA county boundaries
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) # NAD27 / California Albers
+```
+
+## Load fire perimeters data and filter, set CRS, crop to California
+
+```{r}
+fire_perimeters_all <- sf::read_sf(here('data', 
+                                        'California_Fire_Perimeters_all')) %>% 
+  clean_names() %>% 
+  st_transform(crs_ca) %>% # NAD27 / California Albers
+  mutate(val = 1) %>% # Create a column containing a value: this means each fire has a value of 1
+  filter(year >= 1950) # Filter for only fires after 1950: this is when the dataset becomes reliable. 
+
+# Crop to California
+fires_ca <- st_crop(fire_perimeters_all, ca_counties) 
+```
+
+## Load GDE Data
+
+```{r}
+# Read in GDE data
+gde_data <- sf::read_sf(here::here("data", "gde") )
+
+gde_polygons <- gde_data %>%
+  st_transform(crs_ca) %>%
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # may also want to remove semipermanently flooded or all lacustrine
+  mutate(area = st_area(geometry)) %>%
+  mutate(gde = 1)# creating a column so we can have a raster with GDE = 1, not GDE = 0
+```
+
+## Create an empty raster to use as a template
+
+This valueless raster has a resolution of 30 x 30. We'll be using it to rasterize the fire perimeters layer.
+
+```{r}
+## Set extent
+ca_ext <- extent(ca_counties)
+## RASTER OBJECT Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30)
+crs(ca_rast) <- crs_ca$wkt
+
+## TERRA OBJECT Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rasterra <- raster(ca_ext, resolution = 30) %>%
+  terra::rast()
+crs(ca_rasterra) <- crs_ca$wkt 
+```
+
+# GDE Raster
+
+```{r}
+# Fasterize to rasterize, extent to match others 
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
+
+# Mask to california
+gde_masked <- mask(gde_raster, ca_counties)
+
+# Remove agricultural and urban areas
+gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer = nlcd_rasterlayer)
+
+# Create raster file 
+# writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
+
+# Create GDE Objects divided into ecoregions 
+# raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
+```
+
+# Eco Region Raster
+
+```{r}
+# Fasterize to rasterize, extent to match others 
+eco_region_raster <- fasterize(eco_regions, ca_rast, field = "us_l3code")
+```
+
+# NLCD
+
+```{r}
+# I'm using the fed data package because NLCD data was in .img format and .... ew 
+library(FedData)
+
+nlcd <- FedData::get_nlcd(template = ca_rasterra, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") %>%
+  rast() %>%
+  terra::project(y = crs_ca$wkt) # takes several minutes to run, but it will! 
+
+
+nlcd_resampled <- terra::resample(nlcd, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+
+nlcd_masked <- mask(nlcd_resampled, ca_counties)
+
+nlcd_rasterlayer <- raster(nlcd_masked)
+
+# raster::writeRaster(nlcd_rasterlayer, "raster_output/nlcd.tif")
+
+# nlcd_colors() and pal_nlcd() return legend and color palette
+# nlcd_colors()
+# pal_nlcd()
+```
+
+# Fire Count
+
+```{r}
+# Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template ## FUTURE US: REMEMBER TO CHECK FOR DUPLICATES!!!!! 
+fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
+# Mask to California's boundary
+fire_count_raster_masked <- mask(fire_count_raster, ca_counties) 
+crs(fire_count_raster_masked) <- crs_ca$wkt
+```
+
+## Dividing raster into ecoregions
+
+```{r}
+fire_count_final <- remove_ag_urban(fire_count_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+# raster_to_ecoregions(fire_count_final, "fire_count", write_to_file = TRUE)
+
+# writeRaster(fire_count_final, "raster_output/fire_count_final.tif")
+```
+
+# TSLF
+
+```{r}
+# Use fasterize::fasterize() to create a raster layer where each cell is equal to the maximum year value for that cell. 
+most_recent_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "year", fun = "max", background = NA)
+
+# Subtract the raster layer containing the most recent fire from 2022- this will give the number of years since the most recent fire in each cell. 
+tslf_raster <- 2022 - most_recent_raster
+
+# Mask to California's boundary
+tslf_raster_masked <- mask(tslf_raster, ca_counties)
+crs(tslf_raster_masked) <- crs_ca$wkt
+
+# Remove ag and urban areas 
+tslf_final <- remove_ag_urban(tslf_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+# raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
+
+# writeRaster(tslf_final, "raster_output/tslf_final.tif")
+
+```
+
+# Fire Threat
+
+```{r}
+fire_threat <- raster(here::here("data", "fire_threat.tif")) %>%
+  rast() %>%
+  terra::project(y = crs_ca$wkt)
+  
+
+fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+
+fire_threat_masked <- mask(fire_threat_resampled, ca_counties)
+
+fire_threat_rasterlayer <- raster(fire_threat_masked)
+
+# Remove ag and urban areas 
+fire_threat_final <- remove_ag_urban(fire_threat_rasterlayer) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+# writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif")
+
+# raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
+```

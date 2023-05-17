@@ -1,0 +1,194 @@
+---
+title: "Fire Count Stats"
+author: "Jillian Allison"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+Run the Fire Count and GDE sections of the Objects.RMD file to get all spatial objects necessary to run this code.
+
+### Eco Region Key: 
+
+   **code**                                           **region**
+          1                                         Coast Range
+         13                             Central Basin and Range
+         14                              Mojave Basin and Range
+          4                                            Cascades
+          5                                       Sierra Nevada
+          6  Central California Foothills and Coastal Mountains
+          7                           Central California Valley
+         78 Klamath Mountains/California High North Coast Range
+          8                       Southern California Mountains
+         80                            Northern Basin and Range
+         81                             Sonoran Basin and Range
+         85             Southern California/Northern Baja Coast
+          9               Eastern Cascades Slopes and Foothills
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(dplyr)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
+```
+
+# Samples 
+```{r}
+set.seed(123) 
+fire_count_1_sample <- stratified_sample(fire_count_1, gde_1, n = 1000)
+fire_count_4_sample <- stratified_sample(fire_count_4, gde_4, n = 1000)
+fire_count_5_sample <- stratified_sample(fire_count_5, gde_5, n = 1000)
+fire_count_6_sample <- stratified_sample(fire_count_6, gde_6, n = 1000)
+fire_count_7_sample <- stratified_sample(fire_count_7, gde_7, n = 1000)
+fire_count_8_sample <- stratified_sample(fire_count_8, gde_8, n = 1000)
+fire_count_9_sample <- stratified_sample(fire_count_9, gde_9, n = 1000)
+fire_count_13_sample <- stratified_sample(fire_count_13, gde_13, n = 1000)
+fire_count_14_sample <- stratified_sample(fire_count_14, gde_14, n = 1000)
+fire_count_78_sample <- stratified_sample(fire_count_78, gde_78, n = 1000)
+fire_count_80_sample <- stratified_sample(fire_count_80, gde_80, n = 1000)
+fire_count_81_sample <- stratified_sample(fire_count_81, gde_81, n = 1000)
+fire_count_85_sample <- stratified_sample(fire_count_85, gde_85, n = 1000)
+```
+
+# Summary Stats
+```{r}
+fire_count_1_stats <- fire_count_stats(fire_count_1_sample)
+fire_count_4_stats <- fire_count_stats(fire_count_4_sample)
+fire_count_5_stats <- fire_count_stats(fire_count_5_sample)
+fire_count_6_stats <- fire_count_stats(fire_count_6_sample)
+fire_count_7_stats <- fire_count_stats(fire_count_7_sample)
+fire_count_8_stats <- fire_count_stats(fire_count_8_sample)
+fire_count_9_stats <- fire_count_stats(fire_count_9_sample)
+fire_count_13_stats <- fire_count_stats(fire_count_13_sample)
+fire_count_14_stats <- fire_count_stats(fire_count_14_sample)
+fire_count_78_stats <- fire_count_stats(fire_count_78_sample)
+fire_count_80_stats <- fire_count_stats(fire_count_80_sample)
+fire_count_81_stats <- fire_count_stats(fire_count_81_sample)
+fire_count_85_stats <- fire_count_stats(fire_count_85_sample)
+```
+
+
+## Actual Stats
+
+```{r}
+# Coast Range 
+fire_count_1_sample <- stratified_sample(fire_count_1, gde_1, n = 1000)
+fire_count_1_gdes <- fire_count_1_sample %>%
+  filter(gde == 1)
+fire_count_1_nongdes <- fire_count_1_sample %>%
+  filter(gde == 0)
+
+fire_count_1_stats <- fire_count_stats(fire_count_1_sample)
+
+
+# Plot density curves for GDEs and non-GDEs
+library(ggplot2)
+# Create violin plot
+ggplot(fire_count_1_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") + 
+  xlab("GDE Status") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") + 
+  theme_minimal()
+
+
+ggplot(fire_count_1_sample, aes(x = value, color = gde)) + 
+  stat_ecdf() +
+  scale_color_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") +
+  xlab("Fire Count") +
+  ylab("Cumulative Proportion") +
+  ggtitle("Cumulative Distribution of Fire Counts in GDEs vs Non-GDEs") + 
+  theme_minimal()
+
+```
+
+```{r}
+# Northern basin and range
+fire_count_80_sample <- stratified_sample(fire_count_80, gde_80, n = 1000)
+
+fire_count_80_stats <- fire_count_stats(fire_count_80_sample)
+
+# Create violin plot
+ggplot(fire_count_80_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("#DDA15E", "#A3B18A")) +
+  scale_x_discrete(labels = c('Non-GDE', 'GDE')) +
+  xlab("") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") +
+  theme_classic() +
+  coord_flip() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,
+                                  size = 15),
+        axis.text = element_text(size = 13,
+                                 color = 'black'),
+        axis.title = element_text(size = 15,
+                                  color = 'black'),
+        axis.title.x = element_text(vjust = -1.1),
+        axis.text.x = element_text(vjust = -1.5))
+
+
+  
+```
+
+```{r}
+gde_6 <- raster("raster_output/gde_6.tif")
+fire_count_6 <- raster("raster_output/fire_count_6.tif")
+source("user/jillian/functions/stratified_sample.R")
+source("user/jillian/functions/fire_count_stats.R")
+
+set.seed(123)
+
+# Central CA Foothills and Coastal Mountains
+fire_count_6_sample <- stratified_sample(fire_count_6, gde_6, n = 1000)
+
+fire_count_6_stats <- fire_count_stats(fire_count_6_sample)
+
+# Create violin plot
+ggplot(fire_count_6_sample, aes(x = gde, y = value, fill = gde)) +
+  geom_violin(trim = FALSE) +
+  scale_fill_manual(values = c("#DDA15E", "#A3B18A")) +
+  scale_x_discrete(labels = c('Non-GDE', 'GDE')) +
+  xlab("") +
+  ylab("Fire Count") +
+  ggtitle("Distribution of Fire Counts in Non-GDEs vs GDEs") +
+  theme_classic() +
+  coord_flip() +
+  theme(legend.position = 'none',
+        plot.title = element_text(hjust = 0.5,
+                                  size = 15),
+        axis.text = element_text(size = 13,
+                                 color = 'black'),
+        axis.title = element_text(size = 15,
+                                  color = 'black'),
+        axis.title.x = element_text(vjust = -1.1),
+        axis.text.x = element_text(vjust = -1.5))
+
+ggplot(fire_count_6_sample, aes(x = value, color = gde)) + 
+  stat_ecdf() +
+  scale_color_manual(values = c("springgreen4", "dodgerblue"), name = "GDE Status") +
+  xlab("Fire Count") +
+  ylab("Cumulative Proportion") +
+  ggtitle("Cumulative Distribution of Fire Counts in GDEs vs Non-GDEs") + 
+  theme_minimal()
+  
+```
+
+```{r}
+# fire_count_sample <- stratified_sample(fire_count_raster, gde_raster, n = 1000)
+
+# write.csv(fire_count_sample, "user/jillian/csv213/fire_count_sample.csv", row.names=FALSE)
+```

@@ -20,6 +20,9 @@ library(rgdal)
 library(fasterize)
 library(FedData)
 library(terra)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
 ```
 
 ```{r}
@@ -77,6 +80,8 @@ nlcd_resampled <- terra::resample(nlcd, ca_rasterra) # uses nearest neighbors ap
 nlcd_masked <- mask(nlcd_resampled, ca_counties)
 
 nlcd_rasterlayer <- raster(nlcd_masked)
+
+raster::writeRaster(nlcd_rasterlayer, "raster_output/nlcd.tif")
 
 # # plot and view
 # plot(nlcd)

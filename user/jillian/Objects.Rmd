@@ -1,0 +1,102 @@
+---
+title: "Objects"
+author: "Jillian Allison"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(raster)
+library(tidyverse)
+library(terra)
+```
+
+# Functions 
+```{r}
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
+source("user/jillian/functions/fire_count_stats.R")
+```
+
+
+# Final Rasters for California
+Raster layers masked to CA with ag and urban removed. 
+```{r}
+fire_count_final <- raster("raster_output/fire_count_final.tif")
+tslf_final <- raster("raster_output/tslf_final.tif")
+gde_final <- raster("raster_output/gde_final.tif")
+nlcd_rasterlayer <- raster("raster_output/nlcd.tif")
+```
+
+# Final Rasters by Ecoregion 
+Raster layers by eco region with ag and urban removed. 
+## GDEs
+```{r}
+gde_1 <- raster("raster_output/gde_1.tif")
+gde_4 <- raster("raster_output/gde_4.tif")
+gde_5 <- raster("raster_output/gde_5.tif")
+gde_6 <- raster("raster_output/gde_6.tif")
+gde_7 <- raster("raster_output/gde_7.tif")
+gde_8 <- raster("raster_output/gde_8.tif")
+gde_9 <- raster("raster_output/gde_9.tif")
+gde_13 <- raster("raster_output/gde_13.tif")
+gde_14 <- raster("raster_output/gde_14.tif")
+gde_78 <- raster("raster_output/gde_78.tif")
+gde_80 <- raster("raster_output/gde_80.tif")
+gde_81 <- raster("raster_output/gde_81.tif")
+gde_85 <- raster("raster_output/gde_85.tif")
+```
+
+
+## Fire Count
+```{r}
+fire_count_1 <- raster("raster_output/fire_count_1.tif")
+fire_count_4 <- raster("raster_output/fire_count_4.tif")
+fire_count_5 <- raster("raster_output/fire_count_5.tif")
+fire_count_6 <- raster("raster_output/fire_count_6.tif")
+fire_count_7 <- raster("raster_output/fire_count_7.tif")
+fire_count_8 <- raster("raster_output/fire_count_8.tif")
+fire_count_9 <- raster("raster_output/fire_count_9.tif")
+fire_count_13 <- raster("raster_output/fire_count_13.tif")
+fire_count_14 <- raster("raster_output/fire_count_14.tif")
+fire_count_78 <- raster("raster_output/fire_count_78.tif")
+fire_count_80 <- raster("raster_output/fire_count_80.tif")
+fire_count_81 <- raster("raster_output/fire_count_81.tif")
+fire_count_85 <- raster("raster_output/fire_count_85.tif")
+```
+
+
+# Quick Plots 
+```{r}
+# Read in CA boundary
+ca <- read_sf(here::here('data', 'ca-state-boundary', 'CA_State_TIGER2016.shp')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) # NAD27 / California Albers
+```
+
+```{r}
+dev.off()
+plot(tslf_final, axes = FALSE, box = FALSE)
+plot(ca, add = TRUE, col = "transparent")
+title(main = "Time Since Last Burn (Years)")
+```
+
+```{r}
+dev.off()
+plot(fire_count_final, axes = FALSE, box = FALSE)
+plot(ca, add = TRUE, col = "transparent")
+title(main = "Fire Count Since 1950")
+```
+
+```{r}
+dev.off()
+plot(gde_final, axes = FALSE, box = FALSE, legend = FALSE)
+plot(ca, add = TRUE, col = "transparent")
+title(main = "Groundwater Dependent Ecosystems in California")
+```
+
+
+
+
