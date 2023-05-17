@@ -13,7 +13,7 @@ server <- function(input, output, session) {
     # add the remaining ecoregions here
   )
   
-  # fire_count <- raster("shiny/www/fire_threat.tif")
+  # fire_count <- raster("shiny/data/fire_threat.tif")
   
   tmap_mode("view")
   # end

@@ -31,7 +31,7 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
   st_transform(crs_ca) # NAD27 / California Albers
 
 # Load gde .tif file
-gde <- raster("../aquafire/shiny/www/gde_boundaries.tif")
+gde <- raster("../aquafire/shiny/data/gde_boundaries.tif")
 # gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
 
 crs(gde) <- "EPSG:3310"
@@ -68,7 +68,7 @@ most_recent_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_r
 tslf_raster <- 2022 - most_recent_raster
 
 
-tslf_raster_masked <- raster("shiny/www/tslf_raster_masked.tif")
+tslf_raster_masked <- raster("shiny/data/tslf_raster_masked.tif")
 
 source("user/jillian/functions/raster_to_ecoregions.R")
 
@@ -102,19 +102,19 @@ eastern_cascades_slopes_foothills <- eco_regions[13,]
 
 
 # raster time since last burn (TSLB) layers cropped by ecoregion
-coast_range_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/coast_range_crop.tif")
-central_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_basin_crop.tif")
-mojave_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/mojave_basin_crop.tif")
-cascades_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/cascades_crop.tif")
-sierra_nevada_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/sierra_nevada_crop.tif")
-central_foothills_coastal_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_foothills_coastal_mountains_crop.tif")
-central_valley_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_valley_crop.tif")
-klamath_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/klamath_mountains_crop.tif")
-southern_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/southern_mountains_crop.tif")
-northern_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/northern_basin_crop.tif")
-sonoran_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/sonoran_basin_crop.tif")
-socal_norbaja_coast_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/socal_norbaja_coast_crop.tif")
-eastern_cascades_slopes_foothills_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/eastern_cascades_slopes_foothills_crop.tif")
+coast_range_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/coast_range_crop.tif")
+central_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/central_basin_crop.tif")
+mojave_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/mojave_basin_crop.tif")
+cascades_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/cascades_crop.tif")
+sierra_nevada_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/sierra_nevada_crop.tif")
+central_foothills_coastal_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/central_foothills_coastal_mountains_crop.tif")
+central_valley_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/central_valley_crop.tif")
+klamath_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/klamath_mountains_crop.tif")
+southern_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/southern_mountains_crop.tif")
+northern_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/northern_basin_crop.tif")
+sonoran_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/sonoran_basin_crop.tif")
+socal_norbaja_coast_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/socal_norbaja_coast_crop.tif")
+eastern_cascades_slopes_foothills_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf/eastern_cascades_slopes_foothills_crop.tif")
 
 tslf_list <- list()
 
@@ -134,8 +134,8 @@ tslf_list[[13]] <- eastern_cascades_slopes_foothills_crop
 
 
 # raster fire count layer cropped by ecoregion
-fire_count <- raster("shiny/www/fire_count.tif")
-fire_threat <- raster("shiny/www/fire_threat.tif")
+fire_count <- raster("shiny/data/fire_count.tif")
+fire_threat <- raster("shiny/data/fire_threat.tif")
 
 coast_range_fire_count <- crop(fire_count, coast_range)
 central_basin_fire_count <- crop(fire_count, central_basin)
@@ -151,7 +151,7 @@ sonoran_basin_fire_count <- crop(fire_count, sonoran_basin)
 socal_norbaja_coast_fire_count <- crop(fire_count, socal_norbaja_coast)
 eastern_cascades_slopes_foothills_fire_count <- crop(fire_count, eastern_cascades_slopes_foothills)
 
-writeRaster(eastern_cascades_slopes_foothills_fire_count, filename = "shiny/www/fire_count/eastern_cascades_slopes_foothills_fire_count.tif", format = "GTiff")
+writeRaster(eastern_cascades_slopes_foothills_fire_count, filename = "shiny/data/fire_count/eastern_cascades_slopes_foothills_fire_count.tif", format = "GTiff")
 
 plot(coast_range_fire_count)
 
