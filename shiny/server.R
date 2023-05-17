@@ -1,51 +1,89 @@
-server <- function(input, output) {
+server <- function(input, output, session) {
   
-  proxy <- leafletProxy("map")
   # Load the raster layer
   
-  # NOTES - INSTEAD OF 13 FIELDS, ONLY USE 1
-  r <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
-  f <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf.tif")
+  # need to be able to plot each ecoregion independently 
   
-  eco_regions <- read_sf("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/ca_eco_l3") %>% 
-    janitor::clean_names()  %>% 
-    st_transform(crs_ca) %>% 
-    rename(region = us_l3name)
+  # attempt sunday at noon
   
-  # data reading in
+  rasters <- list(
+    "socal_norbaja_coast_gdes" = socal_norbaja_coast_gdes,
+    "southern_mountains_gdes" = southern_mountains_gdes,
+    "sonoran_basin_gdes" = sonoran_basin_gdes
+    # add the remaining ecoregions here
+  )
   
-  # socal_norbaja_coast <- eco_regions[12,]
-  # socal_norbaja_coast_gdes <- crop(r, socal_norbaja_coast)
+  # fire_count <- raster("shiny/www/fire_threat.tif")
+  
+  tmap_mode("view")
+  # end
+  
+  #  tm_df <- observe({
+  #    # proxy <- tmapProxy("map", session)
   # 
-  # southern_mountains <- eco_regions[9,]
-  # southern_mountains_gdes <- crop(r, southern_mountains)
+  #    validate(
+  #      need(length(input$ecoregion_type_input) > 0, "Select more than one ecosystem"))
   # 
-  #   map_1 <- tm_shape(socal_norbaja_coast_gdes, raster.downsample = TRUE) +
-  #   tm_raster()
-  #   
-  #   map_2 <- tm_shape(southern_mountains_gdes, raster.downsample = TRUE) +
-  #     tm_raster()
-  #   
-  #   tm <- tm_shape(socal_norbaja_coast_gdes) +
-  #     tm_raster() +
-  #     tm_shape(southern_mountains_gdes) +
-  #     tm_raster()
+  #    
+  #    tm <- tm_shape(socal_norbaja_coast_gdes) + tm_raster()
+  #    tm1 <- tm_shape(southern_mountains_gdes) + tm_raster()
+  #    # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
+  #    #   tm_shape(socal_norbaja_coast_gdes) + tm_raster()
+  #    # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
+  #    #   tm_shape(southern_mountains_gdes) + tm_raster()
+  #    # } else if ("sonoran_basin_gdes" %in% input$ecoregion_type_input) {
+  #    #   tm_shape(sonoran_basin_gdes) + tm_raster()
+  #    # }
+  # 
+  #  # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
+  #  #   tm_shape(socal_norbaja_coast_gdes) + tm_raster()
+  #  # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
+  #  #   tm_shape(southern_mountains_gdes) + tm_raster()
+  #  # } else if ("sonoran_basin_gdes" %in% input$ecoregion_type_input) {
+  #  #   tm_shape(sonoran_basin_gdes) + tm_raster()
+  #  # }
+  # 
+  #    # tm <- tmap::tmap_element()
+  #    # for (raster_name in input$ecoregion_type_input) {
+  #    #   raster_obj <- rasters[[raster_name]]
+  #    #   tm <- tm + tmap::tm_raster(raster_obj)
+  #    # }
+  # 
+  #    # putting tm raster layer into tm_df object and filtering by ecoregion_type - but need ecoregion_type to be a column in tm
+  # 
+  #    # tm_df <- tm %>%
+  #    #   filter(ecoregion_type %in% c(input$ecoregion_type_input))
+  # 
+  # 
+  # })
+  
+  
+  map_reactive <- reactive({
+    print(input$ecoregion_type_input)
+    print(input$firelayer_type_input)
     
+    if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
+      tm
+    } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
+      tm1
+    }else{
+      NULL
+    }
+  })
   
   output$map <- renderTmap({
-
-    tm
     
-    # if ("socal_norbaja_coast_gdes" %in% input$map) {
-    #   map_1
-    # } else if ("southern_mountains_gdes" %in% input$map) {
-    #   map_2
-    # }
-
+    req(!is.null(map_reactive()))
+    
+    print('Started loading')
+    map_reactive()
   })
-
-#  Update map whenever selection is made
+  
+  #  Update map whenever selection is made
   # observe({
+  
+  
+  
   #   
   #   if (input$socal_norbaja_coast_gdes) {
   #     tm$layers[1]$visible <- TRUE
@@ -71,8 +109,16 @@ server <- function(input, output) {
   #   # }
   # 
   # })
-
+  
 }
+
+
+
+
+
+
+
+
 
 
 
@@ -84,15 +130,15 @@ server <- function(input, output) {
 #     addProviderTiles("Esri.WorldImagery") %>%
 #     setView(-120.829529, 37.538843, zoom = 6) %>%
 #     addRasterImage(tslf_masked) #, opacity = input$layer_opacity, layerId = "rasterLayer") %>% 
-  # addLayersControl(overlayGroups = "rasterLayer", options = layersControlOptions(collapsed = FALSE)) %>% 
-  # addMouseCoordinates() %>% 
-  # addMeasure(
-  #   position = "bottomleft",
-  #   primaryLengthUnit = "miles",
-  #   primaryAreaUnit = "sqmiles",
-  #   activeColor = "#3D535D",
-  #   completedColor = "#36454F") 
-  
+# addLayersControl(overlayGroups = "rasterLayer", options = layersControlOptions(collapsed = FALSE)) %>% 
+# addMouseCoordinates() %>% 
+# addMeasure(
+#   position = "bottomleft",
+#   primaryLengthUnit = "miles",
+#   primaryAreaUnit = "sqmiles",
+#   activeColor = "#3D535D",
+#   completedColor = "#36454F") 
+
 # }) # End render leaflet
 
 # observeEvent(input$overlay, {

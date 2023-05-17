@@ -77,6 +77,19 @@ ui <- fluidPage(
                         
                         sidebarPanel(width = 3,
                                      
+                                     
+                                     # ecoregion type pickerInput ----
+                                     selectInput(inputId = "ecoregion_type_input",
+                                                 label = "Select ecoregion:",
+                                                 choices = c("socal_norbaja_coast_gdes",
+                                                             "southern_mountains_gdes",
+                                                             "sonoran_basin_gdes"), #?? would I need a tm df where ecoregion_type is a column??
+                                                 # options = list(pickerOptions(actionsBox = TRUE)),
+                                                 selected = "socal_norbaja_coast_gdes",
+                                                 multiple = TRUE
+                                                 
+                                     ), # END pickerInput
+                                     
                                      checkboxInput("socal_norbaja_coast_gdes", "So Cal GDEs", value = TRUE),
                                      checkboxInput("southern_mountains_gdes", "So Cal Mountain GDEs", value = TRUE),
                                      
