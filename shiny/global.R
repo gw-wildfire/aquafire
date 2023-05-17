@@ -12,6 +12,7 @@ library(sf)
 library(tmap)
 library(bslib)
 
+datadir <- path.expand("~/../../capstone/aquafire")
 
 preloaded = TRUE
 
@@ -20,7 +21,7 @@ if(!preloaded){
   
   source('shiny/code/crop.R', echo = T)
   
-  eco_regions <- read_sf("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/ca_eco_l3") %>% 
+  eco_regions <- read_sf("../aquafire/data/ca_eco_l3") %>% 
     janitor::clean_names()  %>% 
     st_transform(crs_ca) %>% 
     rename(region = us_l3name)

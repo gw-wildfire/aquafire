@@ -31,7 +31,7 @@ ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
   st_transform(crs_ca) # NAD27 / California Albers
 
 # Load gde .tif file
-gde <- raster("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/gde_boundaries.tif")
+gde <- raster("../aquafire/shiny/www/gde_boundaries.tif")
 # gde_sf <- st_read("/Users/Wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/data/gdes/Groundwater_dependent_ecosystems_summary.shp")
 
 crs(gde) <- "EPSG:3310"
@@ -70,6 +70,7 @@ tslf_raster <- 2022 - most_recent_raster
 
 tslf_raster_masked <- raster("shiny/www/tslf_raster_masked.tif")
 
+source("user/jillian/functions/raster_to_ecoregions.R")
 
 coast_range <- eco_regions[1,]
 central_basin <- eco_regions[2,]
