@@ -1,4 +1,4 @@
-fire_count_stats <- function(sample_dataframe){
+fire_count_stats <- function(sample_dataframe, eco_region_code = "Input in function"){
   gde <- sample_dataframe %>%
     filter(gde == 1)
   non_gde <- sample_dataframe %>%
@@ -31,7 +31,8 @@ fire_count_stats <- function(sample_dataframe){
   stats <- data.frame(group = c("GDEs and Non-GDEs", "GDEs", "Non-GDEs"), 
                       mean = c(mean_all, mean_gde, mean_non_gde), 
                       maximum = c(max_all, max_gde, max_non_gde),
-                      nonzero_mode = c(mode_all, mode_gde, mode_non_gde))
+                      nonzero_mode = c(mode_all, mode_gde, mode_non_gde), 
+                      ecoregion_code = c(eco_region_code, eco_region_code, eco_region_code))
   
   return(stats)
 }

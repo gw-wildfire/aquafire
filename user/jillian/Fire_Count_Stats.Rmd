@@ -38,9 +38,12 @@ library(rgdal)
 library(fasterize)
 library(exactextractr)
 library(dplyr)
+library(gridExtra)
+library(kableExtra)
 source("user/jillian/functions/remove_ag_urban.R")
 source("user/jillian/functions/raster_to_ecoregions.R")
 source("user/jillian/functions/stratified_sample.R")
+source("user/jillian/functions/fire_count_violin_plot.R")
 ```
 
 # Samples 
@@ -63,19 +66,60 @@ fire_count_85_sample <- stratified_sample(fire_count_85, gde_85, n = 1000)
 
 # Summary Stats
 ```{r}
-fire_count_1_stats <- fire_count_stats(fire_count_1_sample)
-fire_count_4_stats <- fire_count_stats(fire_count_4_sample)
-fire_count_5_stats <- fire_count_stats(fire_count_5_sample)
-fire_count_6_stats <- fire_count_stats(fire_count_6_sample)
-fire_count_7_stats <- fire_count_stats(fire_count_7_sample)
-fire_count_8_stats <- fire_count_stats(fire_count_8_sample)
-fire_count_9_stats <- fire_count_stats(fire_count_9_sample)
-fire_count_13_stats <- fire_count_stats(fire_count_13_sample)
-fire_count_14_stats <- fire_count_stats(fire_count_14_sample)
-fire_count_78_stats <- fire_count_stats(fire_count_78_sample)
-fire_count_80_stats <- fire_count_stats(fire_count_80_sample)
-fire_count_81_stats <- fire_count_stats(fire_count_81_sample)
-fire_count_85_stats <- fire_count_stats(fire_count_85_sample)
+fire_count_1_stats <- fire_count_stats(fire_count_1_sample, eco_region_code = 1)
+fire_count_4_stats <- fire_count_stats(fire_count_4_sample, eco_region_code = 4)
+fire_count_5_stats <- fire_count_stats(fire_count_5_sample, eco_region_code = 5)
+fire_count_6_stats <- fire_count_stats(fire_count_6_sample, eco_region_code = 6)
+fire_count_7_stats <- fire_count_stats(fire_count_7_sample, eco_region_code = 7)
+fire_count_8_stats <- fire_count_stats(fire_count_8_sample, eco_region_code = 8)
+fire_count_9_stats <- fire_count_stats(fire_count_9_sample, eco_region_code = 9)
+fire_count_13_stats <- fire_count_stats(fire_count_13_sample, eco_region_code = 13)
+fire_count_14_stats <- fire_count_stats(fire_count_14_sample, eco_region_code = 14)
+fire_count_78_stats <- fire_count_stats(fire_count_78_sample, eco_region_code = 78)
+fire_count_80_stats <- fire_count_stats(fire_count_80_sample, eco_region_code = 80)
+fire_count_81_stats <- fire_count_stats(fire_count_81_sample, eco_region_code = 81)
+fire_count_85_stats <- fire_count_stats(fire_count_85_sample, eco_region_code = 85)
+
+fire_count_stats_all <- rbind(fire_count_1_stats, fire_count_4_stats, 
+                              fire_count_5_stats, fire_count_6_stats,
+                              fire_count_7_stats, fire_count_8_stats,
+                              fire_count_9_stats, fire_count_13_stats, 
+                              fire_count_14_stats, fire_count_78_stats,
+                              fire_count_80_stats, fire_count_81_stats,
+                              fire_count_85_stats)
+```
+
+# Visualizations 
+```{r fig.align="center", echo = FALSE,fig.width = 14}
+plot_fc_1 <- fire_count_violin_plot(fire_count_1_sample, eco_region_code = 1)
+plot_fc_4 <- fire_count_violin_plot(fire_count_4_sample, eco_region_code = 4)
+plot_fc_5 <- fire_count_violin_plot(fire_count_5_sample, eco_region_code = 5)
+plot_fc_6 <- fire_count_violin_plot(fire_count_6_sample, eco_region_code = 6)
+plot_fc_7 <- fire_count_violin_plot(fire_count_7_sample, eco_region_code = 7)
+plot_fc_8 <- fire_count_violin_plot(fire_count_8_sample, eco_region_code = 8)
+plot_fc_9 <- fire_count_violin_plot(fire_count_9_sample, eco_region_code = 9)
+plot_fc_13 <- fire_count_violin_plot(fire_count_13_sample, eco_region_code = 13)
+plot_fc_14 <- fire_count_violin_plot(fire_count_14_sample, eco_region_code = 14)
+plot_fc_78 <- fire_count_violin_plot(fire_count_78_sample, eco_region_code = 78)
+plot_fc_80 <- fire_count_violin_plot(fire_count_80_sample, eco_region_code = 80)
+plot_fc_81 <- fire_count_violin_plot(fire_count_81_sample, eco_region_code = 81)
+plot_fc_85 <- fire_count_violin_plot(fire_count_85_sample, eco_region_code = 85)
+
+plot_fc_6
+plot_fc_85
+plot_fc_8 
+```
+
+# Pretty summary tables 
+```{r}
+pretty_6 <- kable(fire_count_6_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Central California Foothills and Coastal Mountains") %>%
+  kable_styling(bootstrap_options = "striped")
+
+pretty_85 <- kable(fire_count_85_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Southern California/Northern Baja Coast") %>%
+  kable_styling(bootstrap_options = "striped")
+
+pretty_8 <- kable(fire_count_8_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Southern California Mountains") %>%
+  kable_styling(bootstrap_options = "striped")
 ```
 
 

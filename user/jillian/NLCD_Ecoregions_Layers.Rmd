@@ -40,6 +40,11 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
   st_transform(crs_ca) %>% 
   rename(region = us_l3name) %>% 
   mutate(us_l3code = as.numeric(us_l3code))
+
+# Create file containing eco region names 
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
+
   
 
 # Read in CA county boundaries
@@ -62,6 +67,22 @@ crs(ca_rasterra) <- crs_ca$wkt
 ```{r}
 # Fasterize to rasterize, extent to match others 
 eco_region_raster <- fasterize(eco_regions, ca_rast, field = "us_l3code")
+```
+
+```{r}
+# Individual eco region polygons 
+# Iterate over each polygon
+for (i in 1:nrow(eco_regions)) {
+  # Extract individual polygon
+  polygon <- eco_regions[i, ]
+  code <- eco_regions_names$us_l3code[i]
+  
+  
+  # Save individual polygon as a shapefile
+  filename <- paste0("eco_region_", code, ".shp")
+  st_write(polygon, filename)
+}
+
 ```
 
 
