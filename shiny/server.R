@@ -6,12 +6,12 @@ server <- function(input, output, session) {
   
   # attempt sunday at noon
   
-  rasters <- list(
-    "socal_norbaja_coast_gdes" = socal_norbaja_coast_gdes,
-    "southern_mountains_gdes" = southern_mountains_gdes,
-    "sonoran_basin_gdes" = sonoran_basin_gdes
-    # add the remaining ecoregions here
-  )
+  # rasters <- list(
+  #   "socal_norbaja_coast_gdes" = socal_norbaja_coast_gdes,
+  #   "southern_mountains_gdes" = southern_mountains_gdes,
+  #   "sonoran_basin_gdes" = sonoran_basin_gdes
+  #   # add the remaining ecoregions here
+  # )
   
   # fire_count <- raster("shiny/data/fire_threat.tif")
   
@@ -62,13 +62,15 @@ server <- function(input, output, session) {
     print(input$ecoregion_type_input)
     print(input$firelayer_type_input)
     
-    if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
-      tm
-    } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
-      tm1
-    }else{
-      NULL
-    }
+    gde_4
+    
+    # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
+    #   tm
+    # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
+    #   tm1
+    # }else{
+    #   NULL
+    # }
   })
   
   output$map <- renderTmap({

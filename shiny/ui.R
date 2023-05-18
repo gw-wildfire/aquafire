@@ -79,6 +79,7 @@ ui <- fluidPage(
                                      
                                      
                                      # ecoregion type pickerInput ----
+                                     # EDIT SO THAT APPLIES TO ECOREGIONS
                                      selectInput(inputId = "ecoregion_type_input",
                                                  label = "Select ecoregion:",
                                                  choices = c("socal_norbaja_coast_gdes",

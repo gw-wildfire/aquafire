@@ -14,12 +14,12 @@ library(fasterize)
 
 ## Load ecoregions and counties and gde shapefiles 
 
-crs_ca <- st_crs(3309)
+crs_ca <- st_crs(3310)
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform(crs_ca)
 
-# Load in ecoregions shapefile
+# Load in ecoregions shapefile - NEED THIS??
 eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
   janitor::clean_names()  %>% 
   st_transform(crs_ca) %>% 
@@ -86,6 +86,7 @@ sonoran_basin <- eco_regions[11,]
 socal_norbaja_coast <- eco_regions[12,]
 eastern_cascades_slopes_foothills <- eco_regions[13,]
 
+# delete below?
 # coast_range_crop <- crop(tslf_raster_masked, coast_range)
 # central_basin_crop <- crop(tslf_raster_masked, central_basin)
 # mojave_basin_crop <- crop(tslf_raster_masked, mojave_basin)
@@ -137,6 +138,21 @@ tslf_list[[13]] <- eastern_cascades_slopes_foothills_crop
 fire_count <- raster("shiny/data/fire_count.tif")
 fire_threat <- raster("shiny/data/fire_threat.tif")
 
+# coast_range_fire_count <- crop(fire_count, coast_range)
+# central_basin_fire_count <- crop(fire_count, central_basin)
+# mojave_basin_fire_count <- crop(fire_count, mojave_basin)
+# cascades_fire_count <- crop(fire_count, cascades)
+# sierra_nevada_fire_count <- crop(fire_count, sierra_nevada)
+# central_foothills_coastal_mountains_fire_count <- crop(fire_count, central_foothills_coastal_mountains)
+# central_valley_fire_count <- crop(fire_count, central_valley)
+# klamath_mountains_fire_count <- crop(fire_count, klamath_mountains)
+# southern_mountains_fire_count <- crop(fire_count, southern_mountains)
+# northern_basin_fire_count <- crop(fire_count, northern_basin)
+# sonoran_basin_fire_count <- crop(fire_count, sonoran_basin)
+# socal_norbaja_coast_fire_count <- crop(fire_count, socal_norbaja_coast)
+# eastern_cascades_slopes_foothills_fire_count <- crop(fire_count, eastern_cascades_slopes_foothills)
+
+# cropping fire_count by ecoregion
 coast_range_fire_count <- crop(fire_count, coast_range)
 central_basin_fire_count <- crop(fire_count, central_basin)
 mojave_basin_fire_count <- crop(fire_count, mojave_basin)
@@ -151,27 +167,15 @@ sonoran_basin_fire_count <- crop(fire_count, sonoran_basin)
 socal_norbaja_coast_fire_count <- crop(fire_count, socal_norbaja_coast)
 eastern_cascades_slopes_foothills_fire_count <- crop(fire_count, eastern_cascades_slopes_foothills)
 
-writeRaster(eastern_cascades_slopes_foothills_fire_count, filename = "shiny/data/fire_count/eastern_cascades_slopes_foothills_fire_count.tif", format = "GTiff")
-
-plot(coast_range_fire_count)
 
 
-beepr::beep()
 
-end <- Sys.time()
-print(end - start)
-beepr::beep()
 
-plot(gde_crop)
 
 writeRaster(coast_range_crop, "coast_range_crop.tif", format = "GTiff")
 
-# trying to read in GDE data with tslf as a shapefile
-a <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/socal_norbaja_gde_tslf/socal_norbaja_gde_tslf.shp")
-a <- st_read("~/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gdes/socal_norbaja_gde_tslf/socal_norbaja_gde_tslf.shp")
 
-tm_shape(a) +
-  tm_polygons()
+
 
 # crop gdes by county
 gde_crop <- crop(gde, socal_norbaja_coast)
