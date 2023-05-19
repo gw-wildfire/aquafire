@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-Run the Fire Count and GDE sections of the Objects.RMD file to get all spatial objects necessary to run this code.
+Run the Fire Count and GDE sections of the Objects.RMD file to get all spatial objects necessary to run this code. Download necessary files and put them in the raster_output folder before running. 
 
 ### Eco Region Key: 
 
@@ -89,7 +89,7 @@ fire_count_stats_all <- rbind(fire_count_1_stats, fire_count_4_stats,
                               fire_count_85_stats)
 ```
 
-# Visualizations 
+# Basic Visualizations 
 ```{r fig.align="center", echo = FALSE,fig.width = 14}
 plot_fc_1 <- fire_count_violin_plot(fire_count_1_sample, eco_region_code = 1)
 plot_fc_4 <- fire_count_violin_plot(fire_count_4_sample, eco_region_code = 4)
@@ -110,6 +110,64 @@ plot_fc_85
 plot_fc_8 
 ```
 
+# Logistic Regressions
+
+```{r}
+# Coast Range
+fire_count_1_sample$gde <- factor(fire_count_1_sample$gde)
+fire_count_1_glm <- glm(value ~ gde, data = fire_count_1_sample, family = "poisson")
+
+# Cascades 
+fire_count_4_sample$gde <- factor(fire_count_4_sample$gde)
+fire_count_4_glm <- glm(value ~ gde, data = fire_count_4_sample, family = "poisson")
+
+# Sierra Nevada - stat significant 
+fire_count_5_sample$gde <- factor(fire_count_5_sample$gde)
+fire_count_5_glm <- glm(value ~ gde, data = fire_count_5_sample, family = "poisson")
+
+# Central CA Foothills and Coastal Mountains 
+fire_count_6_sample$gde <- factor(fire_count_6_sample$gde)
+fire_count_6_glm <- glm(value ~ gde, data = fire_count_6_sample, family = "poisson")
+
+# Central California Valley
+fire_count_7_sample$gde <- factor(fire_count_7_sample$gde)
+fire_count_7_glm <- glm(value ~ gde, data = fire_count_7_sample, family = "poisson")
+
+# Southern CA Mountains
+fire_count_8_sample$gde <- factor(fire_count_8_sample$gde)
+fire_count_8_glm <- glm(value ~ gde, data = fire_count_8_sample, family = "poisson")
+
+# Eastern Cascades Slopes and Foothills - stat significant 
+fire_count_9_sample$gde <- factor(fire_count_9_sample$gde)
+fire_count_9_glm <- glm(value ~ gde, data = fire_count_9_sample, family = "poisson")
+
+# Central Basin and Range - stat significant 
+fire_count_13_sample$gde <- factor(fire_count_13_sample$gde)
+fire_count_13_glm <- glm(value ~ gde, data = fire_count_13_sample, family = "poisson")
+
+# Mojave Basin and Range - stat significant
+fire_count_14_sample$gde <- factor(fire_count_14_sample$gde)
+fire_count_14_glm <- glm(value ~ gde, data = fire_count_14_sample, family = "poisson")
+
+# Klamath Mountains/California High North Coast Range - stat significant 
+fire_count_78_sample$gde <- factor(fire_count_78_sample$gde)
+fire_count_78_glm <- glm(value ~ gde, data = fire_count_78_sample, family = "poisson")
+
+# Northern Basin and Range - stat significant 
+fire_count_80_sample$gde <- factor(fire_count_80_sample$gde)
+fire_count_80_glm <- glm(value ~ gde, data = fire_count_80_sample, family = "poisson")
+
+# Sonoran Basin and Range 
+fire_count_81_sample$gde <- factor(fire_count_81_sample$gde)
+fire_count_81_glm <- glm(value ~ gde, data = fire_count_81_sample, family = "poisson")
+
+# Southern CA and Northern Baja Coast
+fire_count_85_sample$gde <- factor(fire_count_85_sample$gde)
+fire_count_85_glm <- glm(value ~ gde, data = fire_count_85_sample, family = "poisson")
+```
+
+
+
 # Pretty summary tables 
 ```{r}
 pretty_6 <- kable(fire_count_6_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Central California Foothills and Coastal Mountains") %>%
@@ -120,6 +178,10 @@ pretty_85 <- kable(fire_count_85_stats %>% select(-ecoregion_code), align = "c",
 
 pretty_8 <- kable(fire_count_8_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Southern California Mountains") %>%
   kable_styling(bootstrap_options = "striped")
+
+pretty_6
+pretty_8
+pretty_85
 ```
 
 

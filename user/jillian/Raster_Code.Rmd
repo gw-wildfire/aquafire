@@ -21,6 +21,7 @@ library(rgdal)
 library(fasterize)
 library(exactextractr)
 library(dplyr)
+library(terra)
 source("user/jillian/functions/remove_ag_urban.R")
 source("user/jillian/functions/raster_to_ecoregions.R")
 source("user/jillian/functions/stratified_sample.R")
@@ -86,6 +87,7 @@ gde_polygons <- gde_data %>%
 This valueless raster has a resolution of 30 x 30. We'll be using it to rasterize the fire perimeters layer.
 
 ```{r}
+crs_ca <- st_crs(3310)
 ## Set extent
 ca_ext <- extent(ca_counties)
 ## RASTER OBJECT Create valueless raster layer w/ 30 (unit is something) resolution 
@@ -115,6 +117,26 @@ gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer 
 
 # Create GDE Objects divided into ecoregions 
 # raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
+```
+
+### GDE Polygons by Eco Region
+
+```{r}
+# Perform spatial join to assign eco region IDs to GDE polygons
+gde_eco <- st_join(gde_polygons, eco_regions) %>%
+  st_simplify(preserveTopology = TRUE, 
+              dTolerance = 5) # simplify to reduce file sizes 
+
+ecoregion_codes <- as.numeric(unique(gde_eco$us_l3code))
+
+for(id in ecoregion_codes){
+  gdes_in_ecoregion <- gde_eco %>%
+    filter(us_l3code == id) %>%
+    select(POLYGON_ID, WETLAND_NA, VEGETATION, DOMINANT_S, DOMINANT_C, area, us_l3code, region, geometry)
+  output_file <- paste0("raster_output/gde_eco_regions_simplified/gde_polygon_", id, ".shp")
+  
+  st_write(gdes_in_ecoregion, output_file)
+}
 ```
 
 # Eco Region Raster
@@ -182,19 +204,18 @@ tslf_raster_masked <- mask(tslf_raster, ca_counties)
 crs(tslf_raster_masked) <- crs_ca$wkt
 
 # Remove ag and urban areas 
-tslf_final <- remove_ag_urban(tslf_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+# tslf_final <- remove_ag_urban(tslf_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI
 
-# raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
+raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
 
 # writeRaster(tslf_final, "raster_output/tslf_final.tif")
-
 ```
 
 # Fire Threat
 
 ```{r}
 fire_threat <- raster(here::here("data", "fire_threat.tif")) %>%
-  rast() %>%
+  terra::rast() %>%
   terra::project(y = crs_ca$wkt)
   
 
@@ -207,7 +228,7 @@ fire_threat_rasterlayer <- raster(fire_threat_masked)
 # Remove ag and urban areas 
 fire_threat_final <- remove_ag_urban(fire_threat_rasterlayer) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
 
-# writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif")
+writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif")
 
-# raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
+raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
 ```
