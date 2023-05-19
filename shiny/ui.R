@@ -17,7 +17,7 @@ ui <- fluidPage(
     fluidRow(column(6,
                     h1("Aquafire")),
              column(6,
-                    HTML("<a href='https://www.tnc.org/'><img src='tnc_logo.png' align= 'right' height= '60' width = '180' alt='This is The Nature Conservancy logo'/></a>")))),
+                    HTML("<a href='https://www.tnc.org/'><img src='shiny/data/tnc_logo.png' align= 'right' height= '60' width = '180' alt='This is The Nature Conservancy logo'/></a>")))),
   
   # Navigation Bar ----
   navbarPage("",
@@ -77,9 +77,30 @@ ui <- fluidPage(
                         
                         sidebarPanel(width = 3,
                                      
-                                     checkboxInput("socal_norbaja_coast_gdes", "So Cal GDEs", value = TRUE),
-                                     checkboxInput("southern_mountains_gdes", "So Cal Mountain GDEs", value = TRUE),
                                      
+                                     # ecoregion type pickerInput ----
+                                     # EDIT SO THAT APPLIES TO ECOREGIONS
+                                     selectInput(inputId = "ecoregion_type_input",
+                                                 label = "Select ecoregion:",
+                                                 choices = names(gde_list), #?? would I need a tm df where ecoregion_type is a column??
+                                                 # options = list(pickerOptions(actionsBox = TRUE)),
+                                                 #selected = "socal_norbaja_coast_gdes",
+                                                 multiple = F
+                                                 
+                                     ), # END pickerInput
+                                     
+                                     #checkboxInput("firelayer_type_input", "So Cal GDEs", value = TRUE),
+                                    # checkboxInput("southern_mountains_gdes", "So Cal Mountain GDEs", value = TRUE),
+                                     
+                                    radioButtons('firelayer_type_input',
+                                                       'Fire Rasters',
+                                                       choices = names(fire_count_list)),
+                                    
+                                    # checkboxGroupButtons('firelayer_type_input',
+                                    #                      'Fire Count',
+                                    #                      choices = names(fire_count_list),
+                                    #                      selected = names(fire_count_list[1]))
+                                                      
                                      # checkboxGroupInput(inputId = "map",
                                      #                    label = "Select fire layers:",
                                      #                    choices = c("socal_norbaja_coast_gdes", "southern_mountains_gdes"),
@@ -94,7 +115,7 @@ ui <- fluidPage(
                         
                         # TMAP UI
                         
-                        tmapOutput("map")
+                        tmapOutput("map") %>% withSpinner()
                         
                         
                         # LEAFLET UI

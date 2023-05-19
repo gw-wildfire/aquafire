@@ -113,6 +113,155 @@ library(raster)
 library(terra)
 ```
 
+
+```{r}
+# Load the necessary library
+library(terra)
+
+# Define the directory where the raster files are located
+raster_dir <- here::here("data", "MTBS_BSmosaics")
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+# Get a list of .tif files in the directory
+tif_files <- list.files(raster_dir, pattern = "\\.tif$", full.names = TRUE)
+
+# Initialize the raster stack variable
+raster_stack <- NULL
+
+# Loop through the files
+for (file_path in tif_files) {
+  # Print a message to the console
+  message("Processing file: ", file_path)
+
+  # Read the raster file
+  raster <- rast(file_path)
+  
+  # Project the raster to the target CRS
+  raster_new_crs <- project(raster, target_crs)
+  
+  # If this is the first file, initialize the raster stack
+  if (is.null(raster_stack)) {
+    raster_stack <- raster_new_crs
+  } else {
+    # Otherwise, resample the raster to match the first, and add it to the stack
+    raster_resampled <- resample(raster_new_crs, raster_stack, method = "near")
+    raster_stack <- c(raster_stack, raster_resampled)
+  }
+}
+
+writeRaster(raster_stack, file.path(here::here('raster_output', 'burn_severity_all.tif')))
+
+# Plot the raster stack
+plot(raster_stack, main = "Burn Severity 1984-2021")
+
+```
+
+```{r}
+raster_stack <- rast(here::here('raster_output', 'burn_severity_all.tif'))
+
+non_zero_mode <- function(x) {
+  x <- x[x != 0]  # Exclude zeros
+  if (length(x) == 0) return(0)  # If all values were zero, return zero
+  uniqx <- unique(x)
+  uniqx[which.max(tabulate(match(x, uniqx)))]
+}
+
+# Apply the non-zero mode function to each cell in the raster stack
+mode_raster <- app(raster_stack, non_zero_mode)
+
+plot(mode_raster)
+```
+
+
+```{r}
+# Load the necessary library
+library(terra)
+
+# Define the directory where the raster files are located
+raster_dir <- here::here("data", "MTBS_BSmosaics_copy")
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+# # Read the raster files
+# burn_2020 <- rast(here::here("data", "MTBS_BSmosaics_copy", "mtbs_CA_2020.tif"))
+# 
+# # Project both rasters to the target CRS
+# burn_2020_new_crs <- project(burn_2020, target_crs)
+
+# Get a list of .tif files in the directory
+tif_files <- list.files(raster_dir, pattern = "\\.tif$", full.names = TRUE)
+
+# Create an empty raster stack
+raster_stack <- rast()
+
+# Loop through the files
+for (file_path in tif_files) {
+  # Read the raster file
+  raster <- rast(file_path)
+  
+  # Print a message to the console
+  message("Processing file: ", tif_files[i])
+  
+  # Project the raster to the target CRS
+  raster_new_crs <- project(raster, target_crs)
+  
+  # # Resample the raster to a common resolution and extent
+  # raster_resampled <- resample(raster_new_crs, raster_stack)
+  
+  # Combine the resampled raster with the raster stack
+  burn_severity_raster_stack <- c(raster_stack, raster_resampled)
+}
+
+# Plot the raster stack
+plot(burn_severity_raster_stack, main = "Burn Severity 1984-2021")
+```
+
+
+### TEST 1
+
+```{r}
+# Load the necessary library
+library(terra)
+
+# Define the directory where the raster files are located
+raster_dir <- here::here("data", "MTBS_BSmosaics")
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+# Create an empty raster stack
+raster_stack <- rast()
+
+# Loop through the years from 1988 to 2021
+for (year in 2019:2021) {
+  # Construct the file path for the raster
+  file_path <- file.path(raster_dir, paste0("mtbs_CA_", year, ".tif"))
+  
+  # Read the raster file
+  # raster <- rast(file_path)
+  
+  # Project the raster to the target CRS
+  #raster_new_crs <- project(raster, target_crs)
+  
+  # Resample the raster to a common resolution and extent
+  #raster_resampled <- resample(raster_new_crs, raster_stack)
+  
+  # Stack the resampled raster onto the raster stack
+  #raster_stack <- c(raster_stack, raster_resampled)
+  
+  # Print a message indicating the current layer
+  #message("Processing layer:", year)
+}
+
+# Plot the raster stack
+plot(raster_stack, main = "Burn Severity 1988-2021")
+
+```
+
+
 ```{r}
 # Value	Legend
 # 0	Unburnt
@@ -192,7 +341,7 @@ setwd("~/meds/capstone/aquafire/data/MTBS_BSmosaics")
 # Get a list of .tif files in the directory
 tif_files <- list.files(pattern = "\\.tif$")
 
-raster(tif_files)
+rast(tif_files)
 
 # Use a loop to read the .tif files into a list of Raster* objects
 raster_list <- list()

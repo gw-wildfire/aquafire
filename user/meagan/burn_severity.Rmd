@@ -30,62 +30,68 @@ library(tmap)
 setwd(here('~', 'meds', 'capstone', 'aquafire'))
 ```
 
-# Burn Severity 2021
+## Burn Severity
 ```{r}
-# Read the raster files
-burn_2021 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2021.tif"))
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+### Read in Burn Severity All .tif file
+```{r}
+burn_severity_stack <- rast(here::here('raster_output', 'burn_severity_all.tif'))
+```
+
+
+### Burn Severity All for loop - takes 3 hours to load
+```{r}
+# Load the necessary library
+library(terra)
+
+# Define the directory where the raster files are located
+raster_dir <- here::here("data", "MTBS_BSmosaics")
 
 # Define the target CRS
 target_crs <- "EPSG:3310"
 
-tic()
-# Project both rasters to the target CRS
-burn_2020_new_crs <- project(burn_2021, target_crs)
-toc()
+# Get a list of .tif files in the directory
+tif_files <- list.files(raster_dir, pattern = "\\.tif$", full.names = TRUE)
 
-# Plot 2021 raster
-plot(burn_2021_new_crs, main = "Burn Severity 2021")
-```
+# Initialize the raster stack variable
+raster_stack <- NULL
 
-# Burn Severity 2020
-```{r}
-# Read the raster files
-burn_2020 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2020.tif"))
+# Loop through the files
+for (file_path in tif_files) {
+  # Print a message to the console
+  message("Processing file: ", file_path)
 
-# Define the target CRS
-target_crs <- "EPSG:3310"
+  # Read the raster file
+  raster <- rast(file_path)
+  
+  # Project the raster to the target CRS
+  raster_new_crs <- project(raster, target_crs)
+  
+  # If this is the first file, initialize the raster stack
+  if (is.null(raster_stack)) {
+    raster_stack <- raster_new_crs
+  } else {
+    # Otherwise, resample the raster to match the first, and add it to the stack
+    raster_resampled <- resample(raster_new_crs, raster_stack, method = "near")
+    raster_stack <- c(raster_stack, raster_resampled)
+  }
+}
 
-tic()
-# Project both rasters to the target CRS
-burn_2020_new_crs <- project(burn_2020, target_crs)
-toc()
+writeRaster(raster_stack, file.path(here::here('raster_output', 'burn_severity_all.tif')))
 
-# Plot 2020 raster
-plot(burn_2020_new_crs, main = "Burn Severity 2020")
-```
-
-# Burn Severity 2019
-```{r}
-# Read the raster files
-burn_2020 <- rast(here("data", "MTBS_BSmosaics", "mtbs_CA_2019.tif"))
-
-# Define the target CRS
-target_crs <- "EPSG:3310"
-
-tic()
-# Project both rasters to the target CRS
-burn_2020_new_crs <- project(burn_2019, target_crs)
-toc()
-
-# Plot 2019 raster
-plot(burn_2020_new_crs, main = "Burn Severity 2019")
-```
-
-```{r}
-# Read in California boundary
-cali <- read_sf(here('data', 'ca-state-boundary')) %>% # read in California polygon
-  clean_names()  %>% 
-  st_transform("EPSG: 3310") # NAD28 / California Albers
+# Plot the raster stack
+plot(raster_stack, main = "Burn Severity 1984-2021")
 ```
 
 

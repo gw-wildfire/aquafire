@@ -47,3 +47,5 @@ vignettes/*.pdf
 *raster_output
 
 *coast_range_crop.tif
+
+*burn_severity_all.tif
