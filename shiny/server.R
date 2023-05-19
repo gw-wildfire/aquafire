@@ -62,15 +62,13 @@ server <- function(input, output, session) {
     print(input$ecoregion_type_input)
     print(input$firelayer_type_input)
     
-    gde_4
+    tm_level_one = tm_shape(tslf_list[[input$ecoregion_type_input]]) +
+      tm_raster()
     
-    # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
-    #   tm
-    # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
-    #   tm1
-    # }else{
-    #   NULL
-    # }
+    tm_level_one +
+      tm_shape(fire_count_list[[input$firelayer_type_input]]) +
+      tm_raster()
+    
   })
   
   output$map <- renderTmap({
