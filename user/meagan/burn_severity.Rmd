@@ -9,28 +9,8 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-```{r}
-# load libraries
-library(tidyverse)
-library(dplyr)
-library(here)
-library(janitor)
-library(tmap)
-library(stars)
-library(gridExtra)
-library(raster)
-library(terra)
-library(tictoc)
-library(tmap)
-```
-
-
-```{r}
-# set working directory
-setwd(here('~', 'meds', 'capstone', 'aquafire'))
-```
-
 ## Burn Severity
+
 ```{r}
 #load libraries
 library(tidyverse)
@@ -44,13 +24,79 @@ library(raster)
 library(terra)
 ```
 
+```{r}
+# set working directory
+setwd(here('~', 'meds', 'capstone', 'aquafire'))
+```
+
 ### Read in Burn Severity All .tif file
+
 ```{r}
 burn_severity_stack <- rast(here::here('raster_output', 'burn_severity_all.tif'))
 ```
 
+### Read in Burn Severity Reclassified
+
+```{r}
+burn_severity_recl <- rast(here::here('raster_output', 'burn_severity_recl.tif'))
+```
+
+### Reassign Values
+
+```{r}
+# Value	Legend
+# 0	Unburnt
+# 1	unburnt/low
+
+# 2	low
+# 3	moderate
+# 4	high
+
+# 5	increased greenness
+# 6	masked
+
+# Define reclassification matrix
+bs_recl <- c(-Inf, 1, NA,   # Unburnt
+             1, 2, NA,      # unburnt/low
+             2, 3, 2,       # low
+             3, 4, 3,       # moderate
+             4, 5, 4,       # high
+             5, 6, NA,      # increased greenness
+             6, Inf, NA)    # masked
+
+# Convert to a matrix with 3 columns
+bs_matrix <- matrix(bs_recl, ncol = 3, byrow = TRUE)
+
+# Apply reclassification to the raster stack
+burn_severity_recl <- classify(burn_severity_stack, rcl = bs_matrix)
+
+burn_severity_recl
+
+writeRaster(burn_severity_recl, file.path(here::here('raster_output', 'burn_severity_recl.tif')))
+```
+
+### Find mode across raster stack
+
+```{r}
+# Define the function to calculate mode
+getmode <- function(x) {
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
+
+# Compute mode
+mode_values <- lapply(1:nlyr(burn_severity_recl), function(i) {
+  getmode(values(burn_severity_recl[[i]]))
+})
+
+mode_raster <- do.call(pmax, mode_values)
+mode_raster <- terra::rast(mode_raster)
+
+plot(mode_raster)
+```
 
 ### Burn Severity All for loop - takes 3 hours to load
+
 ```{r}
 # Load the necessary library
 library(terra)
@@ -91,9 +137,22 @@ for (file_path in tif_files) {
 writeRaster(raster_stack, file.path(here::here('raster_output', 'burn_severity_all.tif')))
 
 # Plot the raster stack
-plot(raster_stack, main = "Burn Severity 1984-2021")
+plot(raster_stack)
 ```
 
+```{r}
+# Define a function to calculate mode
+mode_fun <- function(x) {
+  if(all(is.na(x))) {
+    return(NA_real_)  # return NA of class "numeric"
+  }
+  ux <- unique(x)
+  ux[which.max(tabulate(match(x, ux)))]
+}
 
+# Use the app function to calculate the mode
+mode_raster <- app(burn_severity_stack, fun = mode_fun)
 
-
+# Save the resulting raster layer
+writeRaster(mode_raster, filename = "mode_raster.tif", format = "GTiff", overwrite = TRUE)
+```
