@@ -28,6 +28,7 @@ fire_count_final <- raster("raster_output/fire_count_final.tif")
 tslf_final <- raster("raster_output/tslf_final.tif")
 gde_final <- raster("raster_output/gde_final.tif")
 nlcd_rasterlayer <- raster("raster_output/nlcd.tif")
+fire_threat_final <- raster("raster_output/fire_threat_final.tif")
 ```
 
 # Final Rasters by Ecoregion 
@@ -65,6 +66,40 @@ fire_count_78 <- raster("raster_output/fire_count_78.tif")
 fire_count_80 <- raster("raster_output/fire_count_80.tif")
 fire_count_81 <- raster("raster_output/fire_count_81.tif")
 fire_count_85 <- raster("raster_output/fire_count_85.tif")
+```
+
+## TSLF 
+```{r}
+tslf_1 <- raster("raster_output/tslf_1.tif")
+tslf_4 <- raster("raster_output/tslf_4.tif")
+tslf_5 <- raster("raster_output/tslf_5.tif")
+tslf_6 <- raster("raster_output/tslf_6.tif")
+tslf_7 <- raster("raster_output/tslf_7.tif")
+tslf_8 <- raster("raster_output/tslf_8.tif")
+tslf_9 <- raster("raster_output/tslf_9.tif")
+tslf_13 <- raster("raster_output/tslf_13.tif")
+tslf_14 <- raster("raster_output/tslf_14.tif")
+tslf_78 <- raster("raster_output/tslf_78.tif")
+tslf_80 <- raster("raster_output/tslf_80.tif")
+tslf_81 <- raster("raster_output/tslf_81.tif")
+tslf_85 <- raster("raster_output/tslf_85.tif")
+```
+
+## Fire Threat
+```{r}
+fire_threat_1 <- raster("raster_output/fire_threat_1.tif")
+fire_threat_4 <- raster("raster_output/fire_threat_4.tif")
+fire_threat_5 <- raster("raster_output/fire_threat_5.tif")
+fire_threat_6 <- raster("raster_output/fire_threat_6.tif")
+fire_threat_7 <- raster("raster_output/fire_threat_7.tif")
+fire_threat_8 <- raster("raster_output/fire_threat_8.tif")
+fire_threat_9 <- raster("raster_output/fire_threat_9.tif")
+fire_threat_13 <- raster("raster_output/fire_threat_13.tif")
+fire_threat_14 <- raster("raster_output/fire_threat_14.tif")
+fire_threat_78 <- raster("raster_output/fire_threat_78.tif")
+fire_threat_80 <- raster("raster_output/fire_threat_80.tif")
+fire_threat_81 <- raster("raster_output/fire_threat_81.tif")
+fire_threat_85 <- raster("raster_output/fire_threat_85.tif")
 ```
 
 

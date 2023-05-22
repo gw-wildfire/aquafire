@@ -14,22 +14,33 @@ library(bslib)
 
 datadir <- path.expand("~/../../capstone/aquafire")
 
-preloaded = TRUE
+preloaded = FALSE
 
 if(!preloaded){
   # NOTES - INSTEAD OF 13 FIELDS, ONLY USE 1
   
-  source('shiny/code/crop.R', echo = T)
+  print(getwd())
+  # DELETE AFTER READING OVER ALL IMPORTANT DATA
+  # source('code/crop.R', echo = T)
   
-  eco_regions <- read_sf("../aquafire/data/ca_eco_l3") %>% 
+  # reading in data
+  crs_ca <- st_crs(3310)
+  # reading in ecoregions
+  eco_regions <- read_sf("data/ca_eco_l3") %>% 
     janitor::clean_names()  %>% 
     st_transform(crs_ca) %>% 
     rename(region = us_l3name)
   
-  # data reading in
+  # Load in ecoregions shapefile
   
-  tslf_raster_masked <- raster("shiny/www/tslf_raster_masked.tif")
+  # ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
+  #   janitor::clean_names() %>%
+  #   st_transform(crs_ca)
   
+  # reading in tslf of california
+  tslf_raster_masked <- raster("data/tslf_raster_masked.tif")
+  
+  # subsetting by ecoregion
   coast_range <- eco_regions[1,]
   central_basin <- eco_regions[2,]
   mojave_basin <- eco_regions[3,]
@@ -44,61 +55,75 @@ if(!preloaded){
   socal_norbaja_coast <- eco_regions[12,]
   eastern_cascades_slopes_foothills <- eco_regions[13,]
   
-  coast_range_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/coast_range_crop.tif")
-  central_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_basin_crop.tif")
-  mojave_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/mojave_basin_crop.tif")
-  cascades_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/cascades_crop.tif")
-  sierra_nevada_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/sierra_nevada_crop.tif")
-  central_foothills_coastal_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_foothills_coastal_mountains_crop.tif")
-  central_valley_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/central_valley_crop.tif")
-  klamath_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/klamath_mountains_crop.tif")
-  southern_mountains_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/southern_mountains_crop.tif")
-  northern_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/northern_basin_crop.tif")
-  sonoran_basin_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/sonoran_basin_crop.tif")
-  socal_norbaja_coast_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/socal_norbaja_coast_crop.tif")
-  eastern_cascades_slopes_foothills_crop <- raster("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/www/tslf/eastern_cascades_slopes_foothills_crop.tif")
+
+  # making a list of TSLF by ecoregion----
+  print('loading TSLF data')
+  path_tslf <- "data/tslf"
   
+  tslf.files <- list.files(path_tslf, full.names = T)
+  tslf.files2 <- list.files(path_tslf, full.names = F)
+  tslf.files2 = gsub('.tif', '', tslf.files2)
   tslf_list <- list()
   
-  tslf_list[[1]] <- coast_range_crop
-  tslf_list[[2]] <- central_basin_crop
-  tslf_list[[3]] <- mojave_basin_crop
-  tslf_list[[4]] <- cascades_crop
-  tslf_list[[5]] <- sierra_nevada_crop
-  tslf_list[[6]] <- central_foothills_coastal_mountains_crop
-  tslf_list[[7]] <- central_valley_crop
-  tslf_list[[8]] <- klamath_mountains_crop
-  tslf_list[[9]] <- southern_mountains_crop
-  tslf_list[[10]] <- northern_basin_crop
-  tslf_list[[11]] <- sonoran_basin_crop
-  tslf_list[[12]] <- socal_norbaja_coast_crop
-  tslf_list[[13]] <- eastern_cascades_slopes_foothills_crop
+  length(tslf.files)
+  
+  for(i in 1:length(tslf.files)){
+    print(i)
+    file_i = tslf.files[i]
+    file_i2 = tslf.files2[i]
+    tslf_list[[file_i2]] = raster(file_i)
+  }
   
   
-  # raster fire count layer cropped by ecoregion
-  fire_count <- raster("shiny/www/fire_count.tif")
-  fire_threat <- raster("shiny/www/fire_threat.tif")
+  # raster fire count layer cropped by ecoregion----
+  fire_count <- raster("data/fire_count.tif")
+  fire_threat <- raster("data/fire_threat.tif")
   
-  coast_range_fire_count <- crop(fire_count, coast_range)
-  central_basin_fire_count <- crop(fire_count, central_basin)
-  mojave_basin_fire_count <- crop(fire_count, mojave_basin)
-  cascades_fire_count <- crop(fire_count, cascades)
-  sierra_nevada_fire_count <- crop(fire_count, sierra_nevada)
-  central_foothills_coastal_mountains_fire_count <- crop(fire_count, central_foothills_coastal_mountains)
-  central_valley_fire_count <- crop(fire_count, central_valley)
-  klamath_mountains_fire_count <- crop(fire_count, klamath_mountains)
-  southern_mountains_fire_count <- crop(fire_count, southern_mountains)
-  northern_basin_fire_count <- crop(fire_count, northern_basin)
-  sonoran_basin_fire_count <- crop(fire_count, sonoran_basin)
-  socal_norbaja_coast_fire_count <- crop(fire_count, socal_norbaja_coast)
-  eastern_cascades_slopes_foothills_fire_count <- crop(fire_count, eastern_cascades_slopes_foothills)
+  # reading in fire_count data by ecoregion----
+  print('loading FIRE COUNT data')  
   
+  path_fire <- "data/fire_count"
+  fire.files <- list.files(path_fire, full.names = T)
+  fire.files2 <- list.files(path_fire, full.names = F)
+  fire.files2 = gsub('.tif', '', fire.files2)
+  fire_count_list <- list()
   
-  tm <- tm_shape(socal_norbaja_coast_gdes) +
-    tm_raster()
+  length(fire.files)
   
-  tm1 <- tm_shape(southern_mountains_gdes) +
-    tm_raster()
+  for(i in 1:length(fire.files)){
+    print(i)
+    file_i = fire.files[i]
+    file_i2 = fire.files2[i]
+    fire_count_list[[file_i2]] = raster(file_i)
+  }
+  
+  # reading in GDE data by ecoregion----
+  print('loading GDE data')
+  
+  path_gde <- "data/gde_ecoregions"
+  gde.files <- list.files(path_gde, full.names = T)
+  gde.files2 <- list.files(path_gde, full.names = F)
+  # fire.files2 = gsub('.tif', '', fire.files2)
+  gde_list <- list()
+  
+  length(gde.files)
+  
+  for(i in 1:length(gde.files)){
+    print(i)
+    file_i = gde.files[i]
+    file_i2 = gde.files2[i]
+    gde_list[[file_i2]] = st_read(file_i)
+  }
+  
+  simp <- st_simplify(gde_list[['gde_cascades']], dTolerance = 5) # cascades
+  gde_4_simp <- tm_shape(simp) + tm_polygons()
+
+  # tm <- tm_shape(tslf_list[['socal_norbaja_coast_crop']]) +
+  #   tm_raster()
+  # 
+  # tm1 <- tm_shape(tslf_list[['sierra_nevada_crop']]) +
+  #   tm_raster()
+
   
 }
 
