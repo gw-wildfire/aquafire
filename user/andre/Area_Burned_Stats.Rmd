@@ -7,24 +7,131 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(raster)
+library(here)
+library(janitor)
+library(sf)
+library(rgdal)
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+## Load Raster Files
+```{r}
+gde_raster <- raster(here("raster_output", "gde.tif"))
+fire_perimeters <- raster(here("raster_output", "CA_fire_perimeters.tif"))
+ecoregions <- readOGR(here("data", "ca_eco_l3"))
 ```
 
-## Including Plots
+### Create Empty Vectors
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+# Create empty vectors to store the results
+ecoregion_names <- vector()
+percent_burned_gde <- vector()
+percent_burned_non_gde <- vector()
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+### Loop Through Each Ecoregion
+
+```{r}
+# Loop through each ecoregion
+for (i in 1:length(ecoregions)) {
+  # Get the name of the ecoregion
+  ecoregion_name <- ecoregions@data[i,]$NAME  # Replace "NAME" with the correct column name in your data
+  
+  # Mask the GDE and fire perimeter raster to the ecoregion extent
+  gde_raster_ecoregion <- mask(gde_raster, ecoregions[i,])
+  fire_raster_ecoregion <- mask(fire_raster, ecoregions[i,])
+  
+  # Overlay the rasters
+  burned_gde_ecoregion <- overlay(gde_raster_ecoregion, fire_raster_ecoregion, fun = function(x, y) {x * y})
+  
+  # Calculate the total area of GDEs and non-GDEs in the ecoregion
+  total_gde_area_ecoregion <- cellStats(gde_raster_ecoregion, sum)
+  total_area_ecoregion <- ncell(gde_raster_ecoregion)
+  total_non_gde_area_ecoregion <- total_area_ecoregion - total_gde_area_ecoregion
+  
+  # Calculate the burned area in GDEs and non-GDEs in the ecoregion
+  burned_gde_area_ecoregion <- cellStats(burned_gde_ecoregion, sum)
+  total_burned_area_ecoregion <- cellStats(fire_raster_ecoregion, sum)
+  burned_non_gde_area_ecoregion <- total_burned_area_ecoregion - burned_gde_area_ecoregion
+  
+  # Calculate the percentage of burned area in GDEs and non-GDEs in the ecoregion
+  percent_burned_gde_ecoregion <- (burned_gde_area_ecoregion / total_gde_area_ecoregion) * 100
+  percent_burned_non_gde_ecoregion <- (burned_non_gde_area_ecoregion / total_non_gde_area_ecoregion) * 100
+  
+  # Store the results
+  ecoregion_names <- c(ecoregion_names, ecoregion_name)
+  percent_burned_gde <- c(percent_burned_gde, percent_burned_gde_ecoregion)
+  percent_burned_non_gde <- c(percent_burned_non_gde, percent_burned_non_gde_ecoregion)
+}
+
+```
+
+
+### Print Results
+
+```{r}
+# Print out the results
+results <- data.frame(Ecoregion = ecoregion_names, 
+                      Percent_burned_GDE = percent_burned_gde, 
+                      Percent_burned_non_GDE = percent_burned_non_gde)
+
+print(results)
+
+```
+
+
+## Check Extends
+
+```{r}
+# # Check if the two rasters have the same extent and resolution
+# if (extent(gde_raster) != extent(fire_perimeters) || res(gde_raster) != res(fire_perimeters)) {
+#   # Resample the fire raster to match the GDE raster
+#   fire_raster <- resample(fire_perimeters, gde_raster, method = "bilinear")
+# }
+```
+
+## Overlay Layers
+
+```{r}
+# # Overlay the rasters
+# burned_gde <- overlay(gde_raster, fire_raster, fun = function(x, y) {x * y})
+
+```
+
+## Calculate Percent (%) Area Burned
+
+```{r}
+# # Calculate the total area of GDEs
+# total_gde_area <- cellStats(gde_raster, sum)
+# 
+# # Calculate the total area of the raster
+# total_area <- ncell(gde_raster)
+# 
+# # Calculate the total area of non-GDEs
+# total_non_gde_area <- total_area - total_gde_area
+# 
+# # Calculate the burned area in GDEs
+# burned_gde_area <- cellStats(burned_gde, sum)
+# 
+# # Calculate the total burned area
+# total_burned_area <- cellStats(fire_raster, sum)
+# 
+# # Calculate the burned area in non-GDEs
+# burned_non_gde_area <- total_burned_area - burned_gde_area
+# 
+# # Calculate the percentage of burned area in GDEs and non-GDEs
+# percent_burned_gde <- (burned_gde_area / total_gde_area) * 100
+# percent_burned_non_gde <- (burned_non_gde_area / total_non_gde_area) * 100
+
+```
+
+## Results
+
+```{r}
+# # Print out the results
+# print(paste0("Percent area burned within GDEs: ", percent_burned_gde, "%"))
+# print(paste0("Percent area burned within non-GDEs: ", percent_burned_non_gde, "%"))
+
+```
