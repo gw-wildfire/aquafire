@@ -29,7 +29,7 @@ library(terra)
 setwd(here('~', 'meds', 'capstone', 'aquafire'))
 ```
 
-### Read in Burn Severity All .tif file
+### Read in Burn Severity All (1984 - 2021) .tif file
 
 ```{r}
 burn_severity_stack <- rast(here::here('raster_output', 'burn_severity_all.tif'))
@@ -42,11 +42,43 @@ burn_severity_recl <- rast(here::here('raster_output', 'burn_severity_recl.tif')
 ```
 
 ### Read in Burn Severity Mode
+
 ```{r}
-burn <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
 ```
 
-### Burn Severity All for loop - takes 3 hours to load
+## Calculations
+
+### Load necessary data
+```{r}
+gde <- read_sf(here::here('data', 'gde')) %>% 
+  st_transform("EPSG: 3310")
+
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+```
+
+# mode value in GDEs vs non-GDEs
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# crop burn severity and ecoregion
+p <- crop(burn_severity_mode, socal_baja_coast)
+
+tmap_mode('view')
+
+tm_shape(p) +
+    tm_raster(style="cat", palette="-viridis", title="Discrete Raster") +
+    tm_layout(legend.outside = TRUE, legend.outside.position = "right")
+```
+
+## Creating Files if you don't already have it
+### Burn Severity All (1984 - 2021) for loop - takes 3 hours to load
 
 ```{r}
 # Load the necessary library
@@ -91,7 +123,7 @@ writeRaster(raster_stack, file.path(here::here('raster_output', 'burn_severity_a
 plot(raster_stack)
 ```
 
-### Reclassify Burn Severity Values Across Raster Stack
+### Reclassify Burn Severity Values Across Raster Stack - takes 3 hours to load
 
 ```{r}
 # Value	Legend
