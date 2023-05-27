@@ -90,6 +90,8 @@ fire_count_stats_all <- rbind(fire_count_1_stats, fire_count_4_stats,
 ```
 
 # Basic Visualizations 
+
+### Violin Plots
 ```{r fig.align="center", echo = FALSE,fig.width = 14}
 plot_fc_1 <- fire_count_violin_plot(fire_count_1_sample, eco_region_code = 1)
 plot_fc_4 <- fire_count_violin_plot(fire_count_4_sample, eco_region_code = 4)
@@ -110,6 +112,14 @@ plot_fc_85
 plot_fc_8 
 ```
 
+### Histogram Comparing GDE Dist and Non-GDE Dist
+```{r}
+
+```
+
+# T-Test 
+
+
 # Logistic Regressions
 
 ```{r}
@@ -121,7 +131,7 @@ fire_count_1_glm <- glm(value ~ gde, data = fire_count_1_sample, family = "poiss
 fire_count_4_sample$gde <- factor(fire_count_4_sample$gde)
 fire_count_4_glm <- glm(value ~ gde, data = fire_count_4_sample, family = "poisson")
 
-# Sierra Nevada - stat significant 
+# Sierra Nevada 
 fire_count_5_sample$gde <- factor(fire_count_5_sample$gde)
 fire_count_5_glm <- glm(value ~ gde, data = fire_count_5_sample, family = "poisson")
 
@@ -137,31 +147,31 @@ fire_count_7_glm <- glm(value ~ gde, data = fire_count_7_sample, family = "poiss
 fire_count_8_sample$gde <- factor(fire_count_8_sample$gde)
 fire_count_8_glm <- glm(value ~ gde, data = fire_count_8_sample, family = "poisson")
 
-# Eastern Cascades Slopes and Foothills - stat significant 
+# Eastern Cascades Slopes and Foothills *** 
 fire_count_9_sample$gde <- factor(fire_count_9_sample$gde)
 fire_count_9_glm <- glm(value ~ gde, data = fire_count_9_sample, family = "poisson")
 
-# Central Basin and Range - stat significant 
+# Central Basin and Range *** 
 fire_count_13_sample$gde <- factor(fire_count_13_sample$gde)
 fire_count_13_glm <- glm(value ~ gde, data = fire_count_13_sample, family = "poisson")
 
-# Mojave Basin and Range - stat significant
+# Mojave Basin and Range * 
 fire_count_14_sample$gde <- factor(fire_count_14_sample$gde)
 fire_count_14_glm <- glm(value ~ gde, data = fire_count_14_sample, family = "poisson")
 
-# Klamath Mountains/California High North Coast Range - stat significant 
+# Klamath Mountains/California High North Coast Range *** 
 fire_count_78_sample$gde <- factor(fire_count_78_sample$gde)
 fire_count_78_glm <- glm(value ~ gde, data = fire_count_78_sample, family = "poisson")
 
-# Northern Basin and Range - stat significant 
+# Northern Basin and Range *** 
 fire_count_80_sample$gde <- factor(fire_count_80_sample$gde)
 fire_count_80_glm <- glm(value ~ gde, data = fire_count_80_sample, family = "poisson")
 
-# Sonoran Basin and Range 
+# Sonoran Basin and Range *
 fire_count_81_sample$gde <- factor(fire_count_81_sample$gde)
 fire_count_81_glm <- glm(value ~ gde, data = fire_count_81_sample, family = "poisson")
 
-# Southern CA and Northern Baja Coast
+# Southern CA and Northern Baja Coast *** 
 fire_count_85_sample$gde <- factor(fire_count_85_sample$gde)
 fire_count_85_glm <- glm(value ~ gde, data = fire_count_85_sample, family = "poisson")
 ```
@@ -298,3 +308,9 @@ ggplot(fire_count_6_sample, aes(x = value, color = gde)) +
 
 # write.csv(fire_count_sample, "user/jillian/csv213/fire_count_sample.csv", row.names=FALSE)
 ```
+
+- comparing distributions w two plots like two histograms 
+- t test - chi sq 
+- anova comparing eco-regions for all of CA analysis 
+- visualization on map of CA maybe w like colors showing quantified relationship 
+- write up about it 

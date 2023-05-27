@@ -22,6 +22,7 @@ library(fasterize)
 library(exactextractr)
 library(dplyr)
 library(terra)
+library(tmap)
 source("user/jillian/functions/remove_ag_urban.R")
 source("user/jillian/functions/raster_to_ecoregions.R")
 source("user/jillian/functions/stratified_sample.R")
@@ -75,11 +76,17 @@ fires_ca <- st_crop(fire_perimeters_all, ca_counties)
 # Read in GDE data
 gde_data <- sf::read_sf(here::here("data", "gde") )
 
-gde_polygons <- gde_data %>%
+gde_polygons_raster <- gde_data %>%
+  st_transform(crs_ca) %>%
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>%
+  mutate(gde = 1)
+
+gde_polygons_shiny <- gde_data %>%
   st_transform(crs_ca) %>%
   filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # may also want to remove semipermanently flooded or all lacustrine
-  mutate(area = st_area(geometry)) %>%
-  mutate(gde = 1)# creating a column so we can have a raster with GDE = 1, not GDE = 0
+  mutate(area_m2 = as.numeric(st_area(geometry))) %>%
+  filter(area_m2 > 8093) %>% # sq meters, 2 acres 
+  st_simplify(preserveTopology = TRUE, dTolerance = 5) # Simplify remaining polygons to reduce load time in Shiny App
 ```
 
 ## Create an empty raster to use as a template
@@ -100,11 +107,13 @@ ca_rasterra <- raster(ca_ext, resolution = 30) %>%
 crs(ca_rasterra) <- crs_ca$wkt 
 ```
 
-# GDE Raster
+## Groundwater Dependent Ecosystems
+
+### GDE Raster
 
 ```{r}
 # Fasterize to rasterize, extent to match others 
-gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons_raster, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
 
 # Mask to california
 gde_masked <- mask(gde_raster, ca_counties)
@@ -119,13 +128,94 @@ gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer 
 # raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
 ```
 
+### GDE Polygons with Summary Data
+
+```{r}
+# Remove polygons that are ag or urban from the GDE polygon data
+# First, extract land use data 
+gdepoly_nlcd <- exactextractr::exact_extract(nlcd_rasterlayer, gde_polygons_shiny, fun = "majority")
+
+# Join and filter
+nlcd_vals_to_remove <- c(11, 21, 22, 23, 24, 81, 82)
+
+gde_polygons_shiny <- gde_polygons_shiny %>%
+  mutate(nlcd = gdepoly_nlcd) %>%
+  filter(!nlcd %in% nlcd_vals_to_remove)
+
+# st_write(gde_polygons_shiny, "raster_output/gde_polygons_rm_ag_urb.shp")
+
+beep(sound = 3)
+```
+
+```{r}
+# Find the maximum number of times that a GDE polygon has burned since 1950 using the fire count raster layer. Find maximum number of times a cell has burned in that GDE
+gdepoly_fire_count <- exactextractr::exact_extract(fire_count_final, gde_polygons_shiny, fun = "max")
+write.csv(gdepoly_fire_count,file="user/jillian/polygon_values/fire_count.csv",row.names=F)
+beep(sound = 3)
+
+# Find most recent TSLF in each GDE polygon
+gdepoly_tslf <- exactextractr::exact_extract(tslf_final, gde_polygons_shiny, fun = "min")
+# write.csv(gdepoly_tslf,file="user/jillian/polygon_values/tslf.csv",row.names=F)
+beep(sound = 3)
+
+# Find average modeled fire threat in each GDE polygon
+gdepoly_fire_threat <- exactextractr::exact_extract(fire_threat_final, gde_polygons_shiny, fun = "mean")
+write.csv(gdepoly_fire_threat, file = "user/jillian/polygon_values/fire_threat.csv", row.names = F)
+beep(sound = 3)
+
+# Find mode burn severity in GDE polygon 
+gdepoly_burn_severity <- exactextractr::exact_extract(burn_severity_final, gde_polygons_shiny, fun = "mean")
+write.csv(gdepoly_burn_severity, file = "user/jillian/polygon_values/burn_severity.csv", row.names = F)
+beep(sound = 3)
+
+
+gdepoly_perc_burned <- exactextractr::exact_extract(perc_burned_final, gde_polygons_shiny, fun = "mean")
+```
+
+```{r}
+# Join data! 
+gde_summary_shiny <- gde_polygons_shiny %>%
+  mutate(max_fire_count = gdepoly_fire_count, 
+         min_tslf = gdepoly_tslf, 
+         avg_fire_threat = gdepoly_fire_threat, 
+         avg_fire_severity = gdepoly_burn_severity) %>%
+  mutate(area_km2 = (area_m2 / (1E6)),
+         area_km2 = round(area_km2, digits = 3),
+         max_fire_count = round(max_fire_count, digits = 2), 
+         min_tslf = round(min_tslf, digits = 2), 
+         avg_fire_threat = round(avg_fire_threat, digits = 2), 
+         avg_fire_severity = round(avg_fire_severity, digits = 2), 
+         avg_fire_threat = na_if(avg_fire_threat, NaN),
+         avg_fire_severity = na_if(avg_fire_severity, NaN))
+
+st_write(gde_summary_shiny, "raster_output/gde_summary_shiny.shp", append = F)
+  
+```
+
+```{r}
+# Perform spatial join to assign eco region IDs to GDE polygons
+gde_summ_eco <- st_join(gde_summary_shiny, eco_regions) 
+
+ecoregion_codes <- as.numeric(unique(gde_eco$us_l3code))
+
+for(id in ecoregion_codes){
+  gdes_in_ecoregion <- gde_eco %>%
+    filter(us_l3code == id) %>%
+    select(POLYGON_ID, WETLAND_NA, VEGETATION, DOMINANT_S, DOMINANT_C, 
+           max_fire_count, min_tslf, avg_fire_threat, mode_fire_severity, 
+           avg_pct_burned, area, us_l3code, region, geometry)
+  
+  output_file <- paste0("raster_output/gde_summary_polygons/gde_summary_", id, ".shp")
+  
+  st_write(gdes_in_ecoregion, output_file)
+}
+```
+
 ### GDE Polygons by Eco Region
 
 ```{r}
 # Perform spatial join to assign eco region IDs to GDE polygons
-gde_eco <- st_join(gde_polygons, eco_regions) %>%
-  st_simplify(preserveTopology = TRUE, 
-              dTolerance = 5) # simplify to reduce file sizes 
+gde_eco <- st_join(gde_polygons_shiny, eco_regions) 
 
 ecoregion_codes <- as.numeric(unique(gde_eco$us_l3code))
 
@@ -154,16 +244,16 @@ library(FedData)
 
 nlcd <- FedData::get_nlcd(template = ca_rasterra, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") %>%
   rast() %>%
-  terra::project(y = crs_ca$wkt) # takes several minutes to run, but it will! 
+  terra::project(y = crs_ca$wkt, method = "near") # takes several minutes to run, but it will! 
 
 
-nlcd_resampled <- terra::resample(nlcd, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+nlcd_resampled <- terra::resample(nlcd, ca_rasterra, method = "near") # uses nearest neighbors approach for for categorical values 
 
 nlcd_masked <- mask(nlcd_resampled, ca_counties)
 
 nlcd_rasterlayer <- raster(nlcd_masked)
 
-# raster::writeRaster(nlcd_rasterlayer, "raster_output/nlcd.tif")
+# raster::writeRaster(nlcd_rasterlayer, "raster_output/nlcd.tif", overwrite = TRUE)
 
 # nlcd_colors() and pal_nlcd() return legend and color palette
 # nlcd_colors()
@@ -216,10 +306,10 @@ raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
 ```{r}
 fire_threat <- raster(here::here("data", "fire_threat.tif")) %>%
   terra::rast() %>%
-  terra::project(y = crs_ca$wkt)
+  terra::project(y = crs_ca$wkt, method = "near")
   
 
-fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra) # uses nearest neighbors approach for for categorical values 
+fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra, method = "near") # uses nearest neighbors approach for for categorical values 
 
 fire_threat_masked <- mask(fire_threat_resampled, ca_counties)
 
@@ -228,7 +318,23 @@ fire_threat_rasterlayer <- raster(fire_threat_masked)
 # Remove ag and urban areas 
 fire_threat_final <- remove_ag_urban(fire_threat_rasterlayer) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
 
-writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif")
+writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif", overwrite = TRUE)
 
 raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
 ```
+
+# Burn Severity
+```{r}
+burn_severity_final <- burn_severity_final %>%
+  terra::rast() %>%
+  terra::project(y = crs_ca$wkt, method = "near") %>%
+  terra::resample(ca_rasterra, method = "near") %>%
+  terra::mask(ca_counties) %>%
+  raster()
+
+burn_severity_final <- remove_ag_urban(burn_severity_final)
+# writeRaster(burn_severity_final, "raster_output/burn_severity_final.tif")
+# raster_to_ecoregions(burn_severity_final, "burn_severity", write_to_file = TRUE)
+beep(sound = 3)
+```
+

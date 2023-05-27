@@ -29,6 +29,10 @@ tslf_final <- raster("raster_output/tslf_final.tif")
 gde_final <- raster("raster_output/gde_final.tif")
 nlcd_rasterlayer <- raster("raster_output/nlcd.tif")
 fire_threat_final <- raster("raster_output/fire_threat_final.tif")
+burn_severity_final <- raster("raster_output/burn_severity_final.tif")
+
+gde_polygons_shiny <- st_read("raster_output/gde_polygons_rm_ag_urb.shp")
+gde_summary_shiny <- st_read("raster_output/gde_summary_shiny.shp")
 ```
 
 # Final Rasters by Ecoregion 
@@ -100,6 +104,23 @@ fire_threat_78 <- raster("raster_output/fire_threat_78.tif")
 fire_threat_80 <- raster("raster_output/fire_threat_80.tif")
 fire_threat_81 <- raster("raster_output/fire_threat_81.tif")
 fire_threat_85 <- raster("raster_output/fire_threat_85.tif")
+```
+
+## Burn Severity
+```{r}
+burn_severity_1 <- raster("raster_output/burn_severity_1.tif")
+burn_severity_4 <- raster("raster_output/burn_severity_4.tif")
+burn_severity_5 <- raster("raster_output/burn_severity_5.tif")
+burn_severity_6 <- raster("raster_output/burn_severity_6.tif")
+burn_severity_7 <- raster("raster_output/burn_severity_7.tif")
+burn_severity_8 <- raster("raster_output/burn_severity_8.tif")
+burn_severity_9 <- raster("raster_output/burn_severity_9.tif")
+burn_severity_13 <- raster("raster_output/burn_severity_13.tif")
+burn_severity_14 <- raster("raster_output/burn_severity_14.tif")
+burn_severity_78 <- raster("raster_output/burn_severity_78.tif")
+burn_severity_80 <- raster("raster_output/burn_severity_80.tif")
+burn_severity_81 <- raster("raster_output/burn_severity_81.tif")
+burn_severity_85 <- raster("raster_output/burn_severity_85.tif")
 ```
 
 
