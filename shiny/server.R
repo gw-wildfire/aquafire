@@ -1,74 +1,103 @@
 server <- function(input, output, session) {
   
-  # Load the raster layer
-  
-  # need to be able to plot each ecoregion independently 
-  
-  # attempt sunday at noon
-  
-  # rasters <- list(
-  #   "socal_norbaja_coast_gdes" = socal_norbaja_coast_gdes,
-  #   "southern_mountains_gdes" = southern_mountains_gdes,
-  #   "sonoran_basin_gdes" = sonoran_basin_gdes
-  #   # add the remaining ecoregions here
-  # )
-  
-  # fire_count <- raster("shiny/data/fire_threat.tif")
-  
   tmap_mode("view")
   # end
   
-  #  tm_df <- observe({
-  #    # proxy <- tmapProxy("map", session)
-  # 
-  #    validate(
-  #      need(length(input$ecoregion_type_input) > 0, "Select more than one ecosystem"))
-  # 
-  #    
-  #    tm <- tm_shape(socal_norbaja_coast_gdes) + tm_raster()
-  #    tm1 <- tm_shape(southern_mountains_gdes) + tm_raster()
-  #    # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
-  #    #   tm_shape(socal_norbaja_coast_gdes) + tm_raster()
-  #    # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
-  #    #   tm_shape(southern_mountains_gdes) + tm_raster()
-  #    # } else if ("sonoran_basin_gdes" %in% input$ecoregion_type_input) {
-  #    #   tm_shape(sonoran_basin_gdes) + tm_raster()
-  #    # }
-  # 
-  #  # if ("socal_norbaja_coast_gdes" %in% input$ecoregion_type_input) {
-  #  #   tm_shape(socal_norbaja_coast_gdes) + tm_raster()
-  #  # } else if ("southern_mountains_gdes" %in% input$ecoregion_type_input) {
-  #  #   tm_shape(southern_mountains_gdes) + tm_raster()
-  #  # } else if ("sonoran_basin_gdes" %in% input$ecoregion_type_input) {
-  #  #   tm_shape(sonoran_basin_gdes) + tm_raster()
-  #  # }
-  # 
-  #    # tm <- tmap::tmap_element()
-  #    # for (raster_name in input$ecoregion_type_input) {
-  #    #   raster_obj <- rasters[[raster_name]]
-  #    #   tm <- tm + tmap::tm_raster(raster_obj)
-  #    # }
-  # 
-  #    # putting tm raster layer into tm_df object and filtering by ecoregion_type - but need ecoregion_type to be a column in tm
-  # 
-  #    # tm_df <- tm %>%
-  #    #   filter(ecoregion_type %in% c(input$ecoregion_type_input))
-  # 
-  # 
-  # })
-  
-  
   map_reactive <- reactive({
     print(input$ecoregion_type_input)
-    print(input$firelayer_type_input)
+    # print(input$firelayer_type_input)
+    # print(input$tslf_type_input)
+    # 
+    print(input$type_raster)
+    # tm_level_one = tm_shape(gde_list[[input$ecoregion_type_input]]) +
+    #   tm_raster()
     
-    tm_level_one = tm_shape(tslf_list[[input$ecoregion_type_input]]) +
-      tm_raster()
+    req(!is.null(input$ecoregion_type_input))
     
-    tm_level_one +
-      tm_shape(fire_count_list[[input$firelayer_type_input]]) +
-      tm_raster()
+    eco_selected <- input$ecoregion_type_input
+    eco_selected2 = gsub('gde_', '', eco_selected)
     
+    names_fire2 = gsub('_fire_count', '', names_fire)
+    names_tslf2 = gsub('_tslf', '', names_tslf)
+    names_fire_threat2 = gsub('_fire_threat', '',names_fire_threat) # ADDING
+    
+    wfire = which(names_fire2 == eco_selected2)
+    wfire = names_fire[wfire]
+    print(wfire)
+    
+    wtslf = which(names_tslf2 == eco_selected2)
+    wtslf = names_tslf[wtslf]
+    print(wtslf)
+    
+    wfire_threat = which(names_fire_threat2 == eco_selected2) # ADDING
+    wfire_threat = names_fire_threat[wfire_threat]
+    print(wfire_threat)
+    
+    tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+      tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
+      tm_shape(gde_list[[input$ecoregion_type_input]], point.per = "feature") +
+      tm_polygons(col = '#0f851e',
+                  id = 'popup_text',
+                  border.col = 'white',
+                  lwd = 0.5
+                  #popup.vars = c("WETLAND_NA", "area")
+      )
+    
+    
+    # Add pop-up windows using leaflet
+    # leaflet_map <- tmap_leaflet(tm_level_one)
+    # leaflet_map <- leaflet_map %>%
+    #   addPolygons(
+    #     data = st_transform(gde_list[[input$ecoregion_type_input]], crs = 3310),
+    #     fillColor = '#0f851e',
+    #     fillOpacity = 0.5,
+    #     label = ~paste("Area:", area, "<br>",
+    #                    "Wetland:", WETLAND_NA),
+    #     labelOptions = labelOptions(noHide = TRUE)
+    #   )
+    
+    # + tm_dots(popup.vars = TRUE)
+    # + tm_fill(popup.vars = "area")
+    # , id = "WETLAND_NA"
+    # + tm_bubbles("area") 
+    # + tm_fill(interactive = TRUE, popup.vars = "WETLAND_NA")
+    #  # Display legend here!?
+    
+    if('Fire Count Raster' %in% input$type_raster){
+      print(' FIRE COUNT RASTER ')
+      fire_layer <- fire_count_list[[wfire]]
+      tm_level_one <- tm_level_one + tm_shape(fire_layer) +
+        tm_raster(palette = 'Reds',
+                  alpha = input$alpha1,
+                  title = 'Fire Count Raster',
+                  breaks = seq(0, maxValue(fire_layer), 1)) # breaks = seq(0, length(fire_layer), 1)
+    }
+    
+    if('TSLF Raster' %in% input$type_raster){
+      print(' TSLF RASTER ')
+      tslf_layer <- tslf_list[[wtslf]]
+      tm_level_one <- tm_level_one + tm_shape(tslf_layer) +
+        tm_raster(palette = 'YlOrRd',
+                  alpha = input$alpha2,
+                  title = 'TSLF Raster')
+    }
+    
+    if('Fire Threat Raster' %in% input$type_raster){
+      print(' FIRE THREAT RASTER ')
+      fire_threat_layer <- fire_threat_list[[wfire_threat]]
+      tm_level_one <- tm_level_one + tm_shape(fire_threat_layer) +
+        tm_raster(palette = 'Reds',
+                  alpha = input$alpha3,
+                  title = 'Fire Threat Raster')
+    }
+    
+    tm_level_one # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
+    
+    
+    # a <- tmap_leaflet(tm_level_one)
+    # a <- a %>% addPolygons(data = tm_level_one,
+    #                        label = ~paste("Area: ", area))
+    # a
   })
   
   output$map <- renderTmap({
@@ -79,113 +108,215 @@ server <- function(input, output, session) {
     map_reactive()
   })
   
-  #  Update map whenever selection is made
-  # observe({
+  # main page ecoregion map
+  output$main_map <- renderTmap({
+    
+    # Define the text information for the popup
+    popup_text <- "1. COAST RANGE"
+    coast_range$popup_text <- popup_text
+    popup_text <- "4. CASCADES"
+    cascades$popup_text <- popup_text
+    popup_text <- "5. SIERRA NEVADA"
+    sierra_nevada$popup_text <- popup_text
+    popup_text <- "6. CENTRAL CALIFORNIA FOOTHILLS AND COASTAL MOUNTAINS"
+    central_foothills_coastal_mountains$popup_text <- popup_text
+    popup_text <- "7. CENTRAL CALIFORNIA VALLEY"
+    central_valley$popup_text <- popup_text
+    popup_text <- "8. SOUTHERN CALIFORNIA MOUNTAINS"
+    southern_mountains$popup_text <- popup_text
+    popup_text <- "9. EASTERN CASCADE SLOPES AND FOOTHILLS"
+    eastern_cascades_slopes_foothills$popup_text <- popup_text
+    popup_text <- "13. CENTRAL BASIN AND RANGE"
+    central_basin$popup_text <- popup_text
+    popup_text <- "14. MOJAVE BASIN AND RANGE"
+    mojave_basin$popup_text <- popup_text
+    popup_text <- "78. KLAMATH MOUNTAINS AND CALIFORNIA HIGH NORTH COAST RANGE"
+    klamath_mountains$popup_text <- popup_text
+    popup_text <- "80. NORTHERN BASIN AND RANGE"
+    northern_basin$popup_text <- popup_text
+    popup_text <- "81. SONORAN BASIN AND RANGE"
+    sonoran_basin$popup_text <- popup_text
+    popup_text <- "85. SOUTHERN CALIFORNIA/NORTHERN BAJA COAST"
+    socal_norbaja_coast$popup_text <- popup_text
+    
+    # Plot the polygons with interactive click events and custom popup
+    main_cali_map  <- tm_shape(coast_range) +
+      tm_polygons(col = "#0081A7", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # cascades
+      tm_shape(cascades) +
+      tm_polygons(col = "#8CB369", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # sierra nevada
+      tm_shape(sierra_nevada) +
+      tm_polygons(col = "#C0CB77", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # central cal mtns
+      tm_shape(central_foothills_coastal_mountains) +
+      tm_polygons(col = "#7FD6CB", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # socal mountains
+      tm_shape(southern_mountains) +
+      tm_polygons(col = "#F4E285", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # east cascade foothills
+      tm_shape(eastern_cascades_slopes_foothills) +
+      tm_polygons(col = "#F4C26F", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # central basin and range
+      tm_shape(central_basin) +
+      tm_polygons(col = "#F4A259", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # mojave basin and range
+      tm_shape(mojave_basin) +
+      tm_polygons(col = "#8CB369", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # klamath mtns
+      tm_shape(klamath_mountains) +
+      tm_polygons(col = "#A8986B", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # northern basin
+      tm_shape(northern_basin) +
+      tm_polygons(col = "#829374", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3, lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # sonoran basin
+      tm_shape(sonoran_basin) +
+      tm_polygons(col = "#5B8E7D", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # socal baja coast
+      tm_shape(socal_norbaja_coast) +
+      tm_polygons(col = "#BC4B51", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.55, 
+                  border.col = 'white', lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") +
+      
+      # central valley
+      tm_shape(central_valley) +
+      tm_polygons(col = "lightgrey", 
+                  title = "Region", 
+                  id = "popup_text", 
+                  alpha = 0.5, 
+                  border.col = 'white', lwd = 0.3,
+                  lwd = 0.3) +
+      tm_layout(legend.outside = TRUE, 
+                legend.outside.position = "right") 
+    
+    
+    
+  })
   
   
   
-  #   
-  #   if (input$socal_norbaja_coast_gdes) {
-  #     tm$layers[1]$visible <- TRUE
-  #   } else {
-  #     tm$layers[1]$visible <- FALSE
-  #   }
-  #   if (input$southern_mountains_gdes) {
-  #     tm$layers[2]$visible <- TRUE
-  #   } else {
-  #     tm$layers[2]$visible <- FALSE
-  #   }
-  #   
-  #   # if ("socal_norbaja_coast_gdes" %in% input$map) {
-  #   #   map_1@layers[[1]]$visible <- TRUE
-  #   # } else {
-  #   #   map_2@layers[[1]]$visible <- FALSE
-  #   # }
-  # 
-  #   # if ("southern_mountains_gdes" %in% input$map) {
-  #   #   map@layers[[2]]$visible <- TRUE
-  #   # } else {
-  #   #   map@layers[[2]]$visible <- FALSE
-  #   # }
-  # 
-  # })
+  # stats page----
+  stats_reactive <- reactive({
+    
+    print(input$ecoregion_stats_type_input)
+    
+    req(!is.null(input$ecoregion_stats_type_input))
+    
+    stats_selected <- input$ecoregion_stats_type_input
+    # stats here
+    req(!is.null(input$ecoregion_type_input))
+    
+    # make a list of 
+    
+    eco_selected <- input$ecoregion_stats_type_input
+    eco_selected2 = gsub('gde_', '', eco_selected)
+    
+    names_fire2 = gsub('_fire_count', '', names_fire)
+    
+    wstat = which(names_stats2 == eco_selected2)
+    wfire = names_fire[wstat]
+    print(wstat)
+    
+    # if('Fire Count Raster' %in% input$ecoregion_stats_type_input){
+    #   print(' FIRE COUNT RASTER ')
+    #   stat_layer <- stat_list[[wstat]]
+    #   tm_level_one <- tm_level_one + tm_shape(fire_layer) +
+    #     tm_raster(palette = 'Reds',
+    #               alpha = input$alpha1,
+    #               title = 'Fire Count Raster',
+    #               breaks = seq(0, maxValue(fire_layer), 1))
+    #   }
+    
+    
+    
+  })
+  
+  # stats output----
+  output$stats <- renderImage({
+    
+    stats_reactive
+    
+  })
   
 }
-
-
-
-
-
-
-
-
-
-
-
-# BELOW IS LEAFLET
-
-
-# output$map <- renderLeaflet({
-#   leaflet() %>% 
-#     addProviderTiles("Esri.WorldImagery") %>%
-#     setView(-120.829529, 37.538843, zoom = 6) %>%
-#     addRasterImage(tslf_masked) #, opacity = input$layer_opacity, layerId = "rasterLayer") %>% 
-# addLayersControl(overlayGroups = "rasterLayer", options = layersControlOptions(collapsed = FALSE)) %>% 
-# addMouseCoordinates() %>% 
-# addMeasure(
-#   position = "bottomleft",
-#   primaryLengthUnit = "miles",
-#   primaryAreaUnit = "sqmiles",
-#   activeColor = "#3D535D",
-#   completedColor = "#36454F") 
-
-# }) # End render leaflet
-
-# observeEvent(input$overlay, {
-#   if (input$overlay) {
-#     leafletProxy("map", data = r) %>%
-#       addRasterImage(r, opacity = input$opacity, layerId = "overlay") # Add the overlay layer
-#   } else {
-#     leafletProxy("map", data = r) %>%
-#       removeLayer("overlay") # Remove the overlay layer
-#   }
-# }) # End observeEvent for raster image opacity and toggle on/off
-
-
-
-
-#### Getting interactive GDE % burned
-
-# # Define reactive event for groundwater-dependent ecosystem raster layer clicks
-# observeEvent(input$map_click, {
-#   # Get clicked coordinates
-#   click_coords <- input$map_click
-#   
-#   # Get value of clicked pixel in groundwater-dependent ecosystem raster layer
-#   clicked_gde_value <- extract(gde_raster, click_coords)
-#   
-#   # Create a mask to extract values from the time since last burn raster layer
-#   mask <- gde_raster == clicked_gde_value
-#   
-#   # Extract values from the time since last burn raster layer using the mask
-#   burn_values <- extract(burn_raster, mask = mask)
-#   
-#   # Calculate % area burned within the clicked groundwater-dependent ecosystem
-#   pct_burned <- sum(burn_values > 0) / sum(!is.na(burn_values)) * 100
-#   
-#   # Update the map with the % area burned within the clicked groundwater-dependent ecosystem
-#   leafletProxy("map", data = gde_raster) %>%
-#     addLabelOnlyMarkers(lng = click_coords$lng, lat = click_coords$lat, label = paste0(round(pct_burned, 2), "% burned"))
-
-
-#  })
-
-
-# TMAP
-
-
-
-
-
-
 
