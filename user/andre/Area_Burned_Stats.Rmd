@@ -17,9 +17,21 @@ library(rgdal)
 
 ## Load Raster Files
 ```{r}
-gde_raster <- raster(here("raster_output", "gde.tif"))
-fire_perimeters <- raster(here("raster_output", "CA_fire_perimeters.tif"))
-ecoregions <- readOGR(here("data", "ca_eco_l3"))
+fire_raster <- raster(here("raster_output", "CA_fire_perimeters.tif"))
+
+gde_1 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_1.tif"))
+gde_4 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_4.tif"))
+gde_5 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_5.tif"))
+gde_6 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_6.tif"))
+gde_7 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_7.tif"))
+gde_8 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_8.tif"))
+gde_9 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_9.tif"))
+gde_13 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_13.tif"))
+gde_14 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_14.tif"))
+gde_78 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_78.tif"))
+gde_80 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_80.tif"))
+gde_81 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_81.tif"))
+gde_85 <- raster(here("raster_output", "GDE RASTERS by Eco Region", "gde_85.tif"))
 ```
 
 ### Create Empty Vectors
@@ -31,107 +43,107 @@ percent_burned_gde <- vector()
 percent_burned_non_gde <- vector()
 ```
 
-### Loop Through Each Ecoregion
-
 ```{r}
-# Loop through each ecoregion
-for (i in 1:length(ecoregions)) {
-  # Get the name of the ecoregion
-  ecoregion_name <- ecoregions@data[i,]$NAME  # Replace "NAME" with the correct column name in your data
-  
-  # Mask the GDE and fire perimeter raster to the ecoregion extent
-  gde_raster_ecoregion <- mask(gde_raster, ecoregions[i,])
-  fire_raster_ecoregion <- mask(fire_raster, ecoregions[i,])
-  
-  # Overlay the rasters
-  burned_gde_ecoregion <- overlay(gde_raster_ecoregion, fire_raster_ecoregion, fun = function(x, y) {x * y})
-  
-  # Calculate the total area of GDEs and non-GDEs in the ecoregion
-  total_gde_area_ecoregion <- cellStats(gde_raster_ecoregion, sum)
-  total_area_ecoregion <- ncell(gde_raster_ecoregion)
-  total_non_gde_area_ecoregion <- total_area_ecoregion - total_gde_area_ecoregion
-  
-  # Calculate the burned area in GDEs and non-GDEs in the ecoregion
-  burned_gde_area_ecoregion <- cellStats(burned_gde_ecoregion, sum)
-  total_burned_area_ecoregion <- cellStats(fire_raster_ecoregion, sum)
-  burned_non_gde_area_ecoregion <- total_burned_area_ecoregion - burned_gde_area_ecoregion
-  
-  # Calculate the percentage of burned area in GDEs and non-GDEs in the ecoregion
-  percent_burned_gde_ecoregion <- (burned_gde_area_ecoregion / total_gde_area_ecoregion) * 100
-  percent_burned_non_gde_ecoregion <- (burned_non_gde_area_ecoregion / total_non_gde_area_ecoregion) * 100
-  
-  # Store the results
-  ecoregion_names <- c(ecoregion_names, ecoregion_name)
-  percent_burned_gde <- c(percent_burned_gde, percent_burned_gde_ecoregion)
-  percent_burned_non_gde <- c(percent_burned_non_gde, percent_burned_non_gde_ecoregion)
+# Function to check if two extents overlap
+overlaps <- function(e1, e2) {
+  (e1[1] < e2[2]) & (e1[2] > e2[1]) & (e1[3] < e2[4]) & (e1[4] > e2[3])
 }
 
 ```
 
+```{r}
+# Plot data
+plot(gde_raster, main = "GDEs and Ecoregions")
+plot(ecoregions, add = TRUE, border = 'red') # Ecoregions borders in red
 
-### Print Results
+plot(fire_raster, main = "Fire Perimeter and Ecoregions")
+plot(ecoregions, add = TRUE, border = 'red') # Ecoregions borders in red
+```
 
 ```{r}
-# Print out the results
-results <- data.frame(Ecoregion = ecoregion_names, 
-                      Percent_burned_GDE = percent_burned_gde, 
-                      Percent_burned_non_GDE = percent_burned_non_gde)
+# Function to calculate the percentage of burned area within GDEs and non-GDEs
+calc_burned_percent <- function(gde_raster) {
+  # Ensure both rasters are in the same extent
+  fire_raster <- crop(fire_raster, extent(gde_raster))
+  
+  # Re-sample the fire raster to match the GDE raster
+  fire_raster <- resample(fire_raster, gde_raster, method = "ngb")
 
-print(results)
+  # Create a raster where 1 = GDE & Burned, 0 = otherwise
+  burned_in_gde <- gde_raster * fire_raster
+
+  # Calculate percentage of GDE area that is burned
+  gde_area_burned_percent <- sum(burned_in_gde[] == 1, na.rm = TRUE) / sum(gde_raster[] == 1, na.rm = TRUE) * 100
+
+  # Create a raster where 1 = Non-GDE & Burned, 0 = otherwise
+  burned_in_non_gde <- (1 - gde_raster) * fire_raster
+  
+  # Calculate percentage of non-GDE area that is burned
+  non_gde_area_burned_percent <- sum(burned_in_non_gde[] == 1, na.rm = TRUE) / sum(gde_raster[] == 0, na.rm = TRUE) * 100
+
+  return(c(gde_area_burned_percent, non_gde_area_burned_percent))
+}
 
 ```
 
-
-## Check Extends
-
 ```{r}
-# # Check if the two rasters have the same extent and resolution
-# if (extent(gde_raster) != extent(fire_perimeters) || res(gde_raster) != res(fire_perimeters)) {
-#   # Resample the fire raster to match the GDE raster
-#   fire_raster <- resample(fire_perimeters, gde_raster, method = "bilinear")
-# }
+# List of GDE rasters
+gde_rasters <- list(gde_1, gde_4, gde_5, gde_6, gde_7, gde_8, gde_9, gde_13, gde_14, gde_78, gde_80, gde_81, gde_85)
+# Apply function to each GDE raster
+burned_percent_results <- sapply(gde_rasters, calc_burned_percent)
+
+# Transpose the result so that each row corresponds to one GDE raster
+burned_percent_results <- t(burned_percent_results)
+
+# Add column names
+colnames(burned_percent_results) <- c("GDE_Burned_Percent", "Non_GDE_Burned_Percent")
+
+# View results
+burned_percent_results
 ```
 
-## Overlay Layers
-
 ```{r}
-# # Overlay the rasters
-# burned_gde <- overlay(gde_raster, fire_raster, fun = function(x, y) {x * y})
+# Create a vector with GDE names
+gde_names <- c('gde_1', 'gde_4', 'gde_5', 'gde_6', 'gde_7', 'gde_8', 'gde_9', 'gde_13', 'gde_14', 'gde_78', 'gde_80', 'gde_81', 'gde_85')
 
+# Assign GDE names to the rows
+rownames(burned_percent_results) <- gde_names
 ```
 
-## Calculate Percent (%) Area Burned
 
 ```{r}
-# # Calculate the total area of GDEs
-# total_gde_area <- cellStats(gde_raster, sum)
-# 
-# # Calculate the total area of the raster
-# total_area <- ncell(gde_raster)
-# 
-# # Calculate the total area of non-GDEs
-# total_non_gde_area <- total_area - total_gde_area
-# 
-# # Calculate the burned area in GDEs
-# burned_gde_area <- cellStats(burned_gde, sum)
-# 
-# # Calculate the total burned area
-# total_burned_area <- cellStats(fire_raster, sum)
-# 
-# # Calculate the burned area in non-GDEs
-# burned_non_gde_area <- total_burned_area - burned_gde_area
-# 
-# # Calculate the percentage of burned area in GDEs and non-GDEs
-# percent_burned_gde <- (burned_gde_area / total_gde_area) * 100
-# percent_burned_non_gde <- (burned_non_gde_area / total_non_gde_area) * 100
+burned_percent_results <- as.data.frame(burned_percent_results)
 
+# Add a new column "GDE_Name" that includes the row names
+burned_percent_results$GDE_Name <- rownames(burned_percent_results)
 ```
 
-## Results
 
 ```{r}
-# # Print out the results
-# print(paste0("Percent area burned within GDEs: ", percent_burned_gde, "%"))
-# print(paste0("Percent area burned within non-GDEs: ", percent_burned_non_gde, "%"))
+# Set the width of each bar
+bar_width <- 0.35
 
+# Create a vector for the x-axis positions of the bars
+x <- 1:length(burned_percent_results$GDE_Burned_Percent)
+
+# Create a vector of unique names for each pair of GDE and non-GDE bars
+bar_names <- rep(burned_percent_results$GDE_Name, each = 2)
+bar_names <- paste0(bar_names, c("_GDE", "_Non-GDE"))
+
+# Plotting the burned percentages
+barplot(height = c(burned_percent_results$GDE_Burned_Percent, burned_percent_results$Non_GDE_Burned_Percent),
+        beside = TRUE,
+        names.arg = bar_names,
+        xlab = "GDE",
+        ylab = "Burned Percentage",
+        ylim = c(0, 100),
+        col = c("blue", "red"),
+        main = "Percentage of GDE Area Burned",
+        width = bar_width)
+
+# Add a legend
+legend("topright",
+       legend = c("GDE", "Non-GDE"),
+       fill = c("blue", "red"))
 ```
+

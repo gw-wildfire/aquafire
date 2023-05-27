@@ -2,22 +2,21 @@
 library(shiny)
 library(lterdatasampler)
 library(tidyverse)
-library(shinyWidgets)
 library(shinycssloaders)
 library(leaflet)
 library(raster)
 library(rgdal)
 library(leafem)
 library(sf)
-library(tmap)
 library(bslib)
+library(shinyWidgets)
+library(tmap)
 
 datadir <- path.expand("~/../../capstone/aquafire")
 
 preloaded = FALSE
 
 if(!preloaded){
-  # NOTES - INSTEAD OF 13 FIELDS, ONLY USE 1
   
   print(getwd())
   # DELETE AFTER READING OVER ALL IMPORTANT DATA
@@ -55,7 +54,7 @@ if(!preloaded){
   socal_norbaja_coast <- eco_regions[12,]
   eastern_cascades_slopes_foothills <- eco_regions[13,]
   
-
+  
   # making a list of TSLF by ecoregion----
   print('loading TSLF data')
   path_tslf <- "data/tslf"
@@ -97,13 +96,32 @@ if(!preloaded){
     fire_count_list[[file_i2]] = raster(file_i)
   }
   
+  # reading in fire threat data by ecoregion----
+  print('loading fire threat data')
+  
+  path_fire_threat <- "data/fire_threat"
+  fire_threat.files <- list.files(path_fire_threat, full.names = T)
+  fire_threat.files2 <- list.files(path_fire_threat, full.names = F)
+  fire_threat.files2 = gsub('.tif', '', fire_threat.files2)
+  fire_threat_list <- list()
+  
+  length(fire_threat.files)
+  
+  for(i in 1:length(fire_threat.files)) {
+    print(i)
+    file_i = fire_threat.files[i]
+    file_i2 = fire_threat.files2[i]
+    fire_threat_list[[file_i2]] = raster(file_i)
+    # fire_threat_list[[i]] <- aggregate(fire_count_list[[i]], fact = 10)
+  }
+  # MESSING WITH THIS!!!!!! ABOVE
+  
   # reading in GDE data by ecoregion----
   print('loading GDE data')
   
   path_gde <- "data/gde_ecoregions"
   gde.files <- list.files(path_gde, full.names = T)
   gde.files2 <- list.files(path_gde, full.names = F)
-  # fire.files2 = gsub('.tif', '', fire.files2)
   gde_list <- list()
   
   length(gde.files)
@@ -112,18 +130,44 @@ if(!preloaded){
     print(i)
     file_i = gde.files[i]
     file_i2 = gde.files2[i]
-    gde_list[[file_i2]] = st_read(file_i)
+    gde_list[[file_i2]] = st_make_valid(st_read(file_i))
   }
   
-  simp <- st_simplify(gde_list[['gde_cascades']], dTolerance = 5) # cascades
-  gde_4_simp <- tm_shape(simp) + tm_polygons()
-
-  # tm <- tm_shape(tslf_list[['socal_norbaja_coast_crop']]) +
-  #   tm_raster()
-  # 
-  # tm1 <- tm_shape(tslf_list[['sierra_nevada_crop']]) +
-  #   tm_raster()
-
+  dec_place <- 2
+  for (i in 1:length(gde_list)) {
+    
+    gde_shapefile <- gde_list[[i]]
+    
+    gde_shapefile <- gde_shapefile %>% rename(area_col = area)
+    
+    gde_shapefile$area_col <- round(gde_shapefile$area_col, dec_place)
+    
+    gde_list[[i]] <- gde_shapefile
+    
+  }
   
+  # main page ecoregions
+  
+  # RENAMING
+  
+  names_gde <- names(gde_list)
+  names(names_gde) = gsub('gde_', '', names_gde)
+  names(names_gde) = gsub('_', ' ', names(names_gde))
+  names(names_gde) = names(names_gde) %>% stringr::str_to_title()
+  
+  names_tslf <- names(tslf_list)
+  names(names_tslf) = gsub('_tslf', '', names_tslf)
+  names(names_tslf) = gsub('_', ' ', names(names_tslf))
+  names(names_tslf) = names(names_tslf) %>% stringr::str_to_title()
+  
+  names_fire <- names(fire_count_list)
+  names(names_fire) = gsub('_fire_count', '', names_fire)
+  names(names_fire) = gsub('_', ' ', names(names_fire))
+  names(names_fire) = names(names_fire) %>% stringr::str_to_title()
+  
+  names_fire_threat <- names(fire_threat_list)
+  names(names_fire_threat) = gsub('_fire_threat', '', names_fire_threat)
+  names(names_fire_threat) = gsub('_', '', names(names_fire_threat))
+  names(names_fire_threat) = names(names_fire_threat) %>% stringr::str_to_title()
 }
 

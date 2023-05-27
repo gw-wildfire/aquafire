@@ -1,0 +1,500 @@
+---
+title: "ecoregion_info"
+author: "Meagan Brown"
+date: "2023-05-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load necessary data
+```{r}
+gde <- read_sf(here::here('data', 'gde')) %>% 
+  st_transform("EPSG: 3310")
+
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+```
+
+# 1. COAST RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+coast_range <- eco_regions %>% 
+  filter(region == 'Coast Range')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "1. COAST RANGE"
+
+# Add a column for the popup text to your data
+coast_range$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+tm_shape(coast_range) +
+  tm_polygons(col = "#0081A7", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+   tm_layout(frame = FALSE)
+```
+
+# 4. CASCADES
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+cascades <- eco_regions %>% 
+  filter(region == 'Cascades')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "4. CASCADES"
+
+# Add a column for the popup text to your data
+cascades$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(cascades) +
+  tm_polygons(col = "#8CB369", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 5. SIERRA NEVADA
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+sierra_nevada <- eco_regions %>% 
+  filter(region == 'Sierra Nevada')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "5. SIERRA NEVADA"
+
+# Add a column for the popup text to your data
+sierra_nevada$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(sierra_nevada) +
+  tm_polygons(col = "#C0CB77", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 6. CENTRAL CALIFORNIA FOOTHILLS AND COASTAL MOUNTAINS
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+central_cal_coast_mtn <- eco_regions %>% 
+  filter(region == 'Central California Foothills and Coastal Mountains')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "6. CENTRAL CALIFORNIA FOOTHILLS AND COASTAL MOUNTAINS"
+
+# Add a column for the popup text to your data
+central_cal_coast_mtn$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(central_cal_coast_mtn) +
+  tm_polygons(col = "#7FD6CB", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 7. CENTRAL CALIFORNIA VALLEY
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+central_valley <- eco_regions %>% 
+  filter(region == 'Central California Valley')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "7. CENTRAL CALIFORNIA VALLEY"
+
+# Add a column for the popup text to your data
+central_valley$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(central_valley) +
+  tm_polygons(col = "lightgrey", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.5, 
+              border.col = 'white', lwd = 0.3,
+              lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right")  + tm_layout(frame = FALSE)
+```
+
+# 8. SOUTHERN CALIFORNIA MOUNTAINS
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_mtns <- eco_regions %>% 
+  filter(region == 'Southern California Mountains')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "8. SOUTHERN CALIFORNIA MOUNTAINS"
+
+# Add a column for the popup text to your data
+socal_mtns$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(socal_mtns) +
+  tm_polygons(col = "#F4E285", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 9. EASTERN CASCADE SLOPES AND FOOTHILLS
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+east_cascade_foothills <- eco_regions %>% 
+  filter(region == 'Eastern Cascades Slopes and Foothills')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "9. EASTERN CASCADE SLOPES AND FOOTHILLS"
+
+# Add a column for the popup text to your data
+east_cascade_foothills$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(east_cascade_foothills) +
+  tm_polygons(col = "#F4C26F", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 13. CENTRAL BASIN AND RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+central_basin_range <- eco_regions %>% 
+  filter(us_l3code == '13')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "13. CENTRAL BASIN AND RANGE"
+
+# Add a column for the popup text to your data
+central_basin_range$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+ # central basin and range
+  tm_shape(central_basin_range) +
+  tm_polygons(col = "#F4A259", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 14. MOJAVE BASIN AND RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mojave_basin_range <- eco_regions %>% 
+  filter(us_l3code == '14')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "14. MOJAVE BASIN AND RANGE"
+
+# Add a column for the popup text to your data
+mojave_basin_range$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(mojave_basin_range) +
+  tm_polygons(col = "#8CB369", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 78. KLAMATH MOUNTAINS AND CALIFORNIA HIGH NORTH COAST RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+klamath_mtns <- eco_regions %>% 
+  filter(us_l3code == '78')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "78. KLAMATH MOUNTAINS AND CALIFORNIA HIGH NORTH COAST RANGE"
+
+# Add a column for the popup text to your data
+klamath_mtns$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(klamath_mtns) +
+  tm_polygons(col = "#A8986B", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 80. NORTHERN BASIN AND RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+northern_basin_range <- eco_regions %>% 
+  filter(us_l3code == '80')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "80. NORTHERN BASIN AND RANGE"
+
+# Add a column for the popup text to your data
+northern_basin_range$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+tm_shape(northern_basin_range) +
+  tm_polygons(col = "#829374", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 81. SONORAN BASIN AND RANGE
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+sonoran_basin_range <- eco_regions %>% 
+  filter(us_l3code == '81')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "81. SONORAN BASIN AND RANGE"
+
+# Add a column for the popup text to your data
+sonoran_basin_range$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(sonoran_basin_range) +
+  tm_polygons(col = "#5B8E7D", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# 85. SOUTHERN CALIFORNIA/NORTHERN BAJA COAST
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# Enable interactive mode and switch to leaflet mode
+tmap_mode("plot")
+
+# Define the text information for the popup
+popup_text <- "85. SOUTHERN CALIFORNIA/NORTHERN BAJA COAST"
+
+# Add a column for the popup text to your data
+socal_baja_coast$popup_text <- popup_text
+
+# Plot the polygons with interactive click events and custom popup
+  tm_shape(socal_baja_coast) +
+  tm_polygons(col = "#BC4B51", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") + tm_layout(frame = FALSE)
+```
+
+# ALL REGIONS TOGETHER
+
+```{r}
+tmap_mode("view")
+
+# coast range
+tm_shape(coast_range) +
+  tm_polygons(col = "#0081A7", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # cascades
+  tm_shape(cascades) +
+  tm_polygons(col = "#8CB369", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # sierra nevada
+  tm_shape(sierra_nevada) +
+  tm_polygons(col = "#C0CB77", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # central cal mtns
+  tm_shape(central_cal_coast_mtn) +
+  tm_polygons(col = "#7FD6CB", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # socal mountains
+  tm_shape(socal_mtns) +
+  tm_polygons(col = "#F4E285", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # east cascade foothills
+  tm_shape(east_cascade_foothills) +
+  tm_polygons(col = "#F4C26F", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # central basin and range
+  tm_shape(central_basin_range) +
+  tm_polygons(col = "#F4A259", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # mojave basin and range
+  tm_shape(mojave_basin_range) +
+  tm_polygons(col = "#8CB369", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # klamath mtns
+  tm_shape(klamath_mtns) +
+  tm_polygons(col = "#A8986B", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # northern basin
+  tm_shape(northern_basin_range) +
+  tm_polygons(col = "#829374", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3, lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # sonoran basin
+  tm_shape(sonoran_basin_range) +
+  tm_polygons(col = "#5B8E7D", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # socal baja coast
+  tm_shape(socal_baja_coast) +
+  tm_polygons(col = "#BC4B51", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.55, 
+              border.col = 'white', lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  
+  # central valley
+  tm_shape(central_valley) +
+  tm_polygons(col = "lightgrey", 
+              title = "Region", 
+              id = "popup_text", 
+              alpha = 0.5, 
+              border.col = 'white', lwd = 0.3,
+              lwd = 0.3) +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") 
+```
+
+
