@@ -9,22 +9,69 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+Run the Burn Severity and GDE sections of the Objects.RMD file to get all spatial objects necessary to run this code. Download necessary files and put them in the raster_output folder before running. 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+### Eco Region Key: 
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+   **code**                                           **region**
+          1                                         Coast Range
+         13                             Central Basin and Range
+         14                              Mojave Basin and Range
+          4                                            Cascades
+          5                                       Sierra Nevada
+          6  Central California Foothills and Coastal Mountains
+          7                           Central California Valley
+         78 Klamath Mountains/California High North Coast Range
+          8                       Southern California Mountains
+         80                            Northern Basin and Range
+         81                             Sonoran Basin and Range
+         85             Southern California/Northern Baja Coast
+          9               Eastern Cascades Slopes and Foothills
+          
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(dplyr)
+library(gridExtra)
+library(kableExtra)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
 ```
 
-## Including Plots
+# Sample 
+Many areas have no values for burn severity, so I'll mask the GDE raster layer to only have data for areas that have values for burn severity. 
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+set.seed(123) 
+burn_severity_1_sample <- stratified_sample(burn_severity_1, gde_1, n = 1000)
+burn_severity_4_sample <- stratified_sample(burn_severity_4, gde_4, n = 1000)
+burn_severity_5_sample <- stratified_sample(burn_severity_5, gde_5, n = 1000)
+burn_severity_6_sample <- stratified_sample(burn_severity_6, gde_6, n = 1000)
+burn_severity_7_sample <- stratified_sample(burn_severity_7, gde_7, n = 1000)
+burn_severity_8_sample <- stratified_sample(burn_severity_8, gde_8, n = 1000)
+burn_severity_9_sample <- stratified_sample(burn_severity_9, gde_9, n = 1000)
+burn_severity_13_sample <- stratified_sample(burn_severity_13, gde_13, n = 1000)
+burn_severity_14_sample <- stratified_sample(burn_severity_14, gde_14, n = 1000)
+burn_severity_78_sample <- stratified_sample(burn_severity_78, gde_78, n = 1000)
+burn_severity_80_sample <- stratified_sample(burn_severity_80, gde_80, n = 1000)
+burn_severity_81_sample <- stratified_sample(burn_severity_81, gde_81, n = 1000)
+burn_severity_85_sample <- stratified_sample(burn_severity_85, gde_85, n = 1000)
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+# Summary Statistics 
+```{r}
+
+```
+
+# Basic Visualizations
+
+
+# T-Test 

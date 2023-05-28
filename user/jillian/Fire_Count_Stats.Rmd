@@ -46,6 +46,50 @@ source("user/jillian/functions/stratified_sample.R")
 source("user/jillian/functions/fire_count_violin_plot.R")
 ```
 
+# Necessary Objects 
+```{r}
+# For eco region names / codes 
+crs_ca <- st_crs(3310)
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)  %>%
+  mutate(code = as.numeric(us_l3code))
+# Create file containing eco region names 
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
+
+gde_1 <- raster("raster_output/gde_1.tif")
+gde_4 <- raster("raster_output/gde_4.tif")
+gde_5 <- raster("raster_output/gde_5.tif")
+gde_6 <- raster("raster_output/gde_6.tif")
+gde_7 <- raster("raster_output/gde_7.tif")
+gde_8 <- raster("raster_output/gde_8.tif")
+gde_9 <- raster("raster_output/gde_9.tif")
+gde_13 <- raster("raster_output/gde_13.tif")
+gde_14 <- raster("raster_output/gde_14.tif")
+gde_78 <- raster("raster_output/gde_78.tif")
+gde_80 <- raster("raster_output/gde_80.tif")
+gde_81 <- raster("raster_output/gde_81.tif")
+gde_85 <- raster("raster_output/gde_85.tif")
+
+fire_count_1 <- raster("raster_output/fire_count_1.tif")
+fire_count_4 <- raster("raster_output/fire_count_4.tif")
+fire_count_5 <- raster("raster_output/fire_count_5.tif")
+fire_count_6 <- raster("raster_output/fire_count_6.tif")
+fire_count_7 <- raster("raster_output/fire_count_7.tif")
+fire_count_8 <- raster("raster_output/fire_count_8.tif")
+fire_count_9 <- raster("raster_output/fire_count_9.tif")
+fire_count_13 <- raster("raster_output/fire_count_13.tif")
+fire_count_14 <- raster("raster_output/fire_count_14.tif")
+fire_count_78 <- raster("raster_output/fire_count_78.tif")
+fire_count_80 <- raster("raster_output/fire_count_80.tif")
+fire_count_81 <- raster("raster_output/fire_count_81.tif")
+fire_count_85 <- raster("raster_output/fire_count_85.tif")
+```
+
+
 # Samples 
 ```{r}
 set.seed(123) 
@@ -62,6 +106,19 @@ fire_count_78_sample <- stratified_sample(fire_count_78, gde_78, n = 1000)
 fire_count_80_sample <- stratified_sample(fire_count_80, gde_80, n = 1000)
 fire_count_81_sample <- stratified_sample(fire_count_81, gde_81, n = 1000)
 fire_count_85_sample <- stratified_sample(fire_count_85, gde_85, n = 1000)
+
+eco_region_codes <- c(1, 13, 14, 4, 5, 6, 7, 78, 8, 80, 81, 85, 9)
+fire_count_sample_list <- list()
+
+for(i in 1:13){
+  obj <- (paste0('fire_count_', eco_region_codes[i], '_sample'))
+  fire_count_sample_list <- c(fire_count_sample_list, obj)
+}
+
+fire_count_results <- bootstrap_results(fire_count_sample_list) 
+
+fire_count_results <- fire_count_results %>%
+  bind_cols(eco_regions_names)
 ```
 
 # Summary Stats
@@ -114,10 +171,63 @@ plot_fc_8
 
 ### Histogram Comparing GDE Dist and Non-GDE Dist
 ```{r}
+library(MASS)
+fire_count_6_gdes <- fire_count_6_sample %>%
+  filter(gde == 1) %>%
+  mutate(log_transformed_value = log(value))
+
+fire_count_6_nongdes <- fire_count_6_sample %>%
+  filter(gde == 0) %>%
+  mutate(log_transformed_value = log(value))
+
+
+ggplot(data = fire_count_6_gdes, aes(x = log_transformed_value)) + 
+  geom_histogram()
+
+
+
+t.test(fire_count_6_gdes$log_transformed_value, fire_count_6_nongdes$value)
+
+wilcox.test(fire_count_6_gdes$value, fire_count_6_nongdes$value)
 
 ```
 
-# T-Test 
+# Bootstrapping
+```{r}
+# Step 1: Load the required package
+library(boot)
+library(boot.pval)
+
+# Step 2: Define the function that calculates the test statistic (difference in means)
+diff_in_means <- function(sample_data, indices) {
+  gde_0 <- sample_data %>%
+    filter(gde == 0)
+  gde_1 <- sample_data %>%
+    filter(gde == 1)
+  
+  nongde_sample <- gde_0[indices, 3]
+  gde_sample <- gde_1[indices, 3]
+  return(mean(nongde_sample, na.rm = TRUE) - mean(gde_sample, na.rm = TRUE))
+}
+
+# Step 4: Perform the bootstrap procedure
+bootstrap_result <- boot(fire_count_85_sample, diff_in_means, R = 1000)
+
+# Step 5: Obtain the bootstrap confidence interval and p-value
+confidence_interval <- boot.ci(bootstrap_result, conf = 0.95, type = "norm")$normal
+p_value <- boot.pval(bootstrap_result, theta_null = 0)
+
+# Step 6: Print the results
+print("Bootstrap Confidence Interval:")
+print(confidence_interval)
+print("P-value:")
+print(p_value)
+
+diff_in_means_bootstrap(fire_count_85_sample)
+
+
+```
+
 
 
 # Logistic Regressions
