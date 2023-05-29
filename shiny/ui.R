@@ -25,25 +25,23 @@ ui <- fluidPage(
                         h1("Background"),
                         
                         fluidRow(
-                          column(12, p("Eight of the largest 10 wildfires in California have occured in the past five years. And although there has been extensive research on wildfire models designed to predict occurance and severity, little research has been done to understand and quantify how subsurface water may effect these wildfire models. This project aims to understand how Groundwater-Dependent Ecosystems, which are ecosystems that are dependent on groundwater year-round, might play a role in wildfires."),
+                          column(12, p("Eight of the largest 10 wildfires in California have occured in the past five years. And although there has been extensive research on wildfire models designed to predict occurence and severity, little research has been done to understand and quantify how subsurface water may effect these wildfire models. This project aims to understand how Groundwater-Dependent Ecosystems (GDEs), which are ecosystems that are dependent on groundwater year-round, might play a role in wildfires."),
                           )
                         ), # End Background
                         
                         h1("Significance"),
                         
                         fluidRow(
-                          column(12, p("This App was designed to display statistical and spatial relationships between Groundwater-Dependent Ecosystems and Wildfires. It may be used as a tool to understand how Groundwater-Dependent Ecosystems play a role in lessening the severity of a wildfire or may even act as a natural fire break."),
+                          column(12, p("This app was designed to display statistical and spatial relationships between groundwater-dependent ecosystems and wildfires. It may be used as a tool to understand how GDEs play a role in lessening the severity of a wildfire or may even act as a natural fire break."),
                                  
                           ),
                           
                         ), # End Significance
                         
-                        tmapOutput("main_map", height = 600),
-                        
-                        h1("Contact"),
+                        h1("How to Use This App"),
                         
                         fluidRow(
-                          column(12, p("..."),
+                          column(12, p("This Shiny App has 2 main tabs, the Map tab and the Statistics tap. In the Map tab, one of the 13 ecoregions in california, designated by the EPA, can be selected and will display all GDEs within that ecoregion. Click on a GDE and information including wetland type, dominant vegetation, and wildfire metrics will be shown. On the left panel, 4 fire layers can be toggled on and off. These layers are: fire count"),
                           )
                         ), # End Contact
                         
@@ -51,7 +49,10 @@ ui <- fluidPage(
                         
                         fluidRow(
                           column(12, p("Maybe make a graph for displaying the data and metadata?"),
-                          )
+                          ),
+                          
+                          tableOutput("dataTable")
+                          
                         ), # End Data Policy Info
                         
                         h1("About Us"),
@@ -59,11 +60,56 @@ ui <- fluidPage(
                         fluidRow(
                           column(12, p("We are Jillian Allison, Meagan Brown, Andre Dextre, and Wade Sedgwick. This App was designed during our Master in Environmental Data Science Program for use by the Dangermond Preserve, owned by The Nature Conservancy."),
                           )
-                        ), # End Significance
+                        ), # End About Us
+                        
+                        
                         
                       ), # End fluidPage
                       
              ), # End Tab Panel for About page
+             
+             # Ecoregion Information ----
+             tabPanel(title = "Ecoregion Information", icon = icon("layer-group"),
+                      
+                      # Stats Main Panel----
+                      mainPanel(
+                        
+                        h1("Ecoregion Information"),
+                        
+                        tmapOutput("main_map", height = 600, width = 800),
+                        
+                        h3("Coast Range"),
+                        
+                        fluidRow(
+                          column(12, p("The low mountains of the Coast Range of western Washington, western Oregon, and northwestern California are covered by highly productive, rain-drenched coniferous forests. Sitka spruce forests originally dominated the fog-shrouded coast, while a mosaic of western redcedar, western hemlock, and seral Douglas-fir blanketed inland areas. Today, Douglas-fir plantations are prevalent on the intensively logged and managed landscape. In California, redwood forests are a dominant component in much of the region. In Oregon and Washington, soils are typically Inceptisols and Andisols, while Alfisols are common in the California portion. Landslides and debris slides are common, and lithology influences land management strategies. In Oregon and Washington, slopes underlain by sedimentary rock are more susceptible to failure following clear-cutting and road building than those underlain by volcanic rocks. Coastal headlands, high and low marine terraces, sand dunes, and beaches also characterize the region."),
+                                 
+                          ),
+                          
+                        ), # End Significance
+                        h3("Central Basin"),
+                        
+                        fluidRow(
+                          column(12, p(""))
+                        ),
+                        
+                        h3("Central Foothills and Coastal Mountains"),
+                        
+                        fluidRow(
+                          column(12, p("The primary distinguishing characteristic of this ecoregion is its Mediterranean climate of hot dry summers and cool moist winters, and associated vegetative cover comprising mainly chaparral and oak woodlands; grasslands occur in some lower elevations and patches of pine are found at higher elevations. Surrounding the lower and flatter Central California Valley (7), most of the region consists of open low mountains or foothills, but there are some areas of irregular plains and some narrow valleys. Large areas are in ranch lands and grazed by domestic livestock. Relatively little land has been cultivated, although some valleys are major agricultural centers such as the Salinas or the wine vineyard center of Napa and Sonoma."))
+                        ),
+                        
+                        fluidRow(
+                          column(12, p("ecoregion information"),
+                                 
+                          ),
+                          
+                        ), # End Ecoregion Information
+                        # ecoregion info GO HERE
+                        
+                      ) # End mainPanel
+                      
+             ), # End tabPanel for Ecoregion Information
+             
              
              # Map ----
              tabPanel(title = "Map", icon = icon("map"),
@@ -90,7 +136,7 @@ ui <- fluidPage(
                                        column(6,
                                               checkboxGroupButtons('type_raster',
                                                                    'Select Raster Type',
-                                                                   choices = c('Fire Count Raster', 'TSLF Raster', 'Fire Threat Raster'),
+                                                                   choices = c('Fire Count Raster', 'TSLF Raster', 'Fire Threat Raster', 'Burn Severity Raster'),
                                                                    size = ('lg'),
                                                                    individual = T,
                                                                    direction = 'vertical',
@@ -102,13 +148,16 @@ ui <- fluidPage(
                                        ),
                                        
                                        column(6,
-                                              sliderInput('alpha1','Fire Alpha',
+                                              sliderInput('alpha1','Fire Count Alpha',
                                                           step = 0.1,
                                                           min = 0.1, max = 1, value = 0.8),
                                               sliderInput('alpha2','TSLF Alpha',
                                                           step = 0.1,
                                                           min = 0.1, max = 1, value = 0.8),
-                                              sliderInput('alpha3', 'Fire Count Alpha',
+                                              sliderInput('alpha3', 'Fire Threat Alpha',
+                                                          step = 0.1,
+                                                          min = 0.1, max = 1, value = 0.3),
+                                              sliderInput('alpha4', 'Burn Severity Alpha',
                                                           step = 0.1,
                                                           min = 0.1, max = 1, value = 0.8)
                                        )
@@ -131,6 +180,8 @@ ui <- fluidPage(
                       )#, # End sidebarLayout
                       
              ), # End tabPanel
+             
+             
              
              # Statistics ----
              tabPanel(title = "Statistics", icon = icon("chart-simple"),
@@ -167,7 +218,7 @@ ui <- fluidPage(
                       
              ), # End tabPanel
              
-  ), # End mainPanel
+  ), # End navbarPage
   
 ) # End Navigation Bar
 

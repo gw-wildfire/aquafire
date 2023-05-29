@@ -11,16 +11,21 @@ library(sf)
 library(bslib)
 library(shinyWidgets)
 library(tmap)
+library(kableExtra)
 
 datadir <- path.expand("~/../../capstone/aquafire")
 
-preloaded = FALSE
+# if(exists("preloaded")) {
+#   preloaded = TRUE
+# } else {
+#   preloaded = FALSE
+# }
+
+preloaded = T
 
 if(!preloaded){
   
   print(getwd())
-  # DELETE AFTER READING OVER ALL IMPORTANT DATA
-  # source('code/crop.R', echo = T)
   
   # reading in data
   crs_ca <- st_crs(3310)
@@ -54,18 +59,59 @@ if(!preloaded){
   socal_norbaja_coast <- eco_regions[12,]
   eastern_cascades_slopes_foothills <- eco_regions[13,]
   
+  ecoregion_list <- list(coast_range = eco_regions[1,],
+                         central_basin = eco_regions[2,],
+                         mojave_basin = eco_regions[3,],
+                         cascades = eco_regions[4,],
+                         sierra_nevada = eco_regions[5,],
+                         central_foothills_coastal_mountains = eco_regions[6,],
+                         central_valley = eco_regions[7,],
+                         klamath_mountains = eco_regions[8,],
+                         southern_mountains = eco_regions[9,],
+                         northern_basin = eco_regions[10,],
+                         sonoran_basin = eco_regions[11,],
+                         socal_norbaja_coast = eco_regions[12,],
+                         eastern_cascades_slopes_foothills = eco_regions[13,])
   
-  # making a list of TSLF by ecoregion----
+  # loading ecoregion data----
+  print('loading ecoregion data')
+  
+  # getting path file names for GDEs
+  path_gde <- "data/gde_ecoregions"
+  gde.files <- list.files(path_gde, full.names = T)
+  gde.files2 <- list.files(path_gde, full.names = F)
+  gde_list <- list()
+  
+  length(gde.files)
+  
+  # reading in GDE data
+  for(i in 1:length(gde.files)){
+    print(i)
+    file_i = gde.files[i]
+    file_i2 = gde.files2[i]
+    gde_list[[file_i2]] = st_make_valid(st_read(file_i))
+  }
+  
+  # editing GDE shapefiles
+  dec_place <- 2
+  for (i in 1:length(gde_list)) {
+    gde_shapefile <- gde_list[[i]]
+    gde_shapefile$area <- round((gde_shapefile$area), dec_place)
+    gde_list[[i]] <- gde_shapefile
+  }
+  
+  # loading TSLF data----
   print('loading TSLF data')
-  path_tslf <- "data/tslf"
   
+  # getting path file names for TSLF
+  path_tslf <- "data/tslf"
   tslf.files <- list.files(path_tslf, full.names = T)
   tslf.files2 <- list.files(path_tslf, full.names = F)
   tslf.files2 = gsub('.tif', '', tslf.files2)
   tslf_list <- list()
   
   length(tslf.files)
-  
+  # reading in TSLF data
   for(i in 1:length(tslf.files)){
     print(i)
     file_i = tslf.files[i]
@@ -78,7 +124,7 @@ if(!preloaded){
   fire_count <- raster("data/fire_count.tif")
   fire_threat <- raster("data/fire_threat.tif")
   
-  # reading in fire_count data by ecoregion----
+  # reading in Fire Count data----
   print('loading FIRE COUNT data')  
   
   path_fire <- "data/fire_count"
@@ -114,7 +160,21 @@ if(!preloaded){
     fire_threat_list[[file_i2]] = raster(file_i)
     # fire_threat_list[[i]] <- aggregate(fire_count_list[[i]], fact = 10)
   }
-  # MESSING WITH THIS!!!!!! ABOVE
+  
+  burn_severity_file <- "data/burn_severity"
+  burn_severity.files <- list.files(burn_severity_file, full.names = T)
+  burn_severity.files2 <- list.files(burn_severity_file, full.names = F)
+  burn_severity.files2 = gsub('.tif', '', burn_severity.files2)
+  burn_severity_list <- list()
+  
+  length(burn_severity.files)
+  
+  for(i in 1:length(burn_severity.files)){
+    print(i)
+    file_i = burn_severity.files[i]
+    file_i2 = burn_severity.files2[i]
+    burn_severity_list[[file_i2]] = raster(file_i)
+  }
   
   # reading in GDE data by ecoregion----
   print('loading GDE data')
@@ -138,9 +198,9 @@ if(!preloaded){
     
     gde_shapefile <- gde_list[[i]]
     
-    gde_shapefile <- gde_shapefile %>% rename(area_col = area)
+    gde_shapefile$area
     
-    gde_shapefile$area_col <- round(gde_shapefile$area_col, dec_place)
+    gde_shapefile$area <- round((gde_shapefile$area), dec_place)
     
     gde_list[[i]] <- gde_shapefile
     
@@ -169,5 +229,11 @@ if(!preloaded){
   names(names_fire_threat) = gsub('_fire_threat', '', names_fire_threat)
   names(names_fire_threat) = gsub('_', '', names(names_fire_threat))
   names(names_fire_threat) = names(names_fire_threat) %>% stringr::str_to_title()
+  
+  names_burn_severity <- names(burn_severity_list)
+  names(names_burn_severity) = gsub('_burn_severity', '', names_burn_severity)
+  names(names_burn_severity) = gsub('_', ' ', names(names_burn_severity))
+  names(names_burn_severity) = names(names_burn_severity) %>% stringr::str_to_title()
+  
 }
 

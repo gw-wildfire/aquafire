@@ -31,32 +31,6 @@ socal_norbaja_coast <- eco_regions[12,]
 eastern_cascades_slopes_foothills <- eco_regions[13,]
 
 
-## LOOPRASTER ----
-# path_raster <- "/Users/wsedgwick/Desktop/bren_meds/courses/capstone/aquafire/shiny/data/tslf"
-
-# crop.files <- list.files(path_raster, full.names = T)
-# crop.files2 <- list.files(path_raster, full.names = F)
-# tslf_list <- list()
-# 
-# length(crop.files)
-# 
-# for(i in 1:length(crop.files)){
-#   print(i)
-#   file_i = crop.files[i]
-#   file_i2 = crop.files2[i]
-#   tslf_list[[file_i2]] = raster(file_i)
-# }
-
-
-# ANnother bookmark ----
-
-# WORKING WITH GDE DATA----
-#gde_polygon_8 <- st_make_valid(gde_polygon_8)
-
-
-
-
-
 # gde_coast_range <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_coast_range/gde_polygon_1.shp")
 # gde_central_basin <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_central_basin/gde_polygon_13.shp")
 # gde_mojave_basin <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_mojave_basin/gde_polygon_14.shp")
@@ -72,19 +46,38 @@ eastern_cascades_slopes_foothills <- eco_regions[13,]
 # gde_eastern_cascades_slopes_foothills <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_eastern_cascades_slopes_foothills/gde_polygon_9.shp")
 
 
-# this gde 
-
-#gde_8 <- tm_shape(gde_polygon_8) + tm_polygons()
-
-
 # NOTES:----
 # # reading in largest gde polygon - central_foothills_coastal_mountains at 316MB
-# largest_gde <- gde_central_foothills_coastal_mountains %>% 
-#   filter(area > 10000) # more than 2.2~ acres - still 34k obs! too big! MAX 10k?
+eastern_casc <- st_make_valid(st_read("data/gde_ecoregions/gde_eastern_cascades_slopes_foothills"))
+eastern_casc
+
+largest_gde <- eastern_casc %>%
+  filter(area > 10000)  # more than 2.2~ acres - still 34k obs! too big! MAX 10k?
+
+largest_gde_simp <- st_simplify(largest_gde, dTolerance = 5)
+
+largest_gde
+
+tmap_mode("view")
+
+tm_shape(largest_gde_simp) +
+  tm_polygons()
+
+# for central cali foothills
+central_foothills <- st_make_valid(st_read("data/gde_ecoregions/gde_central_foothills_coastal_mountains"))
+central_foothills
+
+central_foothills_gde <- central_foothills %>%
+  filter(area > 10000)  # more than 2.2~ acres - still 34k obs! too big! MAX 10k?
+
+central_foothills_gde_simp <- st_simplify(central_foothills_gde, dTolerance = 10)
+
+central_foothills_gde_simp
+
+tmap_mode("view")
+
+tm_shape(largest_gde_simp) +
+  tm_polygons()
+
 
 # if filter GDEs less than 1 acre, what will be missing? will still be included in the ecoregion analysis
-
-
-
-
-

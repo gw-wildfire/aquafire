@@ -3,6 +3,14 @@ server <- function(input, output, session) {
   tmap_mode("view")
   # end
   
+  observeEvent(input$ecoregion_type_input,{
+    print('new ecoregion')
+    updateCheckboxGroupButtons(session = session,
+                               inputId = 'type_raster',
+                               selected = character(0))
+    
+  })
+  
   map_reactive <- reactive({
     print(input$ecoregion_type_input)
     # print(input$firelayer_type_input)
@@ -19,7 +27,9 @@ server <- function(input, output, session) {
     
     names_fire2 = gsub('_fire_count', '', names_fire)
     names_tslf2 = gsub('_tslf', '', names_tslf)
-    names_fire_threat2 = gsub('_fire_threat', '',names_fire_threat) # ADDING
+    names_fire_threat2 = gsub('_fire_threat', '', names_fire_threat)
+    names_burn_severity2 = gsub('_burn_severity', '', names_burn_severity)
+    names_ecoregion2 = names(ecoregion_list)
     
     wfire = which(names_fire2 == eco_selected2)
     wfire = names_fire[wfire]
@@ -29,39 +39,35 @@ server <- function(input, output, session) {
     wtslf = names_tslf[wtslf]
     print(wtslf)
     
-    wfire_threat = which(names_fire_threat2 == eco_selected2) # ADDING
+    wfire_threat = which(names_fire_threat2 == eco_selected2)
     wfire_threat = names_fire_threat[wfire_threat]
     print(wfire_threat)
     
+    wburn_severity = which(names_burn_severity2 == eco_selected2)
+    wburn_severity = names_burn_severity[wburn_severity]
+    print(wburn_severity)
+    
+    wecoregion = which(names_ecoregion2 == eco_selected2)
+    wecoregion = names_ecoregion[wecoregion]
+    print(wecoregion)
+    
+    
     tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldTerrain) +
       tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
-      tm_shape(gde_list[[input$ecoregion_type_input]], point.per = "feature") +
+      tm_shape(ecoregion_list[[wecoregion]]) +
+      tm_polygons(alpha = 0.2, interactive = FALSE) +
+      tm_shape(gde_list[[input$ecoregion_type_input]], 
+               point.per = "feature") +
       tm_polygons(col = '#0f851e',
                   id = 'popup_text',
                   border.col = 'white',
-                  lwd = 0.5
-                  #popup.vars = c("WETLAND_NA", "area")
-      )
-    
-    
-    # Add pop-up windows using leaflet
-    # leaflet_map <- tmap_leaflet(tm_level_one)
-    # leaflet_map <- leaflet_map %>%
-    #   addPolygons(
-    #     data = st_transform(gde_list[[input$ecoregion_type_input]], crs = 3310),
-    #     fillColor = '#0f851e',
-    #     fillOpacity = 0.5,
-    #     label = ~paste("Area:", area, "<br>",
-    #                    "Wetland:", WETLAND_NA),
-    #     labelOptions = labelOptions(noHide = TRUE)
-    #   )
-    
-    # + tm_dots(popup.vars = TRUE)
-    # + tm_fill(popup.vars = "area")
-    # , id = "WETLAND_NA"
-    # + tm_bubbles("area") 
-    # + tm_fill(interactive = TRUE, popup.vars = "WETLAND_NA")
-    #  # Display legend here!?
+                  lwd = 0.1,
+                  alpha = 0.6,
+                  popup.vars = c("Wetland Type" = "WETLAND_NA", 
+                                 "Area" = "area",
+                                 "Vegetation Type" = "VEGETATION")
+      ) + 
+      tm_layout(title = 'test', title.position = 'right')
     
     if('Fire Count Raster' %in% input$type_raster){
       print(' FIRE COUNT RASTER ')
@@ -70,7 +76,9 @@ server <- function(input, output, session) {
         tm_raster(palette = 'Reds',
                   alpha = input$alpha1,
                   title = 'Fire Count Raster',
-                  breaks = seq(0, maxValue(fire_layer), 1)) # breaks = seq(0, length(fire_layer), 1)
+                  breaks = seq(0, maxValue(fire_layer), 1),
+                  labels = c(as.character(seq(0, maxValue(fire_layer), 1)))
+        ) # breaks = seq(0, length(fire_layer), 1)
     }
     
     if('TSLF Raster' %in% input$type_raster){
@@ -89,6 +97,20 @@ server <- function(input, output, session) {
         tm_raster(palette = 'Reds',
                   alpha = input$alpha3,
                   title = 'Fire Threat Raster')
+      #labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
+    }
+    
+    if('Burn Severity Raster' %in% input$type_raster){
+      print(' BURN SEVERITY RASTER ')
+      burn_severity_layer <- burn_severity_list[[wburn_severity]]
+      tm_level_one <- tm_level_one + tm_shape(burn_severity_layer) +
+        tm_raster(palette = 'Reds', # CHANGE PALATTE
+                  alpha = input$alpha4,
+                  title = 'Burn Severity Raster',
+                  labels = c("NA", "Low", "Medium", "High")
+                  # breaks = seq(1, maxValue(burn_severity_layer), 1),
+                  # labels = c(as.character(seq(1, maxValue(burn_severity_layer), 1)))
+        )
     }
     
     tm_level_one # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
@@ -140,10 +162,13 @@ server <- function(input, output, session) {
     socal_norbaja_coast$popup_text <- popup_text
     
     # Plot the polygons with interactive click events and custom popup
-    main_cali_map  <- tm_shape(coast_range) +
+    main_cali_map  <- tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+      tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
+      tm_shape(coast_range) +
       tm_polygons(col = "#0081A7", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -291,13 +316,17 @@ server <- function(input, output, session) {
     eco_selected <- input$ecoregion_stats_type_input
     eco_selected2 = gsub('gde_', '', eco_selected)
     
-    names_fire2 = gsub('_fire_count', '', names_fire)
-    
     wstat = which(names_stats2 == eco_selected2)
-    wfire = names_fire[wstat]
+    wstat = names_stat[wstat]
     print(wstat)
     
-    # if('Fire Count Raster' %in% input$ecoregion_stats_type_input){
+    stat <- stat_list[[input$ecoregion_stats_type_input]]
+    
+    stat
+    
+    # make a list of stats images!!
+    
+    # if('Stats Image' %in% input$ecoregion_stats_type_input){
     #   print(' FIRE COUNT RASTER ')
     #   stat_layer <- stat_list[[wstat]]
     #   tm_level_one <- tm_level_one + tm_shape(fire_layer) +
@@ -311,12 +340,28 @@ server <- function(input, output, session) {
     
   })
   
-  # stats output----
+  stats_selected <- 
+    # stats output----
   output$stats <- renderImage({
     
     stats_reactive
     
   })
+  
+  data_df <- data.frame(Data = c("Groundwater-Dependent Ecosystems", "Fire Count", "Time Since Last Fire (TSLF)", "Fire Threat", "Burn Severity"),
+                        Source = c("The Nature Conservancy", "Cal Fire (layer produced by us)", "Cal Fire (layer produced by us)", "Cal Fire", "USGS and USFS"),
+                        Information = c("Groundwater-Dependent Ecosystems are from The Nature Conservancy",
+                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the total number of fires that occured since 1950.",
+                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the time in years since the last fire occured since 1950.",
+                                        "Fire Threat is a layer created by Cal Fire that represents the relative vulnerability of an area to wildfires. Some variables that are used in this modeled fire layer are fire occurance, vegetation type and density, topography and weather conditions.",
+                                        "The Burn Severity layer was changed to apply the mode of all previous fires in a single cell. The originial layer is derived from satellite data and represents how intensely a fire burned in a certain area. "))
+  
+  
+  output$dataTable <- renderTable(data_df)
+  
+  # renderTable({
+  #   
+  # })
   
 }
 
