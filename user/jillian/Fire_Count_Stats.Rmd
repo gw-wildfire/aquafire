@@ -31,9 +31,12 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(sf)
+library(boot)
+library(boot.pval)
 library(here)
 library(janitor)
 library(raster)
+library(tmap)
 library(rgdal)
 library(fasterize)
 library(exactextractr)
@@ -44,6 +47,10 @@ source("user/jillian/functions/remove_ag_urban.R")
 source("user/jillian/functions/raster_to_ecoregions.R")
 source("user/jillian/functions/stratified_sample.R")
 source("user/jillian/functions/fire_count_violin_plot.R")
+source("user/jillian/functions/fire_count_stats.R")
+source("user/jillian/functions/diff_in_means_bootstrap.R")
+source("user/jillian/functions/bootstrap_results.R")
+source("user/jillian/functions/fire_count_histogram.R")
 ```
 
 # Necessary Objects 
@@ -59,6 +66,8 @@ eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>%
 # Create file containing eco region names 
 eco_regions_names <- as.data.frame(eco_regions) %>%
   subset(select = c("us_l3code", "region"))
+eco_regions_geoms <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "geometry"))
 
 gde_1 <- raster("raster_output/gde_1.tif")
 gde_4 <- raster("raster_output/gde_4.tif")
@@ -107,6 +116,14 @@ fire_count_80_sample <- stratified_sample(fire_count_80, gde_80, n = 1000)
 fire_count_81_sample <- stratified_sample(fire_count_81, gde_81, n = 1000)
 fire_count_85_sample <- stratified_sample(fire_count_85, gde_85, n = 1000)
 
+# Show locations of sample points 
+ggplot(fire_count_5_sample, aes(x = x, y = y)) + 
+  geom_point() + 
+  theme_minimal()
+```
+
+# Bootstrapping 
+```{r}
 eco_region_codes <- c(1, 13, 14, 4, 5, 6, 7, 78, 8, 80, 81, 85, 9)
 fire_count_sample_list <- list()
 
@@ -115,10 +132,41 @@ for(i in 1:13){
   fire_count_sample_list <- c(fire_count_sample_list, obj)
 }
 
-fire_count_results <- bootstrap_results(fire_count_sample_list) 
+fire_count_bootstrap <- bootstrap_results(fire_count_sample_list) 
 
-fire_count_results <- fire_count_results %>%
-  bind_cols(eco_regions_names)
+fire_count_results <- fire_count_bootstrap %>%
+  bind_cols(eco_regions_names) %>%
+  inner_join(eco_regions_geoms, by = "us_l3code") %>% 
+  mutate(result = case_when(
+    p_value < 0.05 & confidence_interval_upper < 0 ~ "Reject H0 - Incr. Fire Count",
+    p_value < 0.05 & confidence_interval_lower > 0 ~ "Reject H0 - Decr. Fire Count",
+    p_value > 0.05 ~ "Cannot Reject H0"))
+
+fire_count_results_sp <- fire_count_results %>%
+  subset(select = c("p_value","result", "geometry")) %>%
+  st_as_sf(crs = crs_ca$wkt) 
+
+```
+
+# Map showing results from difference in mean test
+```{r}
+# grey is #EDF0F0
+# red is #9D2A38
+# teal is #2A9D8F
+# cant reject is #C8D5D3
+color_palette <- c("Reject H0 - Incr. Fire Count" = "#9D2A38",
+                   "Reject H0 - Decr. Fire Count" = "#2A9D8F",
+                   "Cannot Reject H0" = "#C8D5D3")
+
+tm_shape(fire_count_results_sp) + 
+  tm_polygons + 
+  tm_fill(col = "result", palette = color_palette) + 
+  tm_borders(col = "white", 
+             lwd = 0.5) + 
+  tm_layout(main.title = "",
+            main.title.size = 0.8,
+            frame = FALSE) + 
+  tm_legend(position = c(1, -1))
 ```
 
 # Summary Stats
@@ -148,6 +196,40 @@ fire_count_stats_all <- rbind(fire_count_1_stats, fire_count_4_stats,
 
 # Basic Visualizations 
 
+
+### Histograms
+```{r}
+fire_count_sample_list
+eco_region_codes
+
+
+# Loop through each value in the list and eco region code vector
+for (i in seq_along(fire_count_sample_list)) {
+  # Get the current object name and eco region code
+  sample <- get(fire_count_sample_list[[i]])
+  eco_region_code <- eco_region_codes[i]
+  
+  # Call the function with the object name and eco region code
+  plot <- fire_count_histogram(sample, eco_region_code)
+  
+  # Save the plot as a PNG file
+  png_file <- paste0("plots/fire_count_histogram_", eco_region_code, ".png")
+  png(png_file, width = 1024, height = 600, res = 200)
+  
+  ggsave(
+    filename = paste0("fire_count_histogram_", eco_region_code, ".png"), 
+    plot = plot, 
+    device = "png", 
+    path = "plots/", 
+    units = c("in"),
+    width = 11,
+    height = 7
+  )
+dev.off()
+}
+
+```
+
 ### Violin Plots
 ```{r fig.align="center", echo = FALSE,fig.width = 14}
 plot_fc_1 <- fire_count_violin_plot(fire_count_1_sample, eco_region_code = 1)
@@ -164,73 +246,63 @@ plot_fc_80 <- fire_count_violin_plot(fire_count_80_sample, eco_region_code = 80)
 plot_fc_81 <- fire_count_violin_plot(fire_count_81_sample, eco_region_code = 81)
 plot_fc_85 <- fire_count_violin_plot(fire_count_85_sample, eco_region_code = 85)
 
-plot_fc_6
+plot_fc_5
+plot_fc_1
 plot_fc_85
 plot_fc_8 
+
+plot_fc_5
 ```
 
-### Histogram Comparing GDE Dist and Non-GDE Dist
+### Original Histogram Code: Histogram Comparing GDE Dist and Non-GDE Dist (now a function)
 ```{r}
-library(MASS)
-fire_count_6_gdes <- fire_count_6_sample %>%
+## CHECK VARIABLE NAMES IM JUST TESTING DIFFERENT ECO REGIONS WITH THIS 
+fire_count_histogram(sample_data = fire_count_85_sample, eco_region_code = 85)
+
+fire_count_gdes <- fire_count_85_sample %>%
   filter(gde == 1) %>%
-  mutate(log_transformed_value = log(value))
+  group_by(value) %>%
+  summarize(proportion_1 = n() / nrow(.) * 100)
 
-fire_count_6_nongdes <- fire_count_6_sample %>%
+fire_count_nongdes <- fire_count_5_sample %>%
   filter(gde == 0) %>%
-  mutate(log_transformed_value = log(value))
+  group_by(value) %>%
+  summarize(proportion_0 = n() / nrow(.) * 100)
 
+fire_count_histogram_obj <- inner_join(fire_count_gdes, fire_count_nongdes, by = "value") %>%
+  rename("GDE" = "proportion_1", 
+         "NonGDE" = "proportion_0") %>% 
+  pivot_longer(cols = c(2,3),
+               names_to = "gde_status",
+               values_to = "proportion"
+               )
 
-ggplot(data = fire_count_6_gdes, aes(x = log_transformed_value)) + 
-  geom_histogram()
-
-
-
-t.test(fire_count_6_gdes$log_transformed_value, fire_count_6_nongdes$value)
-
-wilcox.test(fire_count_6_gdes$value, fire_count_6_nongdes$value)
-
-```
-
-# Bootstrapping
-```{r}
-# Step 1: Load the required package
-library(boot)
-library(boot.pval)
-
-# Step 2: Define the function that calculates the test statistic (difference in means)
-diff_in_means <- function(sample_data, indices) {
-  gde_0 <- sample_data %>%
-    filter(gde == 0)
-  gde_1 <- sample_data %>%
-    filter(gde == 1)
-  
-  nongde_sample <- gde_0[indices, 3]
-  gde_sample <- gde_1[indices, 3]
-  return(mean(nongde_sample, na.rm = TRUE) - mean(gde_sample, na.rm = TRUE))
-}
-
-# Step 4: Perform the bootstrap procedure
-bootstrap_result <- boot(fire_count_85_sample, diff_in_means, R = 1000)
-
-# Step 5: Obtain the bootstrap confidence interval and p-value
-confidence_interval <- boot.ci(bootstrap_result, conf = 0.95, type = "norm")$normal
-p_value <- boot.pval(bootstrap_result, theta_null = 0)
-
-# Step 6: Print the results
-print("Bootstrap Confidence Interval:")
-print(confidence_interval)
-print("P-value:")
-print(p_value)
-
-diff_in_means_bootstrap(fire_count_85_sample)
-
+ggplot(fire_count_histogram_obj, aes(x = value, y = proportion, fill = gde_status)) + 
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
+  labs(x = "Fire Count", 
+       y = "Relative Frequency (%)",
+       fill = "GDE Status",
+       title = "Southern CA / Northern Baja Coast: Relative Frequency of Fire Counts in GDEs and Non-GDEs") + 
+  theme_classic() + 
+  theme(legend.position = 'none',
+          plot.title = element_text(hjust = 0.5,
+                                    size = 15),
+          axis.text = element_text(size = 13,
+                                   color = 'black'),
+          axis.title = element_text(size = 15,
+                                    color = 'black'),
+          axis.title.x = element_text(vjust = -1.1),
+          axis.text.x = element_text(vjust = -1.5)) + 
+  scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0))
 
 ```
 
 
 
-# Logistic Regressions
+
+
+# Old Logistic Regressions
 
 ```{r}
 # Coast Range
@@ -288,7 +360,7 @@ fire_count_85_glm <- glm(value ~ gde, data = fire_count_85_sample, family = "poi
 
 
 
-# Pretty summary tables 
+# Old Summary tables 
 ```{r}
 pretty_6 <- kable(fire_count_6_stats %>% select(-ecoregion_code), align = "c", col.names = c("Group", "Mean Fire Count", "Maximum Fire Count", "Mode (not including zeros)"), caption = "Central California Foothills and Coastal Mountains") %>%
   kable_styling(bootstrap_options = "striped")
@@ -305,7 +377,7 @@ pretty_85
 ```
 
 
-## Actual Stats
+# Old violin plot code
 
 ```{r}
 # Coast Range 
@@ -411,6 +483,42 @@ ggplot(fire_count_6_sample, aes(x = value, color = gde)) +
   ggtitle("Cumulative Distribution of Fire Counts in GDEs vs Non-GDEs") + 
   theme_minimal()
   
+```
+
+# Original Bootstrapping Code
+```{r}
+# Step 1: Load the required package
+library(boot)
+library(boot.pval)
+
+# Step 2: Define the function that calculates the test statistic (difference in means)
+diff_in_means <- function(sample_data, indices) {
+  gde_0 <- sample_data %>%
+    filter(gde == 0)
+  gde_1 <- sample_data %>%
+    filter(gde == 1)
+  
+  nongde_sample <- gde_0[indices, 3]
+  gde_sample <- gde_1[indices, 3]
+  return(mean(nongde_sample, na.rm = TRUE) - mean(gde_sample, na.rm = TRUE))
+}
+
+# Step 4: Perform the bootstrap procedure
+bootstrap_result <- boot(fire_count_85_sample, diff_in_means, R = 1000)
+
+# Step 5: Obtain the bootstrap confidence interval and p-value
+confidence_interval <- boot.ci(bootstrap_result, conf = 0.95, type = "norm")$normal
+p_value <- boot.pval(bootstrap_result, theta_null = 0)
+
+# Step 6: Print the results
+print("Bootstrap Confidence Interval:")
+print(confidence_interval)
+print("P-value:")
+print(p_value)
+
+diff_in_means_bootstrap(fire_count_85_sample)
+
+
 ```
 
 ```{r}

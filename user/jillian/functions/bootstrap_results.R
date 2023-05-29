@@ -11,7 +11,7 @@ bootstrap_results <- function(list_sample_datasets){
     new_row <- data.frame(sample = (list_sample_datasets[[i]]),
                           confidence_interval_lower = bootstrap_result[[1]],
                           confidence_interval_upper = bootstrap_result[[2]],
-                          p_value = format(bootstrap_result[[3]], scientific = FALSE))
+                          p_value = bootstrap_result[[3]])
     
     result_df <- rbind(result_df, new_row)
   }
