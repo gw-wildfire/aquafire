@@ -65,9 +65,14 @@ server <- function(input, output, session) {
                   border.col = 'white',
                   lwd = 0.1,
                   alpha = 0.6,
-                  popup.vars = c("Wetland Type" = "WETLAND_NA", 
-                                 "Area" = "area",
-                                 "Vegetation Type" = "VEGETATION")
+                  popup.vars = c("Wetland Type" = "WETLAND", 
+                                 "Area (km)" = "are_km2",
+                                 "Vegetation Type" = "VEGETAT",
+                                 "Max Fire Count" = "mx_fr_c",
+                                 "Most Recent Time Since Last Fire" = "mn_tslf",
+                                 "Average Fire Threat" = "avg_fr_t",
+                                 "Average Fire Severity" = "avg_fr_s"
+                                 )
       ) + tmap_options(check.and.fix = TRUE) +
       # tm_borders(col = , lwd = 2) +
       tm_layout(title = 'test', title.position = 'right')

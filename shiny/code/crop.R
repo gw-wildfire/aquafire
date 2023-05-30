@@ -51,29 +51,26 @@ eastern_cascades_slopes_foothills <- eco_regions[13,]
 # gde_socal_norbaja_coast <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_socal_norbaja_coast/gde_polygon_85.shp")
 # gde_eastern_cascades_slopes_foothills <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_eastern_cascades_slopes_foothills/gde_polygon_9.shp")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Decreasing Raster layer Fire Threat
 
 
-print('loading FIRE THREAT data')
 
-path_fire_threat <- "data/fire_threat"
-fire_threat.files <- list.files(path_fire_threat, full.names = T)
-fire_threat.files2 <- list.files(path_fire_threat, full.names = F)
-fire_threat.files2 = gsub('.tif', '', fire_threat.files2)
-fire_threat_list <- list()
-
-length(fire_threat.files)
-
-for(i in 1:length(fire_threat.files)) {
-  print(i)
-  file_i = fire_threat.files[i]
-  file_i2 = fire_threat.files2[i]
-  fire_threat_list[[file_i2]] = raster(file_i)
-  fire_threat_list[[i]] <- aggregate(fire_count_list[[i]], fact = 10)
-  writeRaster(fire_threat_list[[i]], filename = c("fire_threat_list", fire_count_list[[i]]))
-}
-
-
+# aggregate fire layers
 for(i in 1:length(fire_threat.files)) {
   print(i)
   file_i = fire_threat.files[i]
@@ -127,30 +124,6 @@ for(id in 1:length(gdes_cali)){
   
   st_write(gdes_in_ecoregion, output_file)
 }
-
-coast_range <- eco_regions[1,]
-central_basin <- eco_regions[2,]
-mojave_basin <- eco_regions[3,]
-cascades <- eco_regions[4,]
-sierra_nevada <- eco_regions[5,]
-central_foothills_coastal_mountains <- eco_regions[6,]
-central_valley <- eco_regions[7,]
-klamath_mountains <- eco_regions[8,]
-southern_mountains <- eco_regions[9,]
-northern_basin <- eco_regions[10,]
-sonoran_basin <- eco_regions[11,]
-socal_norbaja_coast <- eco_regions[12,]
-eastern_cascades_slopes_foothills <- eco_regions[13,]
-
-gdes_cali <- gdes_cali %>% 
-  select(POLYGON, WETLAND, VEGETAT, DOMINANT_S, DOMINANT_C, 
-         mx_fr_c, mn_tslf, avg_fr_t, avg_fr_s, are_km2, geometry) %>% 
-  filter()
-
-
-
-
-st_write()
 
 # for (i in seq_along(ecoregion_groups)) {
 #   st_write(ecoregion_groups[[i]], paste0("data/gde_ecoregions/new", ecoregion_groups, ".shp"))

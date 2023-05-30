@@ -200,22 +200,23 @@ if(!preloaded){
   }
   
   # loading STATS data
-  # print('loading STATS data')
-  # 
-  # stats_file <- "www/stats"
-  # stats.files <- list.files(stats_file, full.names = T)
-  # stats.files2 <- list.files(stats_file, full.names = F)
-  # stats.files2 <- gsub('.png', '', stats.files2) # CHANGE format to whatever the format of the stats images are!!!!
-  # stats_list <- list()
-  # 
-  # length(stats.files)
-  # 
-  # for(i in 1:length(stats.files)) {
-  #   print(i)
-  #   file_i = stats.files[i]
-  #   file_i2 = stats.files2[i]
-  #   stats_list[[file_i2]] = image_read(file_i)
-  # }
+  print('loading STATS data')
+
+  stats_file <- "www/plots"
+  stats.files <- list.files(stats_file, full.names = T)
+  stats.files2 <- list.files(stats_file, full.names = F)
+  stats.files2 <- gsub('.png', '', stats.files2) # CHANGE format to whatever the format of the stats images are!!!!
+  stats_list <- list()
+
+  length(stats.files)
+
+  for(i in 1:length(stats.files)) {
+    if(startsWith(stats.files2[i], "burn_severity_histogram")) {
+    print(i)
+    file_i = stats.files[i]
+    file_i2 = stats.files2[i]
+    stats_list[[file_i2]] = image_read(file_i)}
+  }
   
   
   
