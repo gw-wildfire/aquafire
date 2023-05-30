@@ -3,6 +3,7 @@ server <- function(input, output, session) {
   tmap_mode("view")
   # end
   
+  # when new ecoregion selected, gets rid of fire metric selections - HOW TO DO UPON CLICKING NEW ECOREGION
   observeEvent(input$ecoregion_type_input,{
     print('new ecoregion')
     updateCheckboxGroupButtons(session = session,
@@ -11,6 +12,7 @@ server <- function(input, output, session) {
     
   })
   
+  # GDE map----
   map_reactive <- reactive({
     print(input$ecoregion_type_input)
     # print(input$firelayer_type_input)
@@ -48,7 +50,7 @@ server <- function(input, output, session) {
     print(wburn_severity)
     
     wecoregion = which(names_ecoregion2 == eco_selected2)
-    wecoregion = names_ecoregion[wecoregion]
+    wecoregion = names_ecoregion2[wecoregion]
     print(wecoregion)
     
     
@@ -66,8 +68,11 @@ server <- function(input, output, session) {
                   popup.vars = c("Wetland Type" = "WETLAND_NA", 
                                  "Area" = "area",
                                  "Vegetation Type" = "VEGETATION")
-      ) + 
+      ) + tmap_options(check.and.fix = TRUE) +
+      # tm_borders(col = , lwd = 2) +
       tm_layout(title = 'test', title.position = 'right')
+    
+    # if(gde_list[[input$ecoregion_type_input]])
     
     if('Fire Count Raster' %in% input$type_raster){
       print(' FIRE COUNT RASTER ')
@@ -85,9 +90,10 @@ server <- function(input, output, session) {
       print(' TSLF RASTER ')
       tslf_layer <- tslf_list[[wtslf]]
       tm_level_one <- tm_level_one + tm_shape(tslf_layer) +
-        tm_raster(palette = 'YlOrRd',
+        tm_raster(palette = 'seq',
                   alpha = input$alpha2,
-                  title = 'TSLF Raster')
+                  title = 'TSLF Raster') +
+        tm_layout(aes.palette = list(seq = "-YlOrRd")) # reversing palette
     }
     
     if('Fire Threat Raster' %in% input$type_raster){
@@ -115,11 +121,6 @@ server <- function(input, output, session) {
     
     tm_level_one # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
     
-    
-    # a <- tmap_leaflet(tm_level_one)
-    # a <- a %>% addPolygons(data = tm_level_one,
-    #                        label = ~paste("Area: ", area))
-    # a
   })
   
   output$map <- renderTmap({
@@ -130,7 +131,8 @@ server <- function(input, output, session) {
     map_reactive()
   })
   
-  # main page ecoregion map
+  
+  # main page ecoregion map----
   output$main_map <- renderTmap({
     
     # Define the text information for the popup
@@ -179,6 +181,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#8CB369", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = c("region", "state_name"),
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -292,7 +295,8 @@ server <- function(input, output, session) {
                   border.col = 'white', lwd = 0.3,
                   lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
-                legend.outside.position = "right") 
+                legend.outside.position = "right")  +
+      tm_view(bbox = cali_bounds)
     
     
     

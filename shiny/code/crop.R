@@ -14,7 +14,11 @@ library(fasterize)
 # loading in tslf raster layer
 tslf_raster_masked <- raster("data/tslf_raster_masked.tif")
 
-#source("user/jillian/functions/raster_to_ecoregions.R")
+source("functions/raster_to_ecoregions.R")
+
+burn_severity <- raster("data/burn_severity_mode.tif")
+raster_to_ecoregions(raster_layer = burn_severity, file_name = "burn_severity", write_to_file = TRUE)
+
 
 coast_range <- eco_regions[1,]
 central_basin <- eco_regions[2,]
@@ -31,6 +35,8 @@ socal_norbaja_coast <- eco_regions[12,]
 eastern_cascades_slopes_foothills <- eco_regions[13,]
 
 
+
+
 # gde_coast_range <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_coast_range/gde_polygon_1.shp")
 # gde_central_basin <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_central_basin/gde_polygon_13.shp")
 # gde_mojave_basin <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_mojave_basin/gde_polygon_14.shp")
@@ -45,6 +51,114 @@ eastern_cascades_slopes_foothills <- eco_regions[13,]
 # gde_socal_norbaja_coast <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_socal_norbaja_coast/gde_polygon_85.shp")
 # gde_eastern_cascades_slopes_foothills <- st_read("/Users/wsedgwick/Desktop/bren_meds/courses/capstone/ecoregion_wrangling/gde_polygons/gde_eastern_cascades_slopes_foothills/gde_polygon_9.shp")
 
+# Decreasing Raster layer Fire Threat
+
+
+print('loading FIRE THREAT data')
+
+path_fire_threat <- "data/fire_threat"
+fire_threat.files <- list.files(path_fire_threat, full.names = T)
+fire_threat.files2 <- list.files(path_fire_threat, full.names = F)
+fire_threat.files2 = gsub('.tif', '', fire_threat.files2)
+fire_threat_list <- list()
+
+length(fire_threat.files)
+
+for(i in 1:length(fire_threat.files)) {
+  print(i)
+  file_i = fire_threat.files[i]
+  file_i2 = fire_threat.files2[i]
+  fire_threat_list[[file_i2]] = raster(file_i)
+  fire_threat_list[[i]] <- aggregate(fire_count_list[[i]], fact = 10)
+  writeRaster(fire_threat_list[[i]], filename = c("fire_threat_list", fire_count_list[[i]]))
+}
+
+
+for(i in 1:length(fire_threat.files)) {
+  print(i)
+  file_i = fire_threat.files[i]
+  file_i2 = fire_threat.files2[i]
+  fire_threat_list[[file_i2]] = raster(file_i)
+  fire_threat_layer <- fire_threat_list[[i]]
+  fire_threat_layer <- aggregate(fire_threat_layer, fact = 4)
+  fire_threat_list[[i]] <- fire_threat_layer
+  output_path <- file.path("data/fire_threat_aggregated", file_i2)
+  writeRaster(fire_threat_layer, filename = output_path, format = "GTiff")
+}
+
+# 
+
+eco_regions
+
+eco_regions
+gdes_cali
+
+gdes_cali <- st_read("data/gde_ecoregions_california")
+gde_ecoregions <- st_join(eco_regions, gdes_cali)
+ecoregion_groups <- gde_ecoregions %>% 
+  group_split(region)
+
+ecoregion_groups[[1]]
+
+gdes_cali_valid <- st_make_valid(gdes_cali)
+
+gde_coast_range <- st_intersection(gdes_cali_valid, coast_range)
+gde_northern_basin <- st_intersection(gdes_cali_valid, northern_basin)
+gde_coast_range
+
+
+invalid_geom <- eco_regions[!st_is_valid(eco_regions), ]
+
+print(invalid_geom)
+fixed_geom <- st_buffer(eco_regions, 0)
+crs(coast_range)
+
+crs(gdes_cali) == crs(coast_range)
+
+
+
+for(id in 1:length(gdes_cali)){
+  gdes_in_ecoregion <- gdes_cali %>%
+    # filter(us_l3code == POLYGON) %>%
+    select(POLYGON, WETLAND, VEGETAT, DOMINANT_S, DOMINANT_C, 
+           mx_fr_c, mn_tslf, avg_fr_t, avg_fr_s, are_km2, geometry)
+  
+  output_file <- paste0("raster_output/gde_summary_polygons", id, ".shp")
+  
+  st_write(gdes_in_ecoregion, output_file)
+}
+
+coast_range <- eco_regions[1,]
+central_basin <- eco_regions[2,]
+mojave_basin <- eco_regions[3,]
+cascades <- eco_regions[4,]
+sierra_nevada <- eco_regions[5,]
+central_foothills_coastal_mountains <- eco_regions[6,]
+central_valley <- eco_regions[7,]
+klamath_mountains <- eco_regions[8,]
+southern_mountains <- eco_regions[9,]
+northern_basin <- eco_regions[10,]
+sonoran_basin <- eco_regions[11,]
+socal_norbaja_coast <- eco_regions[12,]
+eastern_cascades_slopes_foothills <- eco_regions[13,]
+
+gdes_cali <- gdes_cali %>% 
+  select(POLYGON, WETLAND, VEGETAT, DOMINANT_S, DOMINANT_C, 
+         mx_fr_c, mn_tslf, avg_fr_t, avg_fr_s, are_km2, geometry) %>% 
+  filter()
+
+
+
+
+st_write()
+
+# for (i in seq_along(ecoregion_groups)) {
+#   st_write(ecoregion_groups[[i]], paste0("data/gde_ecoregions/new", ecoregion_groups, ".shp"))
+# }
+# 
+# st_write(ecoregion_groups[[9]], paste0("data/gde_ecoregions/new", ecoregion_groups, ".shp"))
+# 
+# ecoregion_groups[[9]]
 
 # NOTES:----
 # # reading in largest gde polygon - central_foothills_coastal_mountains at 316MB
@@ -79,5 +193,7 @@ tmap_mode("view")
 tm_shape(largest_gde_simp) +
   tm_polygons()
 
+
+# dealing with 
 
 # if filter GDEs less than 1 acre, what will be missing? will still be included in the ecoregion analysis

@@ -35,6 +35,9 @@ if(!preloaded){
     st_transform(crs_ca) %>% 
     rename(region = us_l3name)
   
+  # setting bounding box of california for main_map
+  cali_bounds <- st_bbox(eco_regions)
+  
   # Load in ecoregions shapefile
   
   # ca_counties <- read_sf(here::here('data', 'CA_Counties')) %>%
@@ -59,6 +62,7 @@ if(!preloaded){
   socal_norbaja_coast <- eco_regions[12,]
   eastern_cascades_slopes_foothills <- eco_regions[13,]
   
+  # making ecoregion polygons into a list
   ecoregion_list <- list(coast_range = eco_regions[1,],
                          central_basin = eco_regions[2,],
                          mojave_basin = eco_regions[3,],
@@ -73,8 +77,8 @@ if(!preloaded){
                          socal_norbaja_coast = eco_regions[12,],
                          eastern_cascades_slopes_foothills = eco_regions[13,])
   
-  # loading ecoregion data----
-  print('loading ecoregion data')
+  # loading GDE data----
+  print('loading GDE data')
   
   # getting path file names for GDEs
   path_gde <- "data/gde_ecoregions"
@@ -97,7 +101,22 @@ if(!preloaded){
   for (i in 1:length(gde_list)) {
     gde_shapefile <- gde_list[[i]]
     gde_shapefile$area <- round((gde_shapefile$area), dec_place)
-    gde_list[[i]] <- gde_shapefile
+    
+    # EDIT BELOW
+    if(object.size(gde_shapefile) > 150000000) {
+      gde_shapefile <- gde_shapefile %>% 
+        filter(area > 18000) %>%  # larger than 2.2 acres
+        st_simplify(dTolerance = 15)
+    } else {
+      gde_shapefile <- gde_shapefile %>% 
+        filter(area > 1000) %>%  # larger than .22 acres
+        st_simplify(dTolerance = 5)
+    }
+    # gde_shapefile <- gde_shapefile %>% 
+    #   filter(area > 10000) %>%  # larger than 2.2 acres
+    #   st_simplify(dTolerance = 5)
+    # gde_shapefile <- st_simplify(gde_shapefile, dTolerance = 5)
+    gde_list[[i]] <- st_make_valid(gde_shapefile)
   }
   
   # loading TSLF data----
@@ -120,11 +139,11 @@ if(!preloaded){
   }
   
   
-  # raster fire count layer cropped by ecoregion----
+  # raster fire count layer cropped by ecoregion
   fire_count <- raster("data/fire_count.tif")
   fire_threat <- raster("data/fire_threat.tif")
   
-  # reading in Fire Count data----
+  # loading FIRE COUNT data----
   print('loading FIRE COUNT data')  
   
   path_fire <- "data/fire_count"
@@ -142,10 +161,11 @@ if(!preloaded){
     fire_count_list[[file_i2]] = raster(file_i)
   }
   
-  # reading in fire threat data by ecoregion----
-  print('loading fire threat data')
+  # loading FIRE THREAT data----
+  print('loading FIRE THREAT data')
   
   path_fire_threat <- "data/fire_threat"
+  # path_fire_threat <- "data/fire_threat_aggregated"
   fire_threat.files <- list.files(path_fire_threat, full.names = T)
   fire_threat.files2 <- list.files(path_fire_threat, full.names = F)
   fire_threat.files2 = gsub('.tif', '', fire_threat.files2)
@@ -160,6 +180,9 @@ if(!preloaded){
     fire_threat_list[[file_i2]] = raster(file_i)
     # fire_threat_list[[i]] <- aggregate(fire_count_list[[i]], fact = 10)
   }
+  
+  # loading BURN SEVERITY data----
+  print('loading BURN SEVERITY data')
   
   burn_severity_file <- "data/burn_severity"
   burn_severity.files <- list.files(burn_severity_file, full.names = T)
@@ -176,39 +199,27 @@ if(!preloaded){
     burn_severity_list[[file_i2]] = raster(file_i)
   }
   
-  # reading in GDE data by ecoregion----
-  print('loading GDE data')
+  # loading STATS data
+  # print('loading STATS data')
+  # 
+  # stats_file <- "www/stats"
+  # stats.files <- list.files(stats_file, full.names = T)
+  # stats.files2 <- list.files(stats_file, full.names = F)
+  # stats.files2 <- gsub('.png', '', stats.files2) # CHANGE format to whatever the format of the stats images are!!!!
+  # stats_list <- list()
+  # 
+  # length(stats.files)
+  # 
+  # for(i in 1:length(stats.files)) {
+  #   print(i)
+  #   file_i = stats.files[i]
+  #   file_i2 = stats.files2[i]
+  #   stats_list[[file_i2]] = image_read(file_i)
+  # }
   
-  path_gde <- "data/gde_ecoregions"
-  gde.files <- list.files(path_gde, full.names = T)
-  gde.files2 <- list.files(path_gde, full.names = F)
-  gde_list <- list()
   
-  length(gde.files)
   
-  for(i in 1:length(gde.files)){
-    print(i)
-    file_i = gde.files[i]
-    file_i2 = gde.files2[i]
-    gde_list[[file_i2]] = st_make_valid(st_read(file_i))
-  }
-  
-  dec_place <- 2
-  for (i in 1:length(gde_list)) {
-    
-    gde_shapefile <- gde_list[[i]]
-    
-    gde_shapefile$area
-    
-    gde_shapefile$area <- round((gde_shapefile$area), dec_place)
-    
-    gde_list[[i]] <- gde_shapefile
-    
-  }
-  
-  # main page ecoregions
-  
-  # RENAMING
+  # RENAMING----
   
   names_gde <- names(gde_list)
   names(names_gde) = gsub('gde_', '', names_gde)
@@ -234,6 +245,11 @@ if(!preloaded){
   names(names_burn_severity) = gsub('_burn_severity', '', names_burn_severity)
   names(names_burn_severity) = gsub('_', ' ', names(names_burn_severity))
   names(names_burn_severity) = names(names_burn_severity) %>% stringr::str_to_title()
+  
+  # names_stats <- names(stats_list)
+  # names(names_stats) = gsub('_stats', '', names_stats)
+  # names(names_stats) = gsub('_', ' ', names(names_stats))
+  # names(names_stats) = names(names_stats) %>% stringr::str_to_title()
   
 }
 
