@@ -325,6 +325,7 @@ raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
 
 # Burn Severity
 ```{r}
+burn_severity_final <- raster("raster_output/burn_severity_mode.tif")
 burn_severity_final <- burn_severity_final %>%
   terra::rast() %>%
   terra::project(y = crs_ca$wkt, method = "near") %>%
@@ -333,8 +334,8 @@ burn_severity_final <- burn_severity_final %>%
   raster()
 
 burn_severity_final <- remove_ag_urban(burn_severity_final)
-# writeRaster(burn_severity_final, "raster_output/burn_severity_final.tif")
-# raster_to_ecoregions(burn_severity_final, "burn_severity", write_to_file = TRUE)
+writeRaster(burn_severity_final, "raster_output/burn_severity_final.tif", overwrite = TRUE)
+raster_to_ecoregions(burn_severity_final, "burn_severity", write_to_file = TRUE)
 beep(sound = 3)
 ```
 

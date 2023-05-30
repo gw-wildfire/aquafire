@@ -1,0 +1,220 @@
+---
+title: "Fire Severity Stats"
+author: "Jillian Allison"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+### Eco Region Key: 
+
+   **code**                                           **region**
+          1                                         Coast Range
+         13                             Central Basin and Range
+         14                              Mojave Basin and Range
+          4                                            Cascades
+          5                                       Sierra Nevada
+          6  Central California Foothills and Coastal Mountains
+          7                           Central California Valley
+         78 Klamath Mountains/California High North Coast Range
+          8                       Southern California Mountains
+         80                            Northern Basin and Range
+         81                             Sonoran Basin and Range
+         85             Southern California/Northern Baja Coast
+          9               Eastern Cascades Slopes and Foothills
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(sf)
+library(boot)
+library(boot.pval)
+library(here)
+library(janitor)
+library(raster)
+library(tmap)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(dplyr)
+library(gridExtra)
+library(kableExtra)
+source("user/jillian/functions/remove_ag_urban.R")
+source("user/jillian/functions/raster_to_ecoregions.R")
+source("user/jillian/functions/stratified_sample.R")
+source("user/jillian/functions/fire_count_violin_plot.R")
+source("user/jillian/functions/fire_count_stats.R")
+source("user/jillian/functions/diff_in_means_bootstrap.R")
+source("user/jillian/functions/bootstrap_results.R")
+source("user/jillian/functions/fire_count_histogram.R")
+```
+
+## Burn Severity
+```{r}
+burn_severity_1 <- raster("raster_output/burn_severity_1.tif")
+burn_severity_4 <- raster("raster_output/burn_severity_4.tif")
+burn_severity_5 <- raster("raster_output/burn_severity_5.tif")
+burn_severity_6 <- raster("raster_output/burn_severity_6.tif")
+burn_severity_7 <- raster("raster_output/burn_severity_7.tif")
+burn_severity_8 <- raster("raster_output/burn_severity_8.tif")
+burn_severity_9 <- raster("raster_output/burn_severity_9.tif")
+burn_severity_13 <- raster("raster_output/burn_severity_13.tif")
+burn_severity_14 <- raster("raster_output/burn_severity_14.tif")
+burn_severity_78 <- raster("raster_output/burn_severity_78.tif")
+burn_severity_80 <- raster("raster_output/burn_severity_80.tif")
+burn_severity_81 <- raster("raster_output/burn_severity_81.tif")
+burn_severity_85 <- raster("raster_output/burn_severity_85.tif")
+```
+
+## GDEs
+```{r}
+gde_1 <- raster("raster_output/gde_1.tif")
+gde_4 <- raster("raster_output/gde_4.tif")
+gde_5 <- raster("raster_output/gde_5.tif")
+gde_6 <- raster("raster_output/gde_6.tif")
+gde_7 <- raster("raster_output/gde_7.tif")
+gde_8 <- raster("raster_output/gde_8.tif")
+gde_9 <- raster("raster_output/gde_9.tif")
+gde_13 <- raster("raster_output/gde_13.tif")
+gde_14 <- raster("raster_output/gde_14.tif")
+gde_78 <- raster("raster_output/gde_78.tif")
+gde_80 <- raster("raster_output/gde_80.tif")
+gde_81 <- raster("raster_output/gde_81.tif")
+gde_85 <- raster("raster_output/gde_85.tif")
+```
+
+## Mask GDEs to only areas where we have burn severity data
+(For areas where there is an existing fire)
+```{r}
+# gde_85 - Socal Northern Baja Coast 
+gde_85_masked <- mask(gde_85, burn_severity_85)
+
+# gde_5 - Sierra Nevada 
+gde_5_masked <- mask(gde_5, burn_severity_5)
+```
+
+## Sample 
+```{r}
+burn_sev_sampling <- function(input_raster_layer, gde_raster_layer, n = 30){
+  
+  gde_raster_layer <- mask(gde_raster_layer, input_raster_layer)
+  
+  gde_sample <- sampleStratified(gde_raster_layer, size = 1000, sp = TRUE, buffer = 100)
+  
+  init_raster_sample <- extract(input_raster_layer, gde_sample) 
+  
+  gde_sample$value <- init_raster_sample
+  
+  df <- as.data.frame(gde_sample) %>%
+    mutate(gde = as.factor(layer)) %>%
+    dplyr::select(cell, gde, value, x, y) 
+
+  
+  burn_sev_gde_sample <- df %>%
+    filter(gde == 1) %>%
+    sample_n(n)
+  
+  burn_sev_nongde_sample <- df %>%
+    filter(gde == 0) %>%
+    sample_n(n)
+  
+  burn_severity_sample <- rbind(burn_sev_gde_sample, burn_sev_nongde_sample)
+  
+  
+  return(burn_severity_sample)
+}
+```
+
+```{r}
+set.seed(123) 
+
+burn_severity_1_sample <- burn_sev_sampling(burn_severity_1, gde_1, n = 20) # n is the most samples I could take given the buffer- small area
+burn_severity_4_sample <- burn_sev_sampling(burn_severity_4, gde_4)
+burn_severity_5_sample <- burn_sev_sampling(burn_severity_5, gde_5)
+burn_severity_6_sample <- burn_sev_sampling(burn_severity_6, gde_6)
+# burn_severity_7_sample <- burn_sev_sampling(burn_severity_7, gde_7) not enough data 
+burn_severity_8_sample <- burn_sev_sampling(burn_severity_8, gde_8)
+burn_severity_9_sample <- burn_sev_sampling(burn_severity_9, gde_9)
+# burn_severity_13_sample <- burn_sev_sampling(burn_severity_13, gde_13) not enough data
+# burn_severity_14_sample <- burn_sev_sampling(burn_severity_14, gde_14) not enough data
+burn_severity_78_sample <- burn_sev_sampling(burn_severity_78, gde_78)
+burn_severity_80_sample <- burn_sev_sampling(burn_severity_80, gde_80)
+burn_severity_81_sample <- burn_sev_sampling(burn_severity_81, gde_81)
+burn_severity_85_sample <- burn_sev_sampling(burn_severity_85, gde_85)
+```
+
+## Bootstrapping
+```{r}
+eco_region_codes_burnsev <- c(1, 4, 5, 6, 78, 8, 80, 81, 85, 9) # remove 7, 13, and 14 due to insufficient data
+eco_regions_names_burnsev <- eco_regions_names %>% 
+  filter(us_l3code %in% eco_region_codes_burnsev)
+eco_regions_names_burnsev_insuff <- eco_regions_names %>%
+  filter(!us_l3code %in% eco_region_codes_burnsev)
+eco_regions_geoms_burnsev <- eco_regions_geoms %>%
+  filter(us_l3code %in% eco_region_codes_burnsev)
+
+eco_regions_geoms_burnsev_insuff <- eco_regions_geoms %>%
+  filter(!us_l3code %in% eco_region_codes_burnsev) %>%
+  inner_join(eco_regions_names_burnsev_insuff) %>%
+  mutate(sample = NA,
+         confidence_interval_lower = NA, 
+         confidence_interval_upper = NA, 
+         p_value = NA, 
+         result = "Insufficient Data"
+         )
+  
+burn_severity_sample_list <- list()
+
+for(i in 1:10){
+  obj <- (paste0('burn_severity_', eco_region_codes_burnsev[i], '_sample'))
+  burn_severity_sample_list <- c(burn_severity_sample_list, obj)
+}
+
+burn_severity_bootstrap <- bootstrap_results(burn_severity_sample_list) 
+
+burn_severity_results <- burn_severity_bootstrap %>%
+  bind_cols(eco_regions_names_burnsev) %>%
+  inner_join(eco_regions_geoms_burnsev, by = "us_l3code") %>% 
+  mutate(result = case_when(
+    p_value < 0.05 & confidence_interval_upper < 0 ~ "Reject H0 - Incr. Burn Severity",
+    p_value < 0.05 & confidence_interval_lower > 0 ~ "Reject H0 - Decr. Burn Severity",
+    p_value > 0.05 ~ "Cannot Reject H0")) %>%
+  bind_rows(eco_regions_geoms_burnsev_insuff)
+
+burn_severity_results_sp <- burn_severity_results %>%
+  subset(select = c("p_value","result", "geometry")) %>%
+  st_as_sf(crs = crs_ca$wkt) 
+```
+
+# Map showing results from difference in mean test
+```{r}
+# grey is #EDF0F0
+# red is #9D2A38
+# teal is #2A9D8F
+# cant reject is #C8D5D3
+color_palette <- c("Reject H0 - Incr. Burn Severity" = "#9D2A38",
+                   "Reject H0 - Decr. Burn Severity" = "#2A9D8F",
+                   "Cannot Reject H0" = "#C8D5D3", 
+                   "Insufficient Data" = "#EDF0F0")
+
+tm_shape(burn_severity_results_sp) + 
+  tm_polygons + 
+  tm_fill(col = "result", palette = color_palette) + 
+  tm_borders(col = "white", 
+             lwd = 0.5) + 
+  tm_layout(main.title = "",
+            main.title.size = 0.8,
+            frame = FALSE) + 
+  tm_legend(position = c(1, -1))
+```
+
+
+```{r}
+
+diff_in_means_bootstrap(burn_severity_85_sample)
+
+diff_in_means_bootstrap(burn_severity_5_sample)
+
+```
