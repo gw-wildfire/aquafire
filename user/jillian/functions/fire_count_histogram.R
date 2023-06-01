@@ -42,24 +42,27 @@ fire_count_histogram <- function(sample_data, eco_region_code){
     pivot_longer(cols = c(2,3),
                  names_to = "gde_status",
                  values_to = "proportion"
-    )
+    ) %>%
+    mutate(eco_region = eco_region_name)
   
-  ggplot(fire_count_histogram, aes(x = value, y = proportion, fill = gde_status)) + 
-    geom_bar(stat = "identity", position = "dodge") +
-    scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
-    labs(x = "Fire Count", 
-         y = "Relative Frequency (%)",
-         fill = "GDE Status",
-         title = plot_title) + 
-    theme_classic() + 
-    theme(legend.position = 'none',
-          plot.title = element_text(hjust = 0.5,
-                                    size = 15),
-          axis.text = element_text(size = 13,
-                                   color = 'black'),
-          axis.title = element_text(size = 15,
-                                    color = 'black'),
-          axis.title.x = element_text(vjust = -1.1),
-          axis.text.x = element_text(vjust = -1.5)) + 
-    scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0))
+  return(fire_count_histogram)
+  
+  # ggplot(fire_count_histogram, aes(x = value, y = proportion, fill = gde_status)) + 
+  #   geom_bar(stat = "identity", position = "dodge") +
+  #   scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
+  #   labs(x = "Fire Count", 
+  #        y = "Relative Frequency (%)",
+  #        fill = "GDE Status",
+  #        title = plot_title) + 
+  #   theme_classic() + 
+  #   theme(legend.position = 'none',
+  #         plot.title = element_text(hjust = 0.5,
+  #                                   size = 15),
+  #         axis.text = element_text(size = 13,
+  #                                  color = 'black'),
+  #         axis.title = element_text(size = 15,
+  #                                   color = 'black'),
+  #         axis.title.x = element_text(vjust = -1.1),
+  #         axis.text.x = element_text(vjust = -1.5)) + 
+  #   scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0))
 }

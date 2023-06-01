@@ -10,7 +10,7 @@
 #' @examples
 stratified_sample <- function(input_raster_layer, gde_raster_layer, n = 1000){
   
-  gde_sample <- sampleStratified(gde_raster_layer, size = n, sp = TRUE, buffer = 100)
+  gde_sample <- sampleStratified(gde_raster_layer, size = n, sp = TRUE, buffer = 1000)
   
   raster_sample <- extract(input_raster_layer, gde_sample) 
   

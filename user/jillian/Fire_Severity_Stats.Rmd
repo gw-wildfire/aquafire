@@ -38,6 +38,7 @@ library(tmap)
 library(rgdal)
 library(fasterize)
 library(exactextractr)
+library(scales)
 library(dplyr)
 library(gridExtra)
 library(kableExtra)
@@ -101,7 +102,7 @@ burn_sev_sampling <- function(input_raster_layer, gde_raster_layer, n = 30){
   
   gde_raster_layer <- mask(gde_raster_layer, input_raster_layer)
   
-  gde_sample <- sampleStratified(gde_raster_layer, size = 1000, sp = TRUE, buffer = 100)
+  gde_sample <- sampleStratified(gde_raster_layer, size = 1000, sp = TRUE, buffer = 1000)
   
   init_raster_sample <- extract(input_raster_layer, gde_sample) 
   
@@ -130,7 +131,7 @@ burn_sev_sampling <- function(input_raster_layer, gde_raster_layer, n = 30){
 ```{r}
 set.seed(123) 
 
-burn_severity_1_sample <- burn_sev_sampling(burn_severity_1, gde_1, n = 20) # n is the most samples I could take given the buffer- small area
+burn_severity_1_sample <- burn_sev_sampling(burn_severity_1, gde_1, n = 25) # n is the most samples I could take given the buffer- small area
 burn_severity_4_sample <- burn_sev_sampling(burn_severity_4, gde_4)
 burn_severity_5_sample <- burn_sev_sampling(burn_severity_5, gde_5)
 burn_severity_6_sample <- burn_sev_sampling(burn_severity_6, gde_6)
@@ -143,9 +144,14 @@ burn_severity_78_sample <- burn_sev_sampling(burn_severity_78, gde_78)
 burn_severity_80_sample <- burn_sev_sampling(burn_severity_80, gde_80)
 burn_severity_81_sample <- burn_sev_sampling(burn_severity_81, gde_81)
 burn_severity_85_sample <- burn_sev_sampling(burn_severity_85, gde_85)
+
+# Show locations of sample points 
+ggplot(burn_severity_1_sample, aes(x = x, y = y)) + 
+  geom_point() + 
+  theme_minimal()
 ```
 
-## Bootstrapping
+### Preparing Samples 
 ```{r}
 eco_region_codes_burnsev <- c(1, 4, 5, 6, 78, 8, 80, 81, 85, 9) # remove 7, 13, and 14 due to insufficient data
 eco_regions_names_burnsev <- eco_regions_names %>% 
@@ -171,6 +177,100 @@ for(i in 1:10){
   obj <- (paste0('burn_severity_', eco_region_codes_burnsev[i], '_sample'))
   burn_severity_sample_list <- c(burn_severity_sample_list, obj)
 }
+```
+
+## Mann-Whitney U Test 
+
+```{r}
+mann_whitney_test <- function(sample_data){
+  # Perform mann whitney test 
+  test_result <- wilcox.test(value ~ gde, data = sample_data, paired = FALSE, conf.int = TRUE, exact = FALSE)
+  
+  # Extract values 
+  confidence_interval <- test_result[[8]]
+  
+  # confidence_interval_upper 
+  p_value <- test_result[[3]]
+  
+  return(list(confidence_interval, p_value))
+}
+
+mann_whitney_result <- function(list_sample_datasets){
+  result_df <- data.frame(eco_region = character(), 
+                          confidence_interval = numeric(),
+                          p_value = numeric(), 
+                          stringsAsFactors = FALSE)
+  for(i in 1:length(list_sample_datasets)){
+    mann_whitney_result <- mann_whitney_test(get(list_sample_datasets[[i]]))
+    
+    confidence_interval_lower <- mann_whitney_result[[1]][1]
+    confidence_interval_upper <- mann_whitney_result[[1]][2]
+    p_value <- mann_whitney_result[[2]]
+    
+    new_row <- data.frame(sample = (list_sample_datasets[[i]]),
+                          confidence_interval_lower = confidence_interval_lower,
+                          confidence_interval_upper = confidence_interval_upper,
+                          p_value = p_value)
+    result_df <- rbind(result_df, new_row)
+  }
+  return(result_df)
+}
+
+mann_whitney_results <- mann_whitney_result(burn_severity_sample_list) %>% 
+  bind_cols(eco_regions_names_burnsev) %>%
+  inner_join(eco_regions_geoms_burnsev, by = "us_l3code") %>% 
+  mutate(result = case_when(
+    p_value <= 0.05 & confidence_interval_upper <= 0 ~ "Reject H0 - Incr. Burn Severity",
+    p_value <= 0.05 & confidence_interval_lower >= 0 ~ "Reject H0 - Decr. Burn Severity",
+    p_value > 0.05 ~ "Cannot Reject H0")) %>%
+  bind_rows(eco_regions_geoms_burnsev_insuff)
+
+mann_whitney_results_sp <- mann_whitney_results %>%
+  subset(select = c("p_value","result", "geometry", "region")) %>%
+  st_as_sf(crs = crs_ca$wkt) 
+
+```
+
+## Map showing results from Mann-Whitney U Test
+```{r}
+# grey is #EDF0F0
+# red is #9D2A38
+# teal is #2A9D8F
+# cant reject is #C8D5D3
+color_palette <- c("Reject H0 - Incr. Burn Severity" = "#9D2A38",
+                   "Reject H0 - Decr. Burn Severity" = "#2A9D8F",
+                   "Cannot Reject H0" = "#C8D5D3", 
+                   "Insufficient Data" = "#EDF0F0")
+
+color_palette_presentation <- c("Coast Range" = "#EDF0F0",
+                                "Cascades" = "#EDF0F0",
+                                "Sierra Nevada" = "#EDF0F0", 
+                                "Central California Foothills and Coastal Mountains" = "#EDF0F0",
+                                "Klamath Mountains/California High North Coast Range" = "#EDF0F0", 
+                                "Southern California Mountains" = "#C8D5D3",
+                                "Northern Basin and Range" = "#EDF0F0", 
+                                "Sonoran Basin and Range" = "#EDF0F0", 
+                                "Southern California/Northern Baja Coast" = "#C8D5D3",
+                                "Eastern Cascades Slopes and Foothills" = "#EDF0F0",
+                                "Central Basin and Range" = "#EDF0F0", 
+                                "Mojave Basin and Range" = "#EDF0F0", 
+                                "Central California Valley" = "#EDF0F0")
+
+
+
+tm_shape(mann_whitney_results_sp) + 
+  tm_polygons + 
+  tm_fill(col = "result", palette = color_palette, title = "Result") + 
+  tm_borders(col = "white", 
+             lwd = 0.5) + 
+  tm_layout(main.title = "",
+            main.title.size = 0.8,
+            frame = FALSE) + 
+  tm_legend(position = c(1, -1))
+```
+
+## Bootstrapping
+```{r}
 
 burn_severity_bootstrap <- bootstrap_results(burn_severity_sample_list) 
 
@@ -201,13 +301,13 @@ color_palette <- c("Reject H0 - Incr. Burn Severity" = "#9D2A38",
 
 tm_shape(burn_severity_results_sp) + 
   tm_polygons + 
-  tm_fill(col = "result", palette = color_palette) + 
+  tm_fill(col = "result", palette = color_palette, title = "Result") + 
   tm_borders(col = "white", 
              lwd = 0.5) + 
   tm_layout(main.title = "",
             main.title.size = 0.8,
-            frame = FALSE) + 
-  tm_legend(position = c(1, -1))
+            frame = FALSE) 
+# + tm_legend(position = c(1, -1))
 ```
 
 ## Histograms
@@ -223,7 +323,6 @@ burn_severity_histogram <- function(sample_data, eco_region_code){
       "Cascades",
       "Sierra Nevada",
       "Central California Foothills and Coastal Mountains",
-      "Central California Valley",
       "Klamath Mountains/California High North Coast Range",
       "Southern California Mountains",
       "Northern Basin and Range",
@@ -238,44 +337,73 @@ burn_severity_histogram <- function(sample_data, eco_region_code){
   
   plot_title = paste0(eco_region_name, ": Relative Frequency of Burn Severities in GDEs and Non-GDEs")
   
-  fire_count_gdes <- sample_data %>%
+  burn_severity_gdes <- sample_data %>%
     filter(gde == 1) %>%
     group_by(value) %>%
-    summarize(proportion_1 = n() / nrow(.) * 100)
+    summarize(proportion_1 = n() / nrow(.) * 100) 
   
-  fire_count_nongdes <- sample_data %>%
+  burn_severity_nongdes <- sample_data %>%
     filter(gde == 0) %>%
     group_by(value) %>%
     summarize(proportion_0 = n() / nrow(.) * 100)
   
-  fire_count_histogram <- inner_join(fire_count_gdes, fire_count_nongdes, by = "value") %>%
+  burn_severity_histogram <- inner_join(burn_severity_gdes, burn_severity_nongdes, by = "value") %>%
     rename("GDE" = "proportion_1", 
            "NonGDE" = "proportion_0") %>% 
     pivot_longer(cols = c(2,3),
                  names_to = "gde_status",
                  values_to = "proportion"
-    )
+    ) %>%
+    mutate(eco_region = eco_region_name)
   
-  ggplot(fire_count_histogram, aes(x = value, y = proportion, fill = gde_status)) + 
-    geom_bar(stat = "identity", position = "dodge") +
-    scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
-    labs(x = "Fire Count", 
-         y = "Relative Frequency (%)",
-         fill = "GDE Status",
-         title = plot_title) + 
-    theme_classic() + 
-    theme(legend.position = 'none',
-          plot.title = element_text(hjust = 0.5,
-                                    size = 15),
-          axis.text = element_text(size = 13,
-                                   color = 'black'),
-          axis.title = element_text(size = 15,
-                                    color = 'black'),
-          axis.title.x = element_text(vjust = -1.1),
-          axis.text.x = element_text(vjust = -1.5)) + 
-    scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0))
+  return(burn_severity_histogram)
+  # ggplot(burn_severity_histogram, aes(x = value, y = proportion, fill = gde_status)) +
+  #   geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+  #   scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
+  #   labs(x = "Burn Severity",
+  #        y = "Relative Frequency (%)",
+  #        fill = "GDE Status",
+  #        title = plot_title) +
+  #   theme_classic() +
+  #   theme(legend.position = 'none',
+  #         plot.title = element_text(hjust = 0.5,
+  #                                   size = 15),
+  #         axis.text = element_text(size = 13,
+  #                                  color = 'black'),
+  #         axis.title = element_text(size = 15,
+  #                                   color = 'black'),
+  #         axis.title.x = element_text(vjust = -1.1),
+  #         axis.text.x = element_text(vjust = -1.5)) +
+  #   scale_x_continuous(breaks = c(2, 3, 4)) +
+  #   scale_y_continuous(limits = c(0, 100), expand = c(0,0))
 }
 
+burnsev_shiny_histogram_df <- data.frame() 
 
+# Loop through each value in the list and eco region code vector
+for (i in seq_along(burn_severity_sample_list)) {
+  # Get the current object name and eco region code
+  sample <- get(burn_severity_sample_list[[i]])
+  eco_region_code <- eco_region_codes_burnsev[i]
+  
+  df <- burn_severity_histogram(sample, eco_region_code)
+  
+  burnsev_shiny_histogram_df <- rbind(burnsev_shiny_histogram_df, df)
+  
+  
+  # # Call the function with the object name and eco region code
+  # plot <- burn_severity_histogram(sample, eco_region_code)
+
+  
+  # ggsave(
+  #   filename = paste0("burn_severity_histogram_", eco_region_code, ".png"), 
+  #   plot = plot, 
+  #   device = "png", 
+  #   path = "plots/", 
+  #   units = c("in"),
+  #   width = 12,
+  #   height = 8
+  # )
+}
 ```
 

@@ -143,7 +143,7 @@ fire_count_results <- fire_count_bootstrap %>%
     p_value > 0.05 ~ "Cannot Reject H0"))
 
 fire_count_results_sp <- fire_count_results %>%
-  subset(select = c("p_value","result", "geometry")) %>%
+  subset(select = c("p_value","result","region", "geometry")) %>%
   st_as_sf(crs = crs_ca$wkt) 
 
 ```
@@ -158,14 +158,28 @@ color_palette <- c("Reject H0 - Incr. Fire Count" = "#9D2A38",
                    "Reject H0 - Decr. Fire Count" = "#2A9D8F",
                    "Cannot Reject H0" = "#C8D5D3")
 
+color_palette_presentation <- c("Coast Range" = "#EDF0F0",
+                                "Cascades" = "#EDF0F0",
+                                "Sierra Nevada" = "#EDF0F0", 
+                                "Central California Foothills and Coastal Mountains" = "#EDF0F0",
+                                "Klamath Mountains/California High North Coast Range" = "#EDF0F0", 
+                                "Southern California Mountains" = "#2A9D8F",
+                                "Northern Basin and Range" = "#EDF0F0", 
+                                "Sonoran Basin and Range" = "#EDF0F0", 
+                                "Southern California/Northern Baja Coast" = "#EDF0F0",
+                                "Eastern Cascades Slopes and Foothills" = "#EDF0F0",
+                                "Central Basin and Range" = "#EDF0F0", 
+                                "Mojave Basin and Range" = "#EDF0F0", 
+                                "Central California Valley" = "#EDF0F0")
+
 tm_shape(fire_count_results_sp) + 
   tm_polygons + 
-  tm_fill(col = "result", palette = color_palette) + 
+  tm_fill(col = "result", palette = color_palette, title = "Result") + 
   tm_borders(col = "white", 
              lwd = 0.5) + 
   tm_layout(main.title = "",
             main.title.size = 0.8,
-            frame = FALSE) + 
+            frame = FALSE) +  
   tm_legend(position = c(1, -1))
 ```
 
@@ -203,29 +217,43 @@ fire_count_sample_list
 eco_region_codes
 
 
+# # Loop through each value in the list and eco region code vector
+# for (i in seq_along(fire_count_sample_list)) {
+#   # Get the current object name and eco region code
+#   sample <- get(fire_count_sample_list[[i]])
+#   eco_region_code <- eco_region_codes[i]
+#   
+#   # Call the function with the object name and eco region code
+#   plot <- fire_count_histogram(sample, eco_region_code)
+#   
+#   # Save the plot as a PNG file
+#   png_file <- paste0("plots/fire_count_histogram_", eco_region_code, ".png")
+#   png(png_file, width = 1024, height = 600, res = 200)
+#   
+#   ggsave(
+#     filename = paste0("fire_count_histogram_", eco_region_code, ".png"), 
+#     plot = plot, 
+#     device = "png", 
+#     path = "plots/", 
+#     units = c("in"),
+#     width = 11,
+#     height = 7
+#   )
+# dev.off()
+# }
+
+fire_count_shiny_histogram_df <- data.frame() 
+
 # Loop through each value in the list and eco region code vector
 for (i in seq_along(fire_count_sample_list)) {
   # Get the current object name and eco region code
   sample <- get(fire_count_sample_list[[i]])
   eco_region_code <- eco_region_codes[i]
   
-  # Call the function with the object name and eco region code
-  plot <- fire_count_histogram(sample, eco_region_code)
+  df <- fire_count_histogram(sample, eco_region_code)
   
-  # Save the plot as a PNG file
-  png_file <- paste0("plots/fire_count_histogram_", eco_region_code, ".png")
-  png(png_file, width = 1024, height = 600, res = 200)
+  fire_count_shiny_histogram_df <- rbind(fire_count_shiny_histogram_df, df)
   
-  ggsave(
-    filename = paste0("fire_count_histogram_", eco_region_code, ".png"), 
-    plot = plot, 
-    device = "png", 
-    path = "plots/", 
-    units = c("in"),
-    width = 11,
-    height = 7
-  )
-dev.off()
 }
 
 ```

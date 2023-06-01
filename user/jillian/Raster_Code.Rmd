@@ -188,6 +188,13 @@ gde_summary_shiny <- gde_polygons_shiny %>%
          avg_fire_threat = na_if(avg_fire_threat, NaN),
          avg_fire_severity = na_if(avg_fire_severity, NaN))
 
+# adding fire_severity
+gde_summary_shiny <- gde_summary_shiny %>%
+  mutate(avg_fire_severity = gdepoly_burn_severity) %>%
+  mutate(avg_fire_severity = na_if(avg_fire_severity, NaN)) %>%
+  subset(select = -c(avg_fr_s, avg_fr_sv)) %>%
+  st_as_sf(crs = crs_ca$wkt)
+
 st_write(gde_summary_shiny, "raster_output/gde_summary_shiny.shp", append = F)
   
 ```
@@ -196,19 +203,20 @@ st_write(gde_summary_shiny, "raster_output/gde_summary_shiny.shp", append = F)
 # Perform spatial join to assign eco region IDs to GDE polygons
 gde_summ_eco <- st_join(gde_summary_shiny, eco_regions) 
 
-ecoregion_codes <- as.numeric(unique(gde_eco$us_l3code))
+gde_summ_eco_df <- as.data.frame(gde_summ_eco)
+
+ecoregion_codes <- as.numeric(unique(gde_summ_eco$us_l3code))
 
 for(id in ecoregion_codes){
-  gdes_in_ecoregion <- gde_eco %>%
-    filter(us_l3code == id) %>%
-    select(POLYGON_ID, WETLAND_NA, VEGETATION, DOMINANT_S, DOMINANT_C, 
-           max_fire_count, min_tslf, avg_fire_threat, mode_fire_severity, 
-           avg_pct_burned, area, us_l3code, region, geometry)
+  gdes_in_ecoregion <- gde_summ_eco %>%
+    filter(us_l3code == id) 
   
-  output_file <- paste0("raster_output/gde_summary_polygons/gde_summary_", id, ".shp")
+  output_file <- paste0("raster_output/gde_shiny_summary_ecoregions/gde_summary_", id, ".shp")
   
   st_write(gdes_in_ecoregion, output_file)
 }
+
+st_write(gde_summ_eco, "raster_output/gde_shiny_summary_ecoregions/gde_summary_ALL.shp")
 ```
 
 ### GDE Polygons by Eco Region
