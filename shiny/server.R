@@ -1,9 +1,8 @@
 server <- function(input, output, session) {
   
   tmap_mode("view")
-  # end
   
-  # when new ecoregion selected, gets rid of fire metric selections - HOW TO DO UPON CLICKING NEW ECOREGION
+  
   observeEvent(input$ecoregion_type_input,{
     print('new ecoregion')
     updateCheckboxGroupButtons(session = session,
@@ -14,16 +13,13 @@ server <- function(input, output, session) {
   
   # GDE map----
   map_reactive <- reactive({
-    print(input$ecoregion_type_input)
-    # print(input$firelayer_type_input)
-    # print(input$tslf_type_input)
-    # 
+    
+    # print(input$ecoregion_type_input)
+    
+    #
     print(input$type_raster)
-    # tm_level_one = tm_shape(gde_list[[input$ecoregion_type_input]]) +
-    #   tm_raster()
     
-    req(!is.null(input$ecoregion_type_input))
-    
+    # req(!is.null(input$ecoregion_type_input))
     eco_selected <- input$ecoregion_type_input
     eco_selected2 = gsub('gde_', '', eco_selected)
     
@@ -32,6 +28,7 @@ server <- function(input, output, session) {
     names_fire_threat2 = gsub('_fire_threat', '', names_fire_threat)
     names_burn_severity2 = gsub('_burn_severity', '', names_burn_severity)
     names_ecoregion2 = names(ecoregion_list)
+    # names_fire_count_hist2 = gsub('fire_count_histogram_', '', names_fire_count_hist) # HOW TO ADD CA MAPS
     
     wfire = which(names_fire2 == eco_selected2)
     wfire = names_fire[wfire]
@@ -50,83 +47,115 @@ server <- function(input, output, session) {
     print(wburn_severity)
     
     wecoregion = which(names_ecoregion2 == eco_selected2)
-    wecoregion = names_ecoregion2[wecoregion]
+    wecoregion = names_ecoregion2[wecoregion] # DELETED 2 AFTER names_ecoregion
     print(wecoregion)
     
+    # stat_selected <- input$ecoregion_stats_type_input
+    # stat_selected2 = gsub('fire_count_histogram_', '', stat_selected)
     
-    tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldTerrain) +
-      tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
-      tm_shape(ecoregion_list[[wecoregion]]) +
-      tm_polygons(alpha = 0.2, interactive = FALSE) +
-      tm_shape(gde_list[[input$ecoregion_type_input]], 
+    # wfire_count_hist = which(names_fire_count_hist2 == stat_selected2)
+    # wfire_count_hist = names_fire_count_hist[wfire_count_hist]
+    # print(wfire_count_hist)
+    
+    
+    tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
+      tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+      tm_shape(ecoregion_list[[wecoregion]]) + tm_polygons(alpha = 0.2, interactive = FALSE) +
+      tm_shape(california_polygon) + tm_polygons(alpha = 0, border.col = "black", interactive = FALSE) +
+      tm_shape(gde_list[[eco_selected]],
                point.per = "feature") +
       tm_polygons(col = '#0f851e',
                   id = 'popup_text',
                   border.col = 'white',
                   lwd = 0.1,
                   alpha = 0.6,
-                  popup.vars = c("Wetland Type" = "WETLAND", 
-                                 "Area (km)" = "are_km2",
-                                 "Vegetation Type" = "VEGETAT",
-                                 "Max Fire Count" = "mx_fr_c",
-                                 "Most Recent Time Since Last Fire" = "mn_tslf",
+                  popup.vars = c("Wetland Type" = "WETLAND",
+                                 "Dominant Vegetation Type" = "VEGETAT",
+                                 "Area (km2)" = "are_km2",
+                                 "Land Cover Type" = "land_cover_type",
+                                 "Maximum Fire Count" = "mx_fr_c",
+                                 "Years Since Last Fire" = "mn_tslf",
                                  "Average Fire Threat" = "avg_fr_t",
                                  "Average Fire Severity" = "avg_fr_s"
-                                 )
-      ) + tmap_options(check.and.fix = TRUE) +
-      # tm_borders(col = , lwd = 2) +
-      tm_layout(title = 'test', title.position = 'right')
+                  )) +
+      tm_layout(title = 'test', title.position = 'right') + 
+      tm_legend(show = TRUE,
+                position = c("right", "bottom"),
+                frame = TRUE,
+                # col = "#0f851e",
+                title = "Ecoregion") +
+      tmap_options(check.and.fix = TRUE)
+    # tm_borders(col = , lwd = 2) +
     
-    # if(gde_list[[input$ecoregion_type_input]])
     
-    if('Fire Count Raster' %in% input$type_raster){
-      print(' FIRE COUNT RASTER ')
+    
+    
+    
+    if('Fire Count' %in% input$type_raster){
+      print(' FIRE COUNT ')
       fire_layer <- fire_count_list[[wfire]]
       tm_level_one <- tm_level_one + tm_shape(fire_layer) +
         tm_raster(palette = 'Reds',
                   alpha = input$alpha1,
-                  title = 'Fire Count Raster',
+                  title = 'Fire Count',
                   breaks = seq(0, maxValue(fire_layer), 1),
                   labels = c(as.character(seq(0, maxValue(fire_layer), 1)))
         ) # breaks = seq(0, length(fire_layer), 1)
     }
     
-    if('TSLF Raster' %in% input$type_raster){
-      print(' TSLF RASTER ')
+    if('TSLF' %in% input$type_raster){
+      print(' TSLF ')
       tslf_layer <- tslf_list[[wtslf]]
       tm_level_one <- tm_level_one + tm_shape(tslf_layer) +
-        tm_raster(palette = 'seq',
+        tm_raster(palette = '-YlOrRd',
                   alpha = input$alpha2,
-                  title = 'TSLF Raster') +
-        tm_layout(aes.palette = list(seq = "-YlOrRd")) # reversing palette
+                  title = 'TSLF',
+                  breaks = seq(0, maxValue(tslf_layer), 10))
     }
     
-    if('Fire Threat Raster' %in% input$type_raster){
-      print(' FIRE THREAT RASTER ')
+    # if('Fire Threat' %in% input$type_raster){
+    #   print(' FIRE THREAT ')
+    #   fire_threat_layer <- fire_threat_list[[wfire_threat]]
+    #   tm_level_one <- tm_level_one + tm_shape(fire_threat_layer) +
+    #     tm_raster(palette = 'Reds', # OrRd
+    #               alpha = input$alpha3,
+    #               title = 'Fire Threat')
+    #   #             ,
+    #   # labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
+    # }
+    
+    if('Fire Threat' %in% input$type_raster){
+      print(' FIRE THREAT ')
       fire_threat_layer <- fire_threat_list[[wfire_threat]]
       tm_level_one <- tm_level_one + tm_shape(fire_threat_layer) +
-        tm_raster(palette = 'Reds',
+        tm_raster(palette = 'Oranges', # OrRd
                   alpha = input$alpha3,
-                  title = 'Fire Threat Raster')
-      #labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
+                  title = 'Fire Threat',
+                  breaks = seq(0, maxValue(fire_threat_layer), 1),
+                  labels = c("Low (0-1)", "Moderate (1-2)", "High (2-3)", "Very High (3-4)", "Extreme (4-5)"))
+      #             ,
+      # labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
     }
     
-    if('Burn Severity Raster' %in% input$type_raster){
-      print(' BURN SEVERITY RASTER ')
+    if('Burn Severity' %in% input$type_raster){
+      print(' BURN SEVERITY ')
       burn_severity_layer <- burn_severity_list[[wburn_severity]]
       tm_level_one <- tm_level_one + tm_shape(burn_severity_layer) +
-        tm_raster(palette = 'Reds', # CHANGE PALATTE
+        tm_raster(palette = 'YlOrBr', # CHANGE PALATTE
                   alpha = input$alpha4,
-                  title = 'Burn Severity Raster',
+                  title = 'Burn Severity',
                   labels = c("NA", "Low", "Medium", "High")
                   # breaks = seq(1, maxValue(burn_severity_layer), 1),
                   # labels = c(as.character(seq(1, maxValue(burn_severity_layer), 1)))
         )
     }
     
-    tm_level_one # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
+    tm_level_one
+    
+    # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
     
   })
+  
   
   output$map <- renderTmap({
     
@@ -137,7 +166,7 @@ server <- function(input, output, session) {
   })
   
   
-  # main page ecoregion map----
+  # main ecoregion map----
   output$main_map <- renderTmap({
     
     # Define the text information for the popup
@@ -304,73 +333,179 @@ server <- function(input, output, session) {
       tm_view(bbox = cali_bounds)
     
     
-    
-  })
+  }) # End main ecoregion map tab
   
   
   
-  # stats page----
-  stats_reactive <- reactive({
+  
+  
+  # stats histogram page----
+  
+  # fire count histogram reactivity
+  fire_count_hist_reactive <- reactive({
     
     print(input$ecoregion_stats_type_input)
-    
     req(!is.null(input$ecoregion_stats_type_input))
     
-    stats_selected <- input$ecoregion_stats_type_input
-    # stats here
-    req(!is.null(input$ecoregion_type_input))
+    selected_hist_ecoregion <- input$ecoregion_stats_type_input
+    fire_hist_ecoregion <- fire_count_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
+    plot_title <- fire_hist_ecoregion$ecoregion_name
     
-    # make a list of 
+    # ggplot(hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
+    #   geom_bar()
     
-    eco_selected <- input$ecoregion_stats_type_input
-    eco_selected2 = gsub('gde_', '', eco_selected)
-    
-    wstat = which(names_stats2 == eco_selected2)
-    wstat = names_stat[wstat]
-    print(wstat)
-    
-    stat <- stat_list[[input$ecoregion_stats_type_input]]
-    
-    stat
-    
-    # make a list of stats images!!
-    
-    # if('Stats Image' %in% input$ecoregion_stats_type_input){
-    #   print(' FIRE COUNT RASTER ')
-    #   stat_layer <- stat_list[[wstat]]
-    #   tm_level_one <- tm_level_one + tm_shape(fire_layer) +
-    #     tm_raster(palette = 'Reds',
-    #               alpha = input$alpha1,
-    #               title = 'Fire Count Raster',
-    #               breaks = seq(0, maxValue(fire_layer), 1))
-    #   }
-    
-    
+    ggplot(fire_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
+      geom_bar(stat = "identity", position = "dodge") +
+      scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
+                        labels = c("Non-GDE", "GDE")) +
+      labs(x = "Fire Count",
+           y = "Relative Frequency (%)",
+           fill = "GDE Status",
+           title = str_wrap(paste0("Relative Fire Frequency for ", plot_title), 30)) +
+      theme_classic() +
+      theme(legend.position = 'right',
+            plot.title = element_text(hjust = 0.5,
+                                      size = 15),
+            axis.text = element_text(size = 13,
+                                     color = 'black'),
+            axis.title = element_text(size = 15,
+                                      color = 'black'),
+            axis.title.x = element_text(vjust = -1.1),
+            axis.text.x = element_text(vjust = -1.5)) +
+      scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0),
+                                                               breaks = seq(0, max(fire_hist_ecoregion$value), 1))
     
   })
   
-  stats_selected <- 
-    # stats output----
-  output$stats <- renderImage({
+  # render fire count histogram plot
+  output$fire_count_hist <- renderPlot({
     
-    stats_reactive
+    req(!is.null(fire_count_hist_reactive()))
+    fire_count_hist_reactive()
     
   })
   
-  data_df <- data.frame(Data = c("Groundwater-Dependent Ecosystems", "Fire Count", "Time Since Last Fire (TSLF)", "Fire Threat", "Burn Severity"),
-                        Source = c("The Nature Conservancy", "Cal Fire (layer produced by us)", "Cal Fire (layer produced by us)", "Cal Fire", "USGS and USFS"),
-                        Information = c("Groundwater-Dependent Ecosystems are from The Nature Conservancy",
-                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the total number of fires that occured since 1950.",
-                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the time in years since the last fire occured since 1950.",
-                                        "Fire Threat is a layer created by Cal Fire that represents the relative vulnerability of an area to wildfires. Some variables that are used in this modeled fire layer are fire occurance, vegetation type and density, topography and weather conditions.",
-                                        "The Burn Severity layer was changed to apply the mode of all previous fires in a single cell. The originial layer is derived from satellite data and represents how intensely a fire burned in a certain area. "))
   
   
-  output$dataTable <- renderTable(data_df)
-  
-  # renderTable({
+  # burn severity histogram reactivity
+  # burn_severity_hist_reactive <- reactive({
+  #   
+  #   print(input$ecoregion_stats_type_input)
+  #   req(!is.null(input$ecoregion_stats_type_input))
+  #   
+  #   selected_hist_ecoregion <- input$ecoregion_stats_type_input
+  #   burn_hist_ecoregion <- burn_severity_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
+  #   plot_title <- unique(burn_hist_ecoregion$ecoregion_name)
+  #   
+  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 2] <- 'Low'
+  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 3] <- 'Medium'
+  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 4] <- 'High'
+  #   
+  #   # burn_hist_ecoregion$value <- factor(burn_hist_ecoregion$value, levels = burn_hist_ecoregion$value)
+  #   
+  #   ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
+  #     geom_bar(stat = "identity", position = "dodge") +
+  #     scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
+  #                       labels = c("Non-GDE", "GDE")) +
+  #     labs(x = "Burn Severity",
+  #          y = "Relative Frequency (%)",
+  #          fill = "GDE Status",
+  #          title = str_wrap(paste0("Relative Burn Severity Frequency for ", plot_title), 30)) +
+  #     theme_classic() +
+  #     theme(legend.position = 'right',
+  #           plot.title = element_text(hjust = 0.5,
+  #                                     size = 15),
+  #           axis.text = element_text(size = 13,
+  #                                    color = 'black'),
+  #           axis.title = element_text(size = 15,
+  #                                     color = 'black'),
+  #           axis.title.x = element_text(vjust = -1.1),
+  #           axis.text.x = element_text(vjust = -1.5)) +
+  #     scale_y_continuous(expand = c(0,0)) + scale_x_discrete(limits=burn_hist_ecoregion$value)
   #   
   # })
+  
+  burn_severity_hist_reactive <- reactive({
+    print(input$ecoregion_stats_type_input)
+    req(!is.null(input$ecoregion_stats_type_input))
+    
+    selected_hist_ecoregion <- input$ecoregion_stats_type_input
+    burn_hist_ecoregion <- burn_severity_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
+    
+    if (nrow(burn_hist_ecoregion) == 0) {
+      plot_title <- "No Data Available"
+      plot_msg <- "Not\nEnough\nData"
+      
+      ggplot() +
+        annotate("text", x = 0.5, y = 0.5, label = plot_msg, size = 15, hjust = 0.5, vjust = 0.5, color = "red") +
+        labs(x = "Burn Severity",
+             y = "Relative Frequency (%)") +
+        theme_void()
+    } else {
+      
+      plot_title <- unique(burn_hist_ecoregion$ecoregion_name)
+      
+      burn_hist_ecoregion$value[burn_hist_ecoregion$value == 2] <- 'Low'
+      burn_hist_ecoregion$value[burn_hist_ecoregion$value == 3] <- 'Medium'
+      burn_hist_ecoregion$value[burn_hist_ecoregion$value == 4] <- 'High'
+      
+      ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
+        geom_col(position = "dodge") +
+        # geom_text(aes(label = round(proportion, 2)), position = position_dodge(width = 1), vjust = -0.5, angle = 45, hjust = -0.5) +
+        scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
+                          labels = c("Non-GDE", "GDE")) +
+        labs(x = "Burn Severity",
+             y = "Relative Frequency (%)",
+             fill = "GDE Status",
+             title = str_wrap(paste0("Relative Burn Severity Frequency for ", plot_title), 30)) +
+        theme_classic() +
+        theme(legend.position = 'right',
+              plot.title = element_text(hjust = 0.5, size = 15),
+              axis.text = element_text(size = 13, color = 'black'),
+              axis.title = element_text(size = 15, color = 'black'),
+              axis.title.x = element_text(vjust = -1.1),
+              axis.text.x = element_text(vjust = -1.5)) +
+        scale_y_continuous(expand = c(0,0)) +
+        scale_x_discrete(limits = burn_hist_ecoregion$value)
+      
+    }
+  })
+  
+  output$burn_severity_hist <- renderPlot({
+    
+    req(!is.null(burn_severity_hist_reactive()))
+    burn_severity_hist_reactive()
+    
+  })
+  
+  # output$dataTable <- renderDataTable({
+  #   data_df
+  # })
+  
+  
+  
+  # output for About page data table
+  # output$dataTable <- renderTable(data_df)
+  
+  
+  # output$dataTable <- renderDataTable({
+  #   data_df$Source <- paste0("<a href='", link_addresses, "' target='_blank'>", data_df$Source, "</a>")
+  #   data_df
+  # }, options = list(dom = 't'))
+  
+  # render data source data table with hyperlinks
+  output$dataTable <- renderDataTable({
+    
+    data_df$Source <- sprintf(
+      "<a href='%s' target='_blank' rel='noopener noreferrer'>%s</a>",
+      data_df$link_address,
+      data_df$Source
+    )
+    data_df_subset <- subset(data_df, select = -link_address)
+    data_df_subset
+    
+    
+  }, escape = FALSE, options = list(paging = FALSE, info = FALSE, searching = FALSE))
   
 }
 
