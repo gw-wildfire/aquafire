@@ -12,6 +12,10 @@ fire_count_stats <- function(sample_dataframe, eco_region_code = "Input in funct
   max_gde <- max(gde$value)
   max_non_gde <- max(non_gde$value)
   
+  min_all <- min(sample_dataframe$value)
+  min_gde <- min(gde$value)
+  min_non_gde <- min(non_gde$value)
+  
   # define a mode function - finds the NON-ZERO MODE IF THERE ARE NON-ZERO VALUES
   getmode <- function(v) {
     v_nonzero <- v[v != 0]
@@ -31,6 +35,7 @@ fire_count_stats <- function(sample_dataframe, eco_region_code = "Input in funct
   stats <- data.frame(group = c("GDEs and Non-GDEs", "GDEs", "Non-GDEs"), 
                       mean = c(mean_all, mean_gde, mean_non_gde), 
                       maximum = c(max_all, max_gde, max_non_gde),
+                      minimum = c(min_all, min_gde, min_non_gde), 
                       nonzero_mode = c(mode_all, mode_gde, mode_non_gde), 
                       ecoregion_code = c(eco_region_code, eco_region_code, eco_region_code))
   

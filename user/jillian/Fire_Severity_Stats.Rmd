@@ -151,6 +151,20 @@ ggplot(burn_severity_1_sample, aes(x = x, y = y)) +
   theme_minimal()
 ```
 
+### Summary stats
+```{r}
+burn_severity_1_stats <- fire_count_stats(burn_severity_1_sample, eco_region_code = 1)
+burn_severity_4_stats <- fire_count_stats(burn_severity_4_sample, eco_region_code = 4)
+burn_severity_5_stats <- fire_count_stats(burn_severity_5_sample, eco_region_code = 5)
+burn_severity_6_stats <- fire_count_stats(burn_severity_6_sample, eco_region_code = 6)
+burn_severity_8_stats <- fire_count_stats(burn_severity_8_sample, eco_region_code = 8)
+burn_severity_9_stats <- fire_count_stats(burn_severity_9_sample, eco_region_code = 9)
+burn_severity_78_stats <- fire_count_stats(burn_severity_78_sample, eco_region_code = 78)
+burn_severity_80_stats <- fire_count_stats(burn_severity_80_sample, eco_region_code = 80)
+burn_severity_81_stats <- fire_count_stats(burn_severity_81_sample, eco_region_code = 81)
+burn_severity_85_stats <- fire_count_stats(burn_severity_85_sample, eco_region_code = 85)
+```
+
 ### Preparing Samples 
 ```{r}
 eco_region_codes_burnsev <- c(1, 4, 5, 6, 78, 8, 80, 81, 85, 9) # remove 7, 13, and 14 due to insufficient data
@@ -223,7 +237,8 @@ mann_whitney_results <- mann_whitney_result(burn_severity_sample_list) %>%
     p_value <= 0.05 & confidence_interval_upper <= 0 ~ "Reject H0 - Incr. Burn Severity",
     p_value <= 0.05 & confidence_interval_lower >= 0 ~ "Reject H0 - Decr. Burn Severity",
     p_value > 0.05 ~ "Cannot Reject H0")) %>%
-  bind_rows(eco_regions_geoms_burnsev_insuff)
+  bind_rows(eco_regions_geoms_burnsev_insuff) %>%
+  mutate(p_value = format(p_value, scientific = FALSE))
 
 mann_whitney_results_sp <- mann_whitney_results %>%
   subset(select = c("p_value","result", "geometry", "region")) %>%

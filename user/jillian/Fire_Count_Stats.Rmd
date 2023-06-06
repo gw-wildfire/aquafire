@@ -140,7 +140,8 @@ fire_count_results <- fire_count_bootstrap %>%
   mutate(result = case_when(
     p_value < 0.05 & confidence_interval_upper < 0 ~ "Reject H0 - Incr. Fire Count",
     p_value < 0.05 & confidence_interval_lower > 0 ~ "Reject H0 - Decr. Fire Count",
-    p_value > 0.05 ~ "Cannot Reject H0"))
+    p_value > 0.05 ~ "Cannot Reject H0")) %>%
+  mutate(p_value = format(p_value, scientific = FALSE))
 
 fire_count_results_sp <- fire_count_results %>%
   subset(select = c("p_value","result","region", "geometry")) %>%
