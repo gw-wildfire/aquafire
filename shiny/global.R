@@ -163,11 +163,11 @@ if(!preloaded){
     if(object.size(gde_shapefile) > 120000000) {
       gde_shapefile <- gde_shapefile %>%
         filter(area > 25000) %>%  # larger than 2.2 acres
-        st_simplify(dTolerance = 20)
+        st_simplify(dTolerance = 40)
     } else if(object.size(gde_shapefile) <= 120000000 & object.size(gde_shapefile) > 50000000) {
       gde_shapefile <- gde_shapefile %>%
         filter(area > 15000) %>%  # larger than .22 acres
-        st_simplify(dTolerance = 10)
+        st_simplify(dTolerance = 20)
     } else {
       gde_shapefile <- gde_shapefile %>%
         filter(area > 10000) %>%  # larger than .22 acres

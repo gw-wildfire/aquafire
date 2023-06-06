@@ -14,6 +14,8 @@ ui <- fluidPage(
   # Navigation Bar ----
   navbarPage("",
              position = "static-top",
+             
+             # About tab----
              tabPanel("About", icon = icon("info-circle"),
                       fluidPage(
                         
@@ -28,7 +30,7 @@ ui <- fluidPage(
                           )
                         ), # End IMAGES
                         
-                        # Background ----
+                        # Background
                         h1("Background"),
                         
                         fluidRow(
@@ -48,11 +50,11 @@ ui <- fluidPage(
                         h1("How to Use This App"),
                         
                         fluidRow(
-                          column(12, p("This Shiny App has 3 main tabs, the Ecoregions tab, the Map tab, and the Statistics tab. In the Ecoregions tab, you can understand more about the geography and geology of a certain ecoregion, as well as the dominant vegetation species spread throughout the ecoregion. In the Map tab, one of the 13 ecoregions in california, designated by the EPA, can be selected and will display all GDEs within that ecoregion. Click on a GDE and information including wetland type, dominant vegetation, and wildfire metrics will be shown. There are both wetland and riparian GDEs displayed in this map, and will show either wetland type or dominant vegetation species, respectively. On the left panel, 4 fire layers can be toggled on and off. These layers are: total number of fires since 1950, number of years since the last fire, fire threat, and the mode of the burn severity."),
+                          column(12, p("This Shiny App has 3 main tabs, the Ecoregions tab, the Map tab, and the Statistics tab. In the Ecoregions tab, you can understand more about the geography and geology of a certain ecoregion, as well as the dominant vegetation species spread throughout the ecoregion. In the Map tab, one of the 13 ecoregions in california, designated by the EPA, can be selected and will display all GDEs within that ecoregion. Click on a GDE and information including wetland type, dominant vegetation, and wildfire metrics will be shown. There are both wetland and riparian GDEs displayed in this map, and will show either wetland type or dominant vegetation species, respectively. On the left panel, 4 fire layers can be toggled on and off. These layers are: total number of fires since 1950, number of years since the last fire, fire threat (from Cal Fire), and the most-frequent severity value for a cell."),
                           )
                         ), # End How to Use This App
                         
-                        h1("Data Policy Information"),
+                        h1("Data Information"),
                         
                         fluidRow(
                           column(12, p(""),
@@ -81,10 +83,9 @@ ui <- fluidPage(
                       
              ), # End Tab Panel for About page
              
-             # Ecoregion Information ----
+             # Ecoregion Information tab----
              tabPanel(title = "Ecoregion Information", icon = icon("layer-group"),
                       
-                      # Stats Main Panel----
                       mainPanel(
                         
                         h1("Ecoregion Information"),
@@ -107,88 +108,79 @@ ui <- fluidPage(
                           h3("Central California Foothills and Coastal Mountains (6)"),
                           column(12, p("The primary distinguishing characteristic of this ecoregion is its Mediterranean climate of hot dry summers and cool moist winters, and associated vegetative cover comprising mainly chaparral and oak woodlands; grasslands occur in some lower elevations and patches of pine are found at higher elevations. ")),
                           column(12, p("Surrounding the lower and flatter Central California Valley (7), most of the region consists of open low mountains or foothills, but there are some areas of irregular plains and some narrow valleys. Large areas are in ranch lands and grazed by domestic livestock. Relatively little land has been cultivated, although some valleys are major agricultural centers such as the Salinas or the wine vineyard center of Napa and Sonoma."))
-                        ),
+                        ), # End Central Foothills Coastal Mountains
                         
                         fluidRow(
                           h3("Central California Valley (7)"),
                           column(12, p("Flat, intensively farmed plains with long, hot dry summers and mild winters distinguish the Central California Valley from its neighboring ecoregions that are either hilly or mountainous, forest or shrub covered, and generally nonagricultural. It includes the flat valley basins of deep sediments adjacent to the Sacramento and San Joaquin rivers, as well as the fans and terraces around the edge of the valley. The two major rivers flow from opposite ends of the Central Valley, flowing into the Delta and into San Pablo Bay. ")),
                           column(12, p("It once contained extensive prairies, oak savannas, desert grasslands in the south, riparian woodlands, freshwater marshes, and vernal pools. More than half of the region is now in cropland, about three fourths of which is irrigated. Environmental concerns in the region include salinity due to evaporation of irrigation water, groundwater contamination from heavy use of agricultural chemicals, wildlife habitat loss, and urban sprawl."))
-                        ),
+                        ), # End Central Valley
                         
                         fluidRow(
                           h3("Coast Range (1)"),
                           column(12, p("The low mountains of the Coast Range of western Washington, western Oregon, and northwestern California are covered by highly productive, rain-drenched coniferous forests. Sitka spruce forests originally dominated the fog-shrouded coast, while a mosaic of western redcedar, western hemlock, and seral Douglas-fir blanketed inland areas. Today, Douglas-fir plantations are prevalent on the intensively logged and managed landscape. In California, redwood forests are a dominant component in much of the region. In Oregon and Washington, soils are typically Inceptisols and Andisols, while Alfisols are common in the California portion.")),
                           column(12, p("Landslides and debris slides are common, and lithology influences land management strategies. In Oregon and Washington, slopes underlain by sedimentary rock are more susceptible to failure following clear-cutting and road building than those underlain by volcanic rocks. Coastal headlands, high and low marine terraces, sand dunes, and beaches also characterize the region.")),
-                          
-                          fluidRow(
-                            h3("Eastern Cascades Slopes and Foothills (9)"),
-                            column(12, p("The Eastern Cascade Slopes and Foothills ecoregion is in the rainshadow of the Cascade Range (4). It has a more continental climate than ecoregions to the west, with greater temperature extremes and less precipitation. Open forests of ponderosa pine and some lodgepole pine distinguish this region from the higher ecoregions to the west where hemlock and fir forests are common, and the lower, drier ecoregions to the east where shrubs and grasslands are predominant.")),
-                            column(12, p("The vegetation is adapted to the prevailing dry, continental climate and frequent fire. Historically, creeping ground fires consumed accumulated fuel and devastating crown fires were less common in dry forests. Volcanic cones and buttes are common in much of the region. A few areas of cropland and pastureland occur in the lake basins or larger river valleys.")),
-                          ),
-                          
-                          fluidRow(
-                            h3("Mojave Basin and Range (14)"),
-                            column(12, p("Stretching across southeastern California, southern Nevada, southwest Utah, and northwest Arizona, Ecoregion 14 is composed of broad basins and scattered mountains that are generally lower, warmer, and drier than those of the Central Basin and Range (13). Its creosotebush-dominated shrub community is distinct from the saltbush–greasewood and sagebrush–grass associations that occur to the north in the Central Basin and Range (13) and Northern Basin and Range (80); it is also differs from the palo verde–cactus shrub and saguaro cactus that occur in the Sonoran Basin and Range (81) to the south.")),
-                            column(12, p("In the Mojave, creosotebush, white bursage, Joshua-tree and other yuccas, and blackbrush are typical. On alkali flats, saltbush, saltgrass, alkali sacaton, and iodinebush are found. On mountains, sagebrush, juniper, and singleleaf pinyon occur. At high elevations, some ponderosa pine, white fir, limber pine, and bristlecone pine can be found. The basin soils are mostly Entisols and Aridisols that typically have a thermic temperature regime; they are warmer than those of Ecoregion 13 to the north. Heavy use of off-road vehicles and motorcycles in some areas has made the soils susceptible to wind and water erosion. Most of Ecoregion 14 is federally owned and grazing is constrained by the lack of water and forage for livestock."))
-                          ),
-                          
-                          fluidRow(
-                            h3("Northern Basin and Range (80)"),
-                            column(12, p("The Northern Basin and Range consists of dissected lava plains, rocky uplands, valleys, alluvial fans, and scattered mountain ranges. Overall, it is cooler and has more available moisture than the Central Basin and Range (13) to the south. Ecoregion 80 is higher and cooler than the Snake River Plain (12) to the northeast in Idaho.")),
-                            column(12, p("Valleys support sagebrush steppe or saltbush vegetation. Cool season grasses, such as Idaho fescue and bluebunch wheatgrass are more common than in Ecoregion 13 to the south. Mollisols are also more common than in the hotter and drier basins of the Central Basin and Range (13) where Aridisols support sagebrush, shadscale, and greasewood. Juniper woodlands occur on rugged, stony uplands. Ranges are covered by mountain brush and grasses (e.g. Idaho fescue) at lower and mid-elevations; at higher elevations aspen groves or forest dominated by subalpine fir can be found. Most of Ecoregion 80 is used as rangeland. The western part of the ecoregion is internally drained; its eastern stream network drains to the Snake River system."))
-                          ),
-                          
-                          fluidRow(
-                            h3("Sierra Nevada (5)"),
-                            column(12, p("The Sierra Nevada is a mountainous, deeply dissected, and westerly tilting fault block. The central and southern part of the region is largely composed of granitic rocks that are lithologically distinct from the mixed geology of the Klamath Mountains (78) and the volcanic rocks of the Cascades (4). In the northern Sierra Nevada, however, the lithology has some similarities to the Klamath Mountains. A high fault scarp divides the Sierra Nevada from the Northern Basin and Range (80) and Central Basin and Range (13) to the east. Near this eastern fault scarp, the Sierra Nevada reaches its highest elevations. Here, moraines, cirques, and small lakes are common and are products of Pleistocene alpine glaciation. Large areas are above timberline, including Mt. Whitney in California, the highest point in the conterminous United States at nearly 14,500 feet. The Sierra Nevada casts a rain shadow over Ecoregions 13 and 80 to the east. The ecoregion slopes more gently toward the Central California Valley (7) to the west.")),
-                            column(12, p(" The vegetation grades from mostly ponderosa pine and Douglas-fir at the lower elevations on the west side, pines and Sierra juniper on the east side, to fir and other conifers at the higher elevations. Alpine conditions exist at the highest elevations. Large areas are publicly-owned federal land, including several national parks."))
-                          ),
-                          
-                          fluidRow(
-                            h3("Southern California/Northern Baja Coast (85)"),
-                            column(12, p("This ecoregion includes coastal and alluvial plains and some low hills in the coastal area of Southern California, and it extends over 200 miles south into Baja California.")),
-                            column(12, p("Coastal sage scrub and chaparral vegetation communities with many endemic species were once widespread before overgrazing, clearance for agriculture, and massive urbanization occurred. Coastal sage scrub includes chamise, white sage, black sage, California buckwheat, golden yarrow, and coastal cholla. The chaparral-covered hills include ceanothus, buckeye, manzanita, scrub oak, and mountain-mahogany. Coast live oak, canyon live oak, poison oak, and California black walnut also occur. A small area of Torrey pine occurs near San Diego."))
-                          ),
-                          
-                          fluidRow(
-                            h3("Sonoran Basin and Range (81)"),
-                            column(12, p("Similar in topography to the Mojave Basin and Range (14) to the north, this ecoregion contains scattered low mountains and has large tracts of federally owned lands, a large portion of which are used for military training.")),
-                            column(12, p("However, the Sonoran Basin and Range is slightly hotter than the Mojave and contains large areas of palo verde-cactus shrub and giant saguaro cactus, whereas the potential natural vegetation in the Mojave is largely creosote bush. Other typical Sonoran plants include white bursage, ocotillo, brittlebush, creosote bush, catclaw acacia, cholla, desert saltbush, pricklypear, ironwood, and mesquite. Winter rainfall decreases from west to east, while summer rainfall decreases from east to west. Aridisols and Entisols are dominant with hyperthermic soil temperatures and extremely aridic soil moisture regimes."))
-                          ),
-                          
-                          fluidRow(
-                            h3("Southern California Mountains (8)"),
-                            column(12, p("Similar to other ecoregions in central and southern California, the Southern California Mountains have a Mediterranean climate of hot dry summers and moist cool winters. Although Mediterranean types of vegetation such as chaparral and oak woodlands predominate in this region, the elevations are considerably higher, the summers are slightly cooler, and precipitation amounts are greater than in adjacent ecoregions, resulting in denser vegetation and some large areas of coniferous woodlands. In parts of the Transverse Range, a general slope effect causes distinct ecological differences.")),
-                            column(12, p("The south-facing slopes typically have higher precipitation (30-40 inches) compared to many of the north slopes of the range (15-20 inches), but high evaporation rates on the south contribute to a cover of chaparral. On the north side of parts of the ecoregion, lower evaporation, lower annual temperatures, and slower snow melt allows for a coniferous forest that blends into desert montane habitats as it approaches the Mojave Desert ecoregion boundary. Woodland species such as Jeffrey, Coulter, and Ponderosa pines occur, along with sugar pine, white fir, bigcone Douglas-fir, and, at highest elevations, some lodgepole and limber pines. Severe erosion problems are common where the vegetation cover has been destroyed by fire or overgrazing. Large portions of the region are National Forest public land."))
-                          ),
-                          
-                        ), # End FluidRow Coast Range
+                        ),
                         
+                        fluidRow(
+                          h3("Eastern Cascades Slopes and Foothills (9)"),
+                          column(12, p("The Eastern Cascade Slopes and Foothills ecoregion is in the rainshadow of the Cascade Range (4). It has a more continental climate than ecoregions to the west, with greater temperature extremes and less precipitation. Open forests of ponderosa pine and some lodgepole pine distinguish this region from the higher ecoregions to the west where hemlock and fir forests are common, and the lower, drier ecoregions to the east where shrubs and grasslands are predominant.")),
+                          column(12, p("The vegetation is adapted to the prevailing dry, continental climate and frequent fire. Historically, creeping ground fires consumed accumulated fuel and devastating crown fires were less common in dry forests. Volcanic cones and buttes are common in much of the region. A few areas of cropland and pastureland occur in the lake basins or larger river valleys.")) #,
+                        ),
+                        
+                        fluidRow(
+                          h3("Mojave Basin and Range (14)"),
+                          column(12, p("Stretching across southeastern California, southern Nevada, southwest Utah, and northwest Arizona, Ecoregion 14 is composed of broad basins and scattered mountains that are generally lower, warmer, and drier than those of the Central Basin and Range (13). Its creosotebush-dominated shrub community is distinct from the saltbush–greasewood and sagebrush–grass associations that occur to the north in the Central Basin and Range (13) and Northern Basin and Range (80); it is also differs from the palo verde–cactus shrub and saguaro cactus that occur in the Sonoran Basin and Range (81) to the south.")),
+                          column(12, p("In the Mojave, creosotebush, white bursage, Joshua-tree and other yuccas, and blackbrush are typical. On alkali flats, saltbush, saltgrass, alkali sacaton, and iodinebush are found. On mountains, sagebrush, juniper, and singleleaf pinyon occur. At high elevations, some ponderosa pine, white fir, limber pine, and bristlecone pine can be found. The basin soils are mostly Entisols and Aridisols that typically have a thermic temperature regime; they are warmer than those of Ecoregion 13 to the north. Heavy use of off-road vehicles and motorcycles in some areas has made the soils susceptible to wind and water erosion. Most of Ecoregion 14 is federally owned and grazing is constrained by the lack of water and forage for livestock."))
+                        ),
+                        
+                        fluidRow(
+                          h3("Northern Basin and Range (80)"),
+                          column(12, p("The Northern Basin and Range consists of dissected lava plains, rocky uplands, valleys, alluvial fans, and scattered mountain ranges. Overall, it is cooler and has more available moisture than the Central Basin and Range (13) to the south. Ecoregion 80 is higher and cooler than the Snake River Plain (12) to the northeast in Idaho.")),
+                          column(12, p("Valleys support sagebrush steppe or saltbush vegetation. Cool season grasses, such as Idaho fescue and bluebunch wheatgrass are more common than in Ecoregion 13 to the south. Mollisols are also more common than in the hotter and drier basins of the Central Basin and Range (13) where Aridisols support sagebrush, shadscale, and greasewood. Juniper woodlands occur on rugged, stony uplands. Ranges are covered by mountain brush and grasses (e.g. Idaho fescue) at lower and mid-elevations; at higher elevations aspen groves or forest dominated by subalpine fir can be found. Most of Ecoregion 80 is used as rangeland. The western part of the ecoregion is internally drained; its eastern stream network drains to the Snake River system."))
+                        ),
+                        
+                        fluidRow(
+                          h3("Sierra Nevada (5)"),
+                          column(12, p("The Sierra Nevada is a mountainous, deeply dissected, and westerly tilting fault block. The central and southern part of the region is largely composed of granitic rocks that are lithologically distinct from the mixed geology of the Klamath Mountains (78) and the volcanic rocks of the Cascades (4). In the northern Sierra Nevada, however, the lithology has some similarities to the Klamath Mountains. A high fault scarp divides the Sierra Nevada from the Northern Basin and Range (80) and Central Basin and Range (13) to the east. Near this eastern fault scarp, the Sierra Nevada reaches its highest elevations. Here, moraines, cirques, and small lakes are common and are products of Pleistocene alpine glaciation. Large areas are above timberline, including Mt. Whitney in California, the highest point in the conterminous United States at nearly 14,500 feet. The Sierra Nevada casts a rain shadow over Ecoregions 13 and 80 to the east. The ecoregion slopes more gently toward the Central California Valley (7) to the west.")),
+                          column(12, p(" The vegetation grades from mostly ponderosa pine and Douglas-fir at the lower elevations on the west side, pines and Sierra juniper on the east side, to fir and other conifers at the higher elevations. Alpine conditions exist at the highest elevations. Large areas are publicly-owned federal land, including several national parks."))
+                        ),
+                        
+                        fluidRow(
+                          h3("Southern California/Northern Baja Coast (85)"),
+                          column(12, p("This ecoregion includes coastal and alluvial plains and some low hills in the coastal area of Southern California, and it extends over 200 miles south into Baja California.")),
+                          column(12, p("Coastal sage scrub and chaparral vegetation communities with many endemic species were once widespread before overgrazing, clearance for agriculture, and massive urbanization occurred. Coastal sage scrub includes chamise, white sage, black sage, California buckwheat, golden yarrow, and coastal cholla. The chaparral-covered hills include ceanothus, buckeye, manzanita, scrub oak, and mountain-mahogany. Coast live oak, canyon live oak, poison oak, and California black walnut also occur. A small area of Torrey pine occurs near San Diego."))
+                        ),
+                        
+                        fluidRow(
+                          h3("Sonoran Basin and Range (81)"),
+                          column(12, p("Similar in topography to the Mojave Basin and Range (14) to the north, this ecoregion contains scattered low mountains and has large tracts of federally owned lands, a large portion of which are used for military training.")),
+                          column(12, p("However, the Sonoran Basin and Range is slightly hotter than the Mojave and contains large areas of palo verde-cactus shrub and giant saguaro cactus, whereas the potential natural vegetation in the Mojave is largely creosote bush. Other typical Sonoran plants include white bursage, ocotillo, brittlebush, creosote bush, catclaw acacia, cholla, desert saltbush, pricklypear, ironwood, and mesquite. Winter rainfall decreases from west to east, while summer rainfall decreases from east to west. Aridisols and Entisols are dominant with hyperthermic soil temperatures and extremely aridic soil moisture regimes."))
+                        ),
+                        
+                        fluidRow(
+                          h3("Southern California Mountains (8)"),
+                          column(12, p("Similar to other ecoregions in central and southern California, the Southern California Mountains have a Mediterranean climate of hot dry summers and moist cool winters. Although Mediterranean types of vegetation such as chaparral and oak woodlands predominate in this region, the elevations are considerably higher, the summers are slightly cooler, and precipitation amounts are greater than in adjacent ecoregions, resulting in denser vegetation and some large areas of coniferous woodlands. In parts of the Transverse Range, a general slope effect causes distinct ecological differences.")),
+                          column(12, p("The south-facing slopes typically have higher precipitation (30-40 inches) compared to many of the north slopes of the range (15-20 inches), but high evaporation rates on the south contribute to a cover of chaparral. On the north side of parts of the ecoregion, lower evaporation, lower annual temperatures, and slower snow melt allows for a coniferous forest that blends into desert montane habitats as it approaches the Mojave Desert ecoregion boundary. Woodland species such as Jeffrey, Coulter, and Ponderosa pines occur, along with sugar pine, white fir, bigcone Douglas-fir, and, at highest elevations, some lodgepole and limber pines. Severe erosion problems are common where the vegetation cover has been destroyed by fire or overgrazing. Large portions of the region are National Forest public land."))
+                        ),
                         
                         # END ECOREGION DESCRIPTIONS
                         
-                        
-                        fluidRow(
-                          column(12, p("ecoregion information"),
-                                 
-                          ),
-                          
-                        ), # End Ecoregion Information
-                        # ecoregion info GO HERE
-                        
-                      ) # End mainPanel
+                      ) # End mainPanel for Ecoregions
                       
              ), # End tabPanel for Ecoregion Information
              
              
-             # Map ----
+             # Map tab ----
              tabPanel(title = "Map", icon = icon("map"),
                       sidebarLayout(
                         
                         sidebarPanel(width = 4,
                                      
-                                     # ),----
-                                     # ecoregion type selectInput
+                                     # trying cancel button----
+                                     actionButton("button", "Go to Sub About page"),
+                                     
+                                     # ecoregion type selectInput----
                                      selectInput(inputId = "ecoregion_type_input",
                                                  label = "Select ecoregion:",
                                                  choices = names_gde,
@@ -201,9 +193,10 @@ ui <- fluidPage(
                                        # adjusting space between raster buttons
                                        tags$style(type='text/css',"
                                                   .btn {
-                                                   margin-bottom: 60px; /* Add a margin-bottom of 10px */ }
+                                                   margin-bottom: 60px;}
                                                   "), # end CSS spacing for fire metric buttons
                                        
+                                       # buttons for RASTER layers
                                        column(6,
                                               checkboxGroupButtons('type_raster',
                                                                    'Select Raster Type',
@@ -218,6 +211,7 @@ ui <- fluidPage(
                                                                    ))
                                        ),
                                        
+                                       # transparency for RASTER layers
                                        column(6,
                                               sliderInput('alpha1','Fire Count Transparency',
                                                           step = 0.1,
@@ -232,14 +226,11 @@ ui <- fluidPage(
                                                           step = 0.1,
                                                           min = 0.1, max = 1, value = 0.8)
                                        )
-                                     )
+                                     ) # End fluidRow for RASTER options
                                      
-                                     
-                                     
-                                     
-                        ), # End sidebarPanel
+                        ), # End sidebarPanel for RASTER options
                         
-                        # interactive map
+                        # interactive GDE map
                         mainPanel(
                           
                           # TMAP UI
@@ -257,9 +248,7 @@ ui <- fluidPage(
                       
              ), # End tabPanel
              
-             
-             
-             # Statistics ----
+             # Statistics tab----
              tabPanel(title = "Statistics", icon = icon("chart-simple"),
                       
                       fluidRow(
@@ -274,6 +263,8 @@ ui <- fluidPage(
                         ),
                         
                       ),
+                      
+                      # space between california maps and statistics
                       br(),
                       br(),
                       br(),
@@ -289,28 +280,12 @@ ui <- fluidPage(
                                                  
                                      ), # END pickerInput
                                      
-                                     # selectInput(inputId = "ecoregion_stats_type_input_a",
-                                     #             label = "Select ecoregion:",
-                                     #             choices = names_burn_hist,
-                                     #             selected = 'burn_severity_histogram_eastern_cascades_slopes_foothills',
-                                     #             multiple = F
-                                     #
-                                     # ), # END pickerInput
-                                     
                         ), # End sidebarPanel
                         
-                        
-                        # Stats Main Panel----
+                        # Stats Main Panel
                         mainPanel(width = 9,
                                   
-                                  # imageOutput("stats"),
-                                  
-                                  
-                                  # uiOutput("stats") %>% withSpinner(),
-                                  # plotOutput("stats") %>% withSpinner(),
-                                  
                                   fluidPage(
-                                    
                                     
                                     fluidRow(
                                       
@@ -334,5 +309,5 @@ ui <- fluidPage(
              
   ), # End navbarPage
   
-) # End Navigation Bar
+) # End fluidPage
 

@@ -11,6 +11,11 @@ server <- function(input, output, session) {
     
   })
   
+  # cancel button----
+  observeEvent(input$button, {
+    updateTabsetPanel(session, "About", selected = "Map")
+  })
+  
   # GDE map----
   map_reactive <- reactive({
     
@@ -20,16 +25,19 @@ server <- function(input, output, session) {
     print(input$type_raster)
     
     # req(!is.null(input$ecoregion_type_input))
+    
+    # calling ecoregion_type_input from pickerInput
     eco_selected <- input$ecoregion_type_input
     eco_selected2 = gsub('gde_', '', eco_selected)
     
+    # removing info for interconnectivity
     names_fire2 = gsub('_fire_count', '', names_fire)
     names_tslf2 = gsub('_tslf', '', names_tslf)
     names_fire_threat2 = gsub('_fire_threat', '', names_fire_threat)
     names_burn_severity2 = gsub('_burn_severity', '', names_burn_severity)
     names_ecoregion2 = names(ecoregion_list)
-    # names_fire_count_hist2 = gsub('fire_count_histogram_', '', names_fire_count_hist) # HOW TO ADD CA MAPS
     
+    # creating reactivity for RASTER layers
     wfire = which(names_fire2 == eco_selected2)
     wfire = names_fire[wfire]
     print(wfire)
@@ -57,14 +65,14 @@ server <- function(input, output, session) {
     # wfire_count_hist = names_fire_count_hist[wfire_count_hist]
     # print(wfire_count_hist)
     
-    
+    # GDE polygon map----
     tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
       tm_basemap(leaflet::providers$Esri.WorldTerrain) +
       tm_shape(ecoregion_list[[wecoregion]]) + tm_polygons(alpha = 0.2, interactive = FALSE) +
       tm_shape(california_polygon) + tm_polygons(alpha = 0, border.col = "black", interactive = FALSE) +
       tm_shape(gde_list[[eco_selected]],
                point.per = "feature") +
-      tm_polygons(col = '#0f851e',
+      tm_polygons(col = '#0f851e', # GDE color
                   id = 'popup_text',
                   border.col = 'white',
                   lwd = 0.1,
@@ -90,7 +98,7 @@ server <- function(input, output, session) {
     
     
     
-    
+    # toggle fire count raster layer
     if('Fire Count' %in% input$type_raster){
       print(' FIRE COUNT ')
       fire_layer <- fire_count_list[[wfire]]
@@ -103,6 +111,7 @@ server <- function(input, output, session) {
         ) # breaks = seq(0, length(fire_layer), 1)
     }
     
+    # toggle TSLF raster layer
     if('TSLF' %in% input$type_raster){
       print(' TSLF ')
       tslf_layer <- tslf_list[[wtslf]]
@@ -113,17 +122,7 @@ server <- function(input, output, session) {
                   breaks = seq(0, maxValue(tslf_layer), 10))
     }
     
-    # if('Fire Threat' %in% input$type_raster){
-    #   print(' FIRE THREAT ')
-    #   fire_threat_layer <- fire_threat_list[[wfire_threat]]
-    #   tm_level_one <- tm_level_one + tm_shape(fire_threat_layer) +
-    #     tm_raster(palette = 'Reds', # OrRd
-    #               alpha = input$alpha3,
-    #               title = 'Fire Threat')
-    #   #             ,
-    #   # labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
-    # }
-    
+    # toggle fire threat raster layer
     if('Fire Threat' %in% input$type_raster){
       print(' FIRE THREAT ')
       fire_threat_layer <- fire_threat_list[[wfire_threat]]
@@ -133,10 +132,9 @@ server <- function(input, output, session) {
                   title = 'Fire Threat',
                   breaks = seq(0, maxValue(fire_threat_layer), 1),
                   labels = c("Low (0-1)", "Moderate (1-2)", "High (2-3)", "Very High (3-4)", "Extreme (4-5)"))
-      #             ,
-      # labels = c("Low", "Moderate", "High", "Very High", "Extreme"))
     }
     
+    # toggle burn severity layer
     if('Burn Severity' %in% input$type_raster){
       print(' BURN SEVERITY ')
       burn_severity_layer <- burn_severity_list[[wburn_severity]]
@@ -156,7 +154,7 @@ server <- function(input, output, session) {
     
   })
   
-  
+  # render main map
   output$map <- renderTmap({
     
     req(!is.null(map_reactive()))
@@ -166,7 +164,7 @@ server <- function(input, output, session) {
   })
   
   
-  # main ecoregion map----
+  # ecoregion map----
   output$main_map <- renderTmap({
     
     # Define the text information for the popup
@@ -333,11 +331,7 @@ server <- function(input, output, session) {
       tm_view(bbox = cali_bounds)
     
     
-  }) # End main ecoregion map tab
-  
-  
-  
-  
+  }) # End ecoregion map tab
   
   # stats histogram page----
   
@@ -347,13 +341,12 @@ server <- function(input, output, session) {
     print(input$ecoregion_stats_type_input)
     req(!is.null(input$ecoregion_stats_type_input))
     
+    # selecting ecoregion for histogram
     selected_hist_ecoregion <- input$ecoregion_stats_type_input
     fire_hist_ecoregion <- fire_count_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
     plot_title <- fire_hist_ecoregion$ecoregion_name
     
-    # ggplot(hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
-    #   geom_bar()
-    
+    # statistics histogram plot
     ggplot(fire_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
       geom_bar(stat = "identity", position = "dodge") +
       scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
@@ -451,7 +444,12 @@ server <- function(input, output, session) {
       
       ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
         geom_col(position = "dodge") +
-        # geom_text(aes(label = round(proportion, 2)), position = position_dodge(width = 1), vjust = -0.5, angle = 45, hjust = -0.5) +
+        # geom_text(aes(label = round(proportion, 2)), position = position_stack( vjust = 0.5), check_overlap = TRUE) + # , position = position_dodge(width = 1), vjust = -0.5, angle = 45, hjust = -0.5
+        geom_text(aes(label = round(proportion, 2)),
+                  position = position_dodge(width = 0.9),
+                  vjust = -0.5,
+                  size = 3,
+                  check_overlap = TRUE) +
         scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
                           labels = c("Non-GDE", "GDE")) +
         labs(x = "Burn Severity",
@@ -466,7 +464,7 @@ server <- function(input, output, session) {
               axis.title.x = element_text(vjust = -1.1),
               axis.text.x = element_text(vjust = -1.5)) +
         scale_y_continuous(expand = c(0,0)) +
-        scale_x_discrete(limits = burn_hist_ecoregion$value)
+        scale_x_discrete(limits = burn_hist_ecoregion$value) + lims(y = c(0, 100))
       
     }
   })
@@ -494,6 +492,8 @@ server <- function(input, output, session) {
   # }, options = list(dom = 't'))
   
   # render data source data table with hyperlinks
+  
+  
   output$dataTable <- renderDataTable({
     
     data_df$Source <- sprintf(
