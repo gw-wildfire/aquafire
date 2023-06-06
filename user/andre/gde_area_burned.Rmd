@@ -1,0 +1,95 @@
+---
+title: "GDE % Area Burned"
+author: "Andre Dextre"
+date: "2023-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(raster)
+library(here)
+library(janitor)
+library(sf)
+library(rgdal)
+library(dplyr)
+```
+
+```{r}
+gde_simplified <- st_read(here("data", "gde_simplified")) %>% 
+  st_transform('EPSG:3310')
+fire_perimeters <- st_read(here("data", "California_Fire_Perimeters_all")) %>% 
+  st_transform('EPSG:3310')
+```
+```{r}
+colnames(gde_simplified)
+colnames(fire_perimeters)
+```
+
+
+```{r}
+#Check CRS
+st_crs(gde_simplified)
+st_crs(fire_perimeters)
+
+gde_simplified <- st_make_valid(gde_simplified)
+fire_perimeters <- st_make_valid(fire_perimeters)
+```
+
+
+```{r}
+# Calculate intersection
+burnt_areas <- st_intersection(gde_simplified, fire_perimeters)
+# Calculate intersection areas
+burnt_areas$burnt_area <- as.numeric(st_area(burnt_areas))
+```
+
+```{r}
+#Calculate total burnt area for each GDE
+burnt_totals <- burnt_areas %>%
+  group_by(POLYGON_ID) %>%
+  summarise(total_burnt = sum(burnt_area), .groups = "drop")
+
+# Check if any POLYGON_ID has been counted more than once
+any(duplicated(burnt_totals$POLYGON_ID))
+```
+
+```{r}
+# Calculate total area for each GDE
+gde_totals <- gde_simplified %>%
+  mutate(total_area = as.numeric(st_area(.))) %>%
+  select(POLYGON_ID, total_area)
+
+```
+
+```{r}
+# Convert spatial objects to data frames
+gde_totals_df <- as.data.frame(gde_totals)
+burnt_totals_df <- as.data.frame(burnt_totals)
+
+# Perform the join operation
+burnt_percentages <- left_join(gde_totals_df, burnt_totals_df, by = "POLYGON_ID") %>%
+  mutate(percent_burnt = (total_burnt / total_area) * 100)
+
+```
+
+```{r}
+burnt_percentages <- burnt_percentages %>%
+  replace_na(list(percent_burnt = 0))
+
+```
+
+
+```{r}
+# Union of all fire perimeters
+fire_perimeters_union <- st_union(fire_perimeters)
+
+# Recalculate intersection areas
+burnt_areas <- st_intersection(gde_simplified, fire_perimeters_union)
+
+# Calculate intersection areas
+burnt_areas$burnt_area <- as.numeric(st_area(burnt_areas))
+
+```
+

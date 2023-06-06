@@ -126,24 +126,51 @@ bar_width <- 0.35
 # Create a vector for the x-axis positions of the bars
 x <- 1:length(burned_percent_results$GDE_Burned_Percent)
 
-# Create a vector of unique names for each pair of GDE and non-GDE bars
-bar_names <- rep(burned_percent_results$GDE_Name, each = 2)
-bar_names <- paste0(bar_names, c("_GDE", "_Non-GDE"))
+# Plotting the burned percentages with GDEs and non-GDEs distinguished
+barplot(
+  height = rbind(burned_percent_results$GDE_Burned_Percent, burned_percent_results$Non_GDE_Burned_Percent),
+  beside = TRUE,
+  names.arg = burned_percent_results$GDE_Name,
+  xlab = "GDE",
+  ylab = "Burned Percentage",
+  ylim = c(0, 100),
+  col = c(rep(c("#A3B18A", "#F2CC8F"), length(x))),
+  legend.text = c("GDE", "Non-GDE"),
+  args.legend = list(x = "topright"),
+  main = "Percentage of GDE and Non-GDE Area Burned",
+  width = bar_width
+)
 
-# Plotting the burned percentages
-barplot(height = c(burned_percent_results$GDE_Burned_Percent, burned_percent_results$Non_GDE_Burned_Percent),
-        beside = TRUE,
-        names.arg = bar_names,
-        xlab = "GDE",
-        ylab = "Burned Percentage",
-        ylim = c(0, 100),
-        col = c("blue", "red"),
-        main = "Percentage of GDE Area Burned",
-        width = bar_width)
 
-# Add a legend
-legend("topright",
-       legend = c("GDE", "Non-GDE"),
-       fill = c("blue", "red"))
 ```
+
+```{r}
+library(ggplot2)
+
+# Create a data frame with the burned percentages and GDE names
+data <- data.frame(
+  GDE_Name = burned_percent_results$GDE_Name,
+  GDE_Burned_Percent = burned_percent_results$GDE_Burned_Percent,
+  Non_GDE_Burned_Percent = burned_percent_results$Non_GDE_Burned_Percent
+)
+
+# Set the width of each bar
+bar_width <- 0.35
+
+# Plotting the burned percentages with GDEs and non-GDEs distinguished
+ggplot(data, aes(x = GDE_Name)) +
+    geom_bar(aes(y = Non_GDE_Burned_Percent, fill = "Non-GDE"), stat = "identity", position = "identity", width = bar_width, col = 'white') +
+  geom_bar(aes(y = GDE_Burned_Percent, fill = "GDE", col = 'white'), stat = "identity", position = "identity", width = bar_width, col = 'white') +
+  scale_fill_manual(values = c("GDE" = "#A3B18A", "Non-GDE" = "#F2CC8F")) +
+  labs(x = " ", y = "Burned Percentage", title = "Percentage of GDE and Non-GDE Area Burned") +
+  ylim(0, 100) +
+  scale_y_continuous(expand = c(0,0)) +
+  theme_classic() +
+  theme(legend.position = "topright",
+        axis.text.x=element_blank(),
+axis.ticks = element_blank())
+
+```
+
+
 
