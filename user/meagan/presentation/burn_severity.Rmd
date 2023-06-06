@@ -1,0 +1,161 @@
+---
+title: "Burn Severity"
+author: "Meagan Brown"
+date: "2023-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+```{r}
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>%
+  filter(region == 'Southern California Mountains')
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# GDE mountains
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_mtns <- crop(gde, mtns)
+g_mtns <- mask(g_mtns, mtns)
+
+# GDE coast
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_coast <- crop(gde, socal_baja_coast)
+g_coast <- mask(g_coast, socal_baja_coast)
+```
+
+## mtns
+```{r}
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+
+burn_severity_mtns <- crop(burn_severity_mode, mtns)
+burn_severity_mtns <- mask(burn_severity_mtns, mtns)
+```
+
+## coast
+```{r}
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+
+burn_severity_coast <- crop(burn_severity_mode, socal_baja_coast)
+burn_severity_coast <- mask(burn_severity_coast, socal_baja_coast)
+```
+
+# Reclassify for moderate & high severity
+```{r}
+# Assuming burn_severity_mtns and burn_severity_coast are SpatRaster objects
+bs_mtns_med <- ifel(burn_severity_mtns <= 3, 1, NA) # low-moderate severity
+bs_mtns_high <- ifel(burn_severity_mtns == 4, 1, NA) # high severity
+
+bs_coast_med <- ifel(burn_severity_coast <= 3, 1, NA) # low-moderate severity
+bs_coast_high <- ifel(burn_severity_coast == 4, 1, NA) # high severity
+
+```
+
+```{r}
+tmap_mode('view')
+```
+
+## Plotting mtns
+```{r}
+# mtns
+tm_shape(bs_mtns_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(bs_mtns_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting coast
+```{r}
+# coast
+tm_shape(bs_coast_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(bs_coast_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting together
+```{r}
+# mtns
+tm_shape(bs_mtns_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+  tm_shape(bs_mtns_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) +
+# coast
+tm_shape(bs_coast_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(bs_coast_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+

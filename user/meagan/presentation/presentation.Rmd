@@ -1,0 +1,391 @@
+---
+title: "dataviz_presentation"
+author: "Meagan Brown"
+date: "2023-05-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+```{r}
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+```
+
+```{r}
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+
+# Set the output file path and name
+output_file <- here::here('user', 'meagan', 'burn_severity_plot.png')
+
+# Set the dimensions of the output file (optional)
+# Adjust width and height as per your requirements
+png(output_file, width = 800, height = 600)
+
+# Generate the raster plot
+plot(burn_severity_mode)
+
+# Save and close the file
+dev.off()
+
+burn_severity <- crop(burn_severity_mode, socal_baja_coast)
+burn_severity <- mask(burn_severity, socal_baja_coast)
+```
+
+```{r}
+fire_count <- rast(here::here('raster_output', 'fire_count_final.tif'))
+
+fire_count_coast <- crop(fire_count, socal_baja_coast)
+fire_count_coast <- mask(fire_count_coast, socal_baja_coast)
+
+# Apply a mask to fire_count raster
+fire_count[fire_count <= 0] <- NA
+plot(fire_count)
+fire_count
+# Set the output file path and name
+output_file <- here::here('user', 'meagan', 'fire_count_plot.png')
+
+# Set the dimensions of the output file (optional)
+# Adjust width and height as per your requirements
+png(output_file, width = 800, height = 600)
+
+# Generate the raster plot
+plot(fire_count)
+
+# Save and close the file
+dev.off()
+
+# Apply a mask to fire_count raster
+fire_count_coast[fire_count_coast <= 0] <- NA
+```
+
+```{r}
+tslf <- rast(here::here('raster_output', 'tslf_final.tif'))
+
+# Set the output file path and name
+output_file <- here::here('user', 'meagan', 'tslf_plot.png')
+
+# Set the dimensions of the output file (optional)
+# Adjust width and height as per your requirements
+png(output_file, width = 800, height = 600)
+
+# Generate the raster plot
+plot(tslf)
+
+tslf <- crop(tslf, socal_baja_coast)
+tslf <- mask(tslf, socal_baja_coast)
+```
+
+```{r}
+fire_threat <- rast(here::here('raster_output', 'fire_threat.tif'))
+
+# Set the output file path and name
+output_file <- here::here('user', 'meagan', 'fire_threat_plot.png')
+
+# Set the dimensions of the output file (optional)
+# Adjust width and height as per your requirements
+png(output_file, width = 800, height = 600)
+
+# Generate the raster plot
+plot(fire_threat)
+
+fire_threat <- crop(fire_threat, socal_baja_coast)
+fire_threat <- mask(fire_threat, socal_baja_coast)
+```
+
+```{r}
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_coast <- crop(gde, socal_baja_coast)
+g_coast <- mask(g_coast, socal_baja_coast)
+```
+
+# Modified Plots
+
+## Fire Threat
+
+```{r}
+# Define reclassification function
+reclass_threat <- function(x) {
+  x[x <= 4] <- 1
+  x[x == 5] <- 3
+  return(x)
+}
+
+# Apply reclassification function to the raster
+fire_threat_reclass <- terra::app(fire_threat, reclass_threat)
+
+# Now you can plot your data with a categorical legend
+tmap_mode('view')
+tm_shape(fire_threat_reclass) +
+   tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+   tm_raster(style = "cat", palette = c("#eed7c5", "#BC4749"), 
+             breaks = c(1,2,3),
+             labels = c("<4", "5"),
+             title = "Fire Threat",
+             legend.show = FALSE,
+             alpha = 0.8) +
+   # tm_layout(legend.outside = TRUE,
+   #           legend.outside.position = "right") +
+   tm_shape(g) +
+   tm_raster(style = "cat", palette = c("#386641"),
+             title = "GDE", 
+             legend.show = TRUE)
+```
+
+## Fire Count since 1950
+
+```{r}
+# Create a raster for values less than or equal to 5
+fire_count_le5 <- fire_count_coast
+fire_count_le5[fire_count_coast > 5] <- NA
+
+# Create a raster for values greater than 5
+fire_count_gt5 <- fire_count_coast
+fire_count_gt5[fire_count_coast <= 5] <- NA
+
+# Then plot each raster separately
+
+tmap_mode('view')
+
+# Plot values less than or equal to 5
+tm_shape(fire_count_le5) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c('-RdYlGn'), 
+            title = "Fire Count (<=5)") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.5)
+
+# Plot values greater than 5
+tm_shape(fire_count_gt5) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c('-RdYlGn'), 
+            title = "Fire Count (>5)") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.5)
+```
+
+```{r}
+#Define reclassification function
+# reclass_count <- function(x) {
+#   x[x <= 4] <- 1
+#   x[x > 4 & x <= 8] <- 2
+#   x[x > 8] <- 3
+#   return(x)
+# }
+
+reclass_count_med <- function(x) {
+  x[x <= 5] <- 1
+  x[x > 5] <- NA
+  return(x)
+}
+
+fire_count[fire_count <= 5] <- NA
+
+# Apply reclassification function to the raster
+fire_count_coast_med <- terra::app(fire_count_coast, reclass_count_med)
+fire_count_coast_high <- terra::app(fire_count_coast, reclass_count_high)
+
+# Apply reclassification function to the raster
+# fire_count_coast <- terra::app(fire_count_coast, reclass_count)
+
+tmap_mode('view')
+tm_shape(fire_count_coast_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#BC4749"), 
+            breaks = c(1),
+            legend.show = FALSE,
+            alpha = 0.8) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE)
+
+
+# Now plot your data with a categorical legend
+tmap_mode('view')
+tm_shape(fire_count_coast) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2, 3),
+            labels = c("Less than 5", "Greater than 5"),
+            title = "Fire count",
+            legend.show = TRUE,
+            alpha = 0.8) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Burn Severity
+
+```{r}
+reclass_severity <- function(x) {
+  x[x == 2] <- NA
+  x[x == 3] <- 1
+  x[x == 4] <- 2
+  return(x)
+}
+
+# Apply reclassification function to the raster
+burn_reclass <- terra::app(burn_severity, reclass_severity)
+
+tmap_mode('view')
+
+tm_shape(burn_reclass) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2),
+            labels = c("Moderate", "High"),
+            title = "Burn Severity",
+            legend.show = TRUE) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.8,
+            legend.show = FALSE)
+```
+
+## Number of years since last fire
+
+```{r}
+# Create reclassification raster
+tslf_reclass <- terra::ifel(tslf <= 5, 1, 2)
+
+# Now you can plot your data with a categorical legend
+tmap_mode('view')
+tm_shape(tslf_reclass) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#BC4749", "#2A9D8F"), 
+            breaks = c(1,2),
+            labels = c("0-10 years", "Older than 10 years"),
+            title = "Years Since Last Fire",
+            legend.show = FALSE) +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE",
+            legend.show = FALSE)
+
+```
+
+# ORIGINAL PLOTS
+
+```{r}
+# Crop the raster layers
+fire_threat <- crop(fire_threat, socal_baja_coast)
+
+tmap_mode('view')
+
+tm_shape(fire_threat) +
+   tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+   tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#F4A261", "#E76F51"),
+            title = "Fire Threat") +
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right") 
+  # tm_shape(g) +
+  # tm_raster(style = "cat", palette = c("purple"),
+  #           title = "GDE", alpha = 0.6)
+```
+
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# Crop the raster layers
+tslf <- crop(tslf, socal_baja_coast)
+#g <- crop(gde, socal_baja_coast)
+
+tmap_mode('view')
+
+tm_shape(tslf) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "pretty", palette = c('RdYlGn'),
+            title = "Years Since Last Fire") +
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right") +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE")
+```
+
+```{r}
+# plotting fire count
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# Crop the raster layers
+fire_count <- crop(fire_count, socal_baja_coast)
+#g <- crop(gde, socal_baja_coast)
+
+# Apply a mask to fire_count raster
+fire_count[fire_count <= 0] <- NA
+
+tmap_mode('view')
+
+tm_shape(fire_count) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c('-RdYlGn'), 
+            title = "Fire Count") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.5)
+```
+
+```{r}
+# plotting burn severity
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# crop burn severity and ecoregion
+p <- crop(burn_severity_mode, socal_baja_coast)
+# g <- crop(gde, socal_baja_coast)
+
+tmap_mode('view')
+
+tm_shape(p) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = '-RdYlGn', 
+            title = "Burn Severity") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "bottom", 
+            legend.width = 2, 
+            legend.height = 2) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", 
+            palette = c("purple"), 
+            title = "GDE", alpha = 0.5)
+```

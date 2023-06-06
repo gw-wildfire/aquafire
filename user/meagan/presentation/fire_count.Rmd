@@ -1,0 +1,169 @@
+---
+title: "Fire Count Since 1950"
+author: "Meagan Brown"
+date: "2023-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+```{r}
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>%
+  filter(region == 'Southern California Mountains')
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# GDE mountains
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_mtns <- crop(gde, mtns)
+g_mtns <- mask(g_mtns, mtns)
+
+# GDE coast
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_coast <- crop(gde, socal_baja_coast)
+g_coast <- mask(g_coast, socal_baja_coast)
+```
+
+## mtns
+```{r}
+fire_count <- rast(here::here('raster_output', 'fire_count_final.tif'))
+
+fire_count_mtns <- crop(fire_count, mtns)
+fire_count_mtns <- mask(fire_count_mtns, mtns)
+
+# Apply a mask to fire_count raster
+fire_count_mtns[fire_count_mtns <= 0] <- NA
+```
+
+## coast
+```{r}
+fire_count <- rast(here::here('raster_output', 'fire_count_final.tif'))
+
+fire_count_coast <- crop(fire_count, socal_baja_coast)
+fire_count_coast <- mask(fire_count_coast, socal_baja_coast)
+
+# Apply a mask to fire_count raster
+fire_count_coast[fire_count_coast <= 0] <- NA
+```
+
+## Less than 5 fires / more than 5 fires
+```{r}
+# mtns - Reassign values for medium and high count
+fire_count_mtns_med <- terra::ifel(fire_count_mtns <= 5, 1, NA) # less than 5 fires
+fire_count_mtns_high <- terra::ifel(fire_count_mtns > 5, 1, NA) # more than 5 fires
+
+# coast - Reassign values for medium and high count
+fire_count_coast_med <- terra::ifel(fire_count_coast <= 5, 1, NA) # less than 5 fires
+fire_count_coast_high <- terra::ifel(fire_count_coast > 5, 1, NA) # more than 5 fires
+```
+
+```{r}
+tmap_mode('view')
+```
+
+## Plotting mtns
+```{r}
+# mtns
+tm_shape(fire_count_mtns_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(fire_count_mtns_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting coast
+```{r}
+# coast
+tm_shape(fire_count_coast_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(fire_count_coast_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting together
+```{r}
+# mtns
+tm_shape(fire_count_mtns_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(fire_count_mtns_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) +
+  # coast
+tm_shape(fire_count_coast_med) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+
+  tm_shape(fire_count_coast_high) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            title = "Fire count",
+            legend.show = FALSE) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+

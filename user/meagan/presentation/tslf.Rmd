@@ -1,0 +1,167 @@
+---
+title: "time since last fire"
+author: "Meagan Brown"
+date: "2023-05-28"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+```{r}
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>%
+  filter(region == 'Southern California Mountains')
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+socal_baja_coast <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# GDE mountains
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_mtns <- crop(gde, mtns)
+g_mtns <- mask(g_mtns, mtns)
+
+# GDE coast
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_coast <- crop(gde, socal_baja_coast)
+g_coast <- mask(g_coast, socal_baja_coast)
+```
+
+## mtns
+
+```{r}
+tslf <- rast(here::here('raster_output', 'tslf_final.tif'))
+
+tslf_mtns <- crop(tslf, mtns)
+tslf_mtns <- mask(tslf_mtns, mtns)
+
+# Apply a mask to tslf raster
+tslf_mtns[tslf_mtns <= 0] <- NA
+```
+
+## coast
+
+```{r}
+tslf <- rast(here::here('raster_output', 'tslf_final.tif'))
+
+tslf_coast <- crop(tslf, socal_baja_coast)
+tslf_coast <- mask(tslf_coast, socal_baja_coast)
+```
+
+## Fires in the last ten years
+
+```{r}
+# mtns - Reassign values for fires within the last 10 years vs after
+tslf_mtns_le10 <- terra::ifel(tslf_mtns <= 10, 1, NA) # fire in last 10 years
+tslf_mtns_mo10 <- terra::ifel(tslf_mtns > 10, 1, NA) # fire more than 10 years ago
+
+# coast - Reassign values for medium and high count
+tslf_coast_le10 <- terra::ifel(tslf_coast <= 10, 1, NA) # fire in last 10 years
+tslf_coast_mo10 <- terra::ifel(tslf_coast > 10, 1, NA) # fire more than 10 years ago
+```
+
+```{r}
+tmap_mode('view')
+```
+
+## Plotting mtns
+
+```{r}
+# mtns
+tm_shape(tslf_mtns_le10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            legend.show = FALSE) 
+
+  tm_shape(tslf_mtns_mo10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) 
+  
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting coast
+
+```{r}
+# coast
+tm_shape(tslf_mtns_le10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            legend.show = FALSE) +
+
+  tm_shape(tslf_mtns_mo10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            legend.show = FALSE,
+            alpha = 0.4) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Plotting together
+
+```{r}
+# mtns
+tm_shape(tslf_mtns_le10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            legend.show = FALSE) +
+
+  tm_shape(tslf_mtns_mo10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            alpha = 0.4,
+            legend.show = FALSE) +
+  
+  tm_shape(g_mtns) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) +
+  # coast
+tm_shape(tslf_coast_le10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#BC4749"),
+            legend.show = FALSE) +
+
+  tm_shape(tslf_coast_mo10) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(palette = c("#2A9D8F"),
+            alpha = 0.4,
+            legend.show = FALSE) +
+  
+  tm_shape(g_coast) +
+  tm_raster(palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```

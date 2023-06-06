@@ -1,0 +1,86 @@
+---
+title: "ca_bs"
+author: "Meagan Brown"
+date: "2023-05-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+library(sf)
+```
+
+```{r}
+ca <- read_sf(here::here('data', 'ca-state-boundary')) %>% 
+  st_transform('EPSG:3310')
+```
+
+```{r}
+tmap_mode('view')
+
+tm_shape(ca) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_polygons(col = '#2A9D8F', alpha = 0.5, border.col = 'white')
+
+tmap_save(ca_plot, here::here('user', 'meagan', 'presentation', "my_map.png"))
+
+
+tm_shape(ca) +
+tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+tm_polygons(col = "#F4C26F",
+            title = "Region",
+            id = "popup_text",
+            alpha = 0.55, border.col = 'white', lwd = 0.3, lwd = 0.3) +
+tm_layout(legend.outside = TRUE,
+          legend.outside.position = "right")
+```
+
+```{r}
+# Load raster
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+
+# Define custom color palette
+# Change colors as per your requirement
+cols <- c("#eed7c5", "#2A9D8F", "#BC4749")
+
+# Plot
+plot(burn_severity_mode, col=cols, 
+     key.pos=4, key.width=1, key.length=1,
+     xlab="Longitude", ylab="Latitude",
+     main="Burn Severity Mode",
+    labels=c("Category 1", "Category 2", "Category 3")) # change labels as per your requirement
+
+plot(ca_plot, col = "black", add = TRUE)
+
+```
+
+```{r}
+# Convert raster to a data frame
+df <- as.data.frame(burn_severity_mode, xy=TRUE)
+
+# Plot with ggplot2
+ggplot() +
+  geom_raster(data = df , aes(x = x, y = y, fill = layer)) +
+  scale_fill_manual(values = cols) +
+  geom_sf(data = ca_plot, fill = NA, color = 'black') +
+  labs(fill = "Category",
+       x = "Longitude",
+       y = "Latitude",
+       title = "Burn Severity Mode") +
+  theme_minimal()
+```
+
+

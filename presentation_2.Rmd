@@ -1,0 +1,316 @@
+---
+title: "presentation 2"
+author: "Meagan Brown"
+date: "2023-05-28"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#load libraries
+library(tidyverse)
+library(dplyr)
+library(here)
+library(janitor)
+library(tmap)
+library(stars)
+library(gridExtra)
+library(raster)
+library(terra)
+```
+
+```{r}
+# ecoregions data
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform("EPSG: 3310") %>% 
+  rename(region = us_l3name)
+
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>%
+  filter(region == 'Southern California Mountains')
+
+ca <- read_sf(here::here('data', 'ca-state-boundary')) %>% 
+    st_transform("EPSG: 3310")
+```
+
+```{r}
+burn_severity_mode <- rast(here::here('raster_output', 'burn_severity_mode.tif'))
+
+burn_severity_mtns <- crop(burn_severity_mode, mtns)
+burn_severity_mtns <- mask(burn_severity_mtns, mtns)
+```
+
+```{r}
+fire_count <- rast(here::here('raster_output', 'fire_count_final.tif'))
+
+fire_count_mtns <- crop(fire_count, mtns)
+fire_count_mtns <- mask(fire_count_mtns, mtns)
+
+# Apply a mask to fire_count raster
+fire_count_mtns[fire_count_mtns <= 0] <- NA
+```
+
+```{r}
+tslf <- rast(here::here('raster_output', 'tslf_final.tif'))
+
+tslf <- crop(tslf, mtns)
+tslf <- mask(tslf, mtns)
+```
+
+```{r}
+fire_threat <- rast(here::here('raster_output', 'fire_threat.tif'))
+
+fire_threat <- crop(fire_threat, mtns)
+fire_threat <- mask(fire_threat, mtns)
+```
+
+```{r}
+gde <- rast(here::here('raster_output', 'gde_boundaries.tif')) 
+  
+g_mtns <- crop(gde, mtns)
+g_mtns <- mask(g_mtns, mtns)
+```
+
+# Modified Plots
+## Fire Threat
+```{r}
+# Define reclassification function
+reclass_threat <- function(x) {
+  x[x <= 4] <- 1
+  x[x == 5] <- 3
+  return(x)
+}
+
+# Apply reclassification function to the raster
+fire_threat_reclass <- terra::app(fire_threat, reclass_threat)
+
+# Now you can plot your data with a categorical legend
+tmap_mode('view')
+tm_shape(fire_threat_reclass) +
+   tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+   tm_raster(style = "cat", palette = c("#eed7c5", "#BC4749"), 
+             breaks = c(1,2,3),
+             labels = c("<4", "5"),
+             title = "Fire Threat",
+             legend.show = FALSE,
+             alpha = 0.8) +
+   # tm_layout(legend.outside = TRUE,
+   #           legend.outside.position = "right") +
+   tm_shape(g) +
+   tm_raster(style = "cat", palette = c("#386641"),
+             title = "GDE", 
+             legend.show = TRUE)
+```
+
+## Fire Count since 1950
+```{r}
+#Define reclassification function
+# reclass_count <- function(x) {
+#   x[x <= 4] <- 1
+#   x[x > 4 & x <= 8] <- 2
+#   x[x > 8] <- 3
+#   return(x)
+# }
+
+reclass_count <- function(x) {
+  x[x <= 5] <- 1
+  x[x > 5] <- 2
+  return(x)
+}
+
+# Apply reclassification function to the raster
+fire_count_mtns <- terra::app(fire_count_mtns, reclass_count)
+
+# Now plot your data with a categorical legend
+tmap_mode('view')
+
+# mtns
+tm_shape(fire_count_mtns) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2, 3),
+            labels = c("Less than 5", "Greater than 5"),
+            title = "Fire count",
+            legend.show = FALSE,
+            alpha = 0.4) +
+  tm_shape(g_mtns) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) +
+tm_shape(fire_count_coast) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2, 3),
+            labels = c("Less than 5", "Greater than 5"),
+            title = "Fire count",
+            legend.show = FALSE,
+            alpha = 0.4) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) 
+```
+
+## Burn Severity
+```{r}
+reclass_severity <- function(x) {
+  x[x == 2] <- NA
+  x[x == 3] <- 1
+  x[x == 4] <- 2
+  return(x)
+}
+
+# Apply reclassification function to the raster
+burn_reclass_mtns <- terra::app(burn_severity_mtns, reclass_severity)
+
+tmap_mode('view')
+
+# mtns
+tm_shape(burn_reclass_mtns) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2),
+            labels = c("Moderate", "High"),
+            title = "Burn Severity",
+            legend.show = TRUE) +
+  tm_shape(g_mtns) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE) +
+  # coast
+tm_shape(burn_reclass) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#BC4749"), 
+            breaks = c(1, 2),
+            labels = c("Moderate", "High"),
+            title = "Burn Severity",
+            legend.show = TRUE) +
+  tm_shape(g_coast) +
+  tm_raster(style = "cat", palette = c("#ee9b00"),
+            title = "GDE",
+            legend.show = FALSE)
+```
+
+
+
+
+
+## Number of years since last fire
+```{r}
+# Create reclassification raster
+tslf_reclass <- terra::ifel(tslf <= 5, 1, 2)
+
+# Now you can plot your data with a categorical legend
+tmap_mode('view')
+tm_shape(tslf_reclass) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c("#BC4749", "#2A9D8F"), 
+            breaks = c(1,2),
+            labels = c("0-10 years", "Older than 10 years"),
+            title = "Years Since Last Fire",
+            legend.show = FALSE) +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE",
+            legend.show = FALSE)
+
+```
+
+# ORIGINAL PLOTS
+```{r}
+# Crop the raster layers
+fire_threat <- crop(fire_threat, mtns)
+
+tmap_mode('view')
+
+tm_shape(fire_threat) +
+   tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+   tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
+  tm_raster(style = "cat", palette = c("#2A9D8F", "#F4A261", "#E76F51"),
+            title = "Fire Threat") +
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right") +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.6)
+```
+
+```{r}
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>%
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# Crop the raster layers
+tslf <- crop(tslf, mtns)
+#g <- crop(gde, mtns)
+
+tmap_mode('view')
+
+tm_shape(tslf) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "pretty", palette = c('RdYlGn'),
+            title = "Years Since Last Fire") +
+  tm_layout(legend.outside = TRUE,
+            legend.outside.position = "right") +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE")
+```
+
+```{r}
+# plotting fire count
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# Crop the raster layers
+fire_count <- crop(fire_count, mtns)
+#g <- crop(gde, mtns)
+
+# Apply a mask to fire_count raster
+fire_count[fire_count <= 0] <- NA
+
+tmap_mode('view')
+
+tm_shape(fire_count) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = c('-RdYlGn'), 
+            title = "Fire Count") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "right") +
+  tm_shape(g) +
+  tm_raster(style = "cat", palette = c("purple"),
+            title = "GDE", alpha = 0.5)
+```
+
+
+```{r}
+# plotting burn severity
+# Filter for just the Southern California/Northern Baja Coast Ecoregion
+mtns <- eco_regions %>% 
+  filter(region == 'Southern California/Northern Baja Coast')
+
+# crop burn severity and ecoregion
+p <- crop(burn_severity_mode, mtns)
+# g <- crop(gde, mtns)
+
+tmap_mode('view')
+
+tm_shape(p) +
+  tm_basemap(leaflet::providers$Esri.WorldTerrain) +
+  tm_raster(style = "cat", palette = '-RdYlGn', 
+            title = "Burn Severity") +
+  tm_layout(legend.outside = TRUE, 
+            legend.outside.position = "bottom", 
+            legend.width = 2, 
+            legend.height = 2) +
+  tm_shape(g) +
+  tm_raster(style = "cat", 
+            palette = c("purple"), 
+            title = "GDE", alpha = 0.5)
+```
+
