@@ -371,25 +371,25 @@ burn_severity_histogram <- function(sample_data, eco_region_code){
     ) %>% 
     mutate(eco_region = eco_region_name)
   
-#   ggplot(burn_severity_histogram, aes(x = value, y = proportion, fill = gde_status)) +
-#     geom_bar(stat = "identity", position = "dodge", width = 0.7) +
-#     scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
-#     labs(x = "Burn Severity",
-#          y = "Relative Frequency (%)",
-#          fill = "GDE Status",
-#          title = plot_title) +
-#     theme_classic() +
-#     theme(legend.position = 'none',
-#           plot.title = element_text(hjust = 0.5,
-#                                     size = 15),
-#           axis.text = element_text(size = 13,
-#                                    color = 'black'),
-#           axis.title = element_text(size = 15,
-#                                     color = 'black'),
-#           axis.title.x = element_text(vjust = -1.1),
-#           axis.text.x = element_text(vjust = -1.5)) +
-#     scale_x_continuous(breaks = c(2, 3, 4)) +
-#     scale_y_continuous(limits = c(0, 100), expand = c(0,0))
+  ggplot(burn_severity_histogram, aes(x = value, y = proportion, fill = gde_status)) +
+    geom_bar(stat = "identity", position = "dodge", width = 0.7) +
+    scale_fill_manual(values = c("#A3B18A", "#DDA15E")) +
+    labs(x = "Burn Severity",
+         y = "Relative Frequency (%)",
+         fill = "GDE Status",
+         title = plot_title) +
+    theme_classic() +
+    theme(legend.position = 'none',
+          plot.title = element_text(hjust = 0.5,
+                                    size = 15),
+          axis.text = element_text(size = 13,
+                                   color = 'black'),
+          axis.title = element_text(size = 15,
+                                    color = 'black'),
+          axis.title.x = element_text(vjust = -1.1),
+          axis.text.x = element_text(vjust = -1.5)) +
+    scale_x_continuous(breaks = c(2, 3, 4)) +
+    scale_y_continuous(limits = c(0, 100), expand = c(0,0))
  }
 
 burnsev_shiny_histogram_df <- data.frame() 
@@ -405,19 +405,19 @@ for (i in seq_along(burn_severity_sample_list)) {
   burnsev_shiny_histogram_df <- rbind(burnsev_shiny_histogram_df, df)
   
   
- # # Call the function with the object name and eco region code
- #   plot <- burn_severity_histogram(sample, eco_region_code)
- # 
- # 
- #   ggsave(
- #     filename = paste0("burn_severity_histogram_", eco_region_code, ".png"),
- #     plot = plot,
- #     device = "png",
- #     path = "plots/",
- #     units = c("in"),
- #     width = 12,
- #     height = 8
- #   )
+ # Call the function with the object name and eco region code
+   plot <- burn_severity_histogram(sample, eco_region_code)
+
+
+   ggsave(
+     filename = paste0("burn_severity_histogram_", eco_region_code, ".png"),
+     plot = plot,
+     device = "png",
+     path = "plots/",
+     units = c("in"),
+     width = 12,
+     height = 8
+   )
 }
 ```
 

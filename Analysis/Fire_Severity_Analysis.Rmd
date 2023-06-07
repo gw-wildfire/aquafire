@@ -1,0 +1,232 @@
+---
+title: "Fire Severity Analysis"
+author: "Jillian Allison, Meagan Brown, Andre Dextre, Wade Sedgwick (MEDS 2023)"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Eco Region Key: 
+
+   **code**                                           **region**
+          1                                         Coast Range
+         13                             Central Basin and Range
+         14                              Mojave Basin and Range
+          4                                            Cascades
+          5                                       Sierra Nevada
+          6  Central California Foothills and Coastal Mountains
+          7                           Central California Valley
+         78 Klamath Mountains/California High North Coast Range
+          8                       Southern California Mountains
+         80                            Northern Basin and Range
+         81                             Sonoran Basin and Range
+         85             Southern California/Northern Baja Coast
+          9               Eastern Cascades Slopes and Foothills
+
+### Load Packages and Functions
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(tmap)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(scales)
+library(dplyr)
+library(gridExtra)
+library(kableExtra)
+source("Functions/remove_ag_urban.R")
+source("Functions/raster_to_ecoregions.R")
+source("Functions/stratified_sample.R")
+source("Functions/fire_count_violin_plot.R")
+source("Functions/fire_count_stats.R")
+source("Functions/diff_in_means_bootstrap.R")
+source("Functions/bootstrap_results.R")
+source("Functions/fire_count_histogram.R")
+source("Functions/burn_sev_sampling.R")
+source("Functions/mann_whitney_result.R")
+source("Functions/mann_whitney_test.R")
+source("Functions/burn_severity_histogram.R")
+```
+
+
+
+### Necessary Objects
+To run this code, you will need to run the GDE and Fire Severity sections of the "Spatial_Layers.rmd" file in the Spatial_Layers folder in this repository. That code requires the proper datasets- see the project repository on Dangermond's dataone.org repository to access that data. Once you have run that code, you will be able to proceed with this analysis. 
+If you are using new data, you may read in .tif files for GDEs and MTBS fire severity data if they share the same resolution, CRS, and extent. Use compareRaster() to check if your raster input layers align. 
+```{r}
+# For eco region names / codes 
+crs_ca <- st_crs(3310)
+# Load in ecoregions shapefile
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3')) %>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)  %>%
+  mutate(code = as.numeric(us_l3code))
+# Create object containing eco region names 
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
+eco_regions_geoms <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "geometry"))
+eco_region_codes <- c(1, 13, 14, 4, 5, 6, 7, 78, 8, 80, 81, 85, 9)
+
+burn_severity_1 <- raster("raster_output/burn_severity_1.tif")
+burn_severity_4 <- raster("raster_output/burn_severity_4.tif")
+burn_severity_5 <- raster("raster_output/burn_severity_5.tif")
+burn_severity_6 <- raster("raster_output/burn_severity_6.tif")
+burn_severity_7 <- raster("raster_output/burn_severity_7.tif")
+burn_severity_8 <- raster("raster_output/burn_severity_8.tif")
+burn_severity_9 <- raster("raster_output/burn_severity_9.tif")
+burn_severity_13 <- raster("raster_output/burn_severity_13.tif")
+burn_severity_14 <- raster("raster_output/burn_severity_14.tif")
+burn_severity_78 <- raster("raster_output/burn_severity_78.tif")
+burn_severity_80 <- raster("raster_output/burn_severity_80.tif")
+burn_severity_81 <- raster("raster_output/burn_severity_81.tif")
+burn_severity_85 <- raster("raster_output/burn_severity_85.tif")
+
+gde_1 <- raster("raster_output/gde_1.tif")
+gde_4 <- raster("raster_output/gde_4.tif")
+gde_5 <- raster("raster_output/gde_5.tif")
+gde_6 <- raster("raster_output/gde_6.tif")
+gde_7 <- raster("raster_output/gde_7.tif")
+gde_8 <- raster("raster_output/gde_8.tif")
+gde_9 <- raster("raster_output/gde_9.tif")
+gde_13 <- raster("raster_output/gde_13.tif")
+gde_14 <- raster("raster_output/gde_14.tif")
+gde_78 <- raster("raster_output/gde_78.tif")
+gde_80 <- raster("raster_output/gde_80.tif")
+gde_81 <- raster("raster_output/gde_81.tif")
+gde_85 <- raster("raster_output/gde_85.tif")
+```
+
+### Obtain Samples
+This code uses the burn_sev_sampling() function in the "Functions" folder of this repository. The function inputs are the relevant fire layer, the corresponding GDE layer, and the number of points you would like to sample. For the sample size, n = 30 by default.  
+In the code below, we take a stratified random sample of 30 points from areas with burn severity data within and outside of GDEs in each ecoregion. Each point has a buffer distance of 1000 m / 1 km, meaning that points will be at least 1 km apart so the user can assume independence. 
+
+```{r}
+set.seed(123) 
+burn_severity_1_sample <- burn_sev_sampling(burn_severity_1, gde_1, n = 25) # n is the most samples possible given the buffer and small burned area
+burn_severity_4_sample <- burn_sev_sampling(burn_severity_4, gde_4)
+burn_severity_5_sample <- burn_sev_sampling(burn_severity_5, gde_5)
+burn_severity_6_sample <- burn_sev_sampling(burn_severity_6, gde_6)
+# burn_severity_7_sample <- burn_sev_sampling(burn_severity_7, gde_7) not enough data 
+burn_severity_8_sample <- burn_sev_sampling(burn_severity_8, gde_8)
+burn_severity_9_sample <- burn_sev_sampling(burn_severity_9, gde_9)
+# burn_severity_13_sample <- burn_sev_sampling(burn_severity_13, gde_13) not enough data
+# burn_severity_14_sample <- burn_sev_sampling(burn_severity_14, gde_14) not enough data
+burn_severity_78_sample <- burn_sev_sampling(burn_severity_78, gde_78)
+burn_severity_80_sample <- burn_sev_sampling(burn_severity_80, gde_80)
+burn_severity_81_sample <- burn_sev_sampling(burn_severity_81, gde_81)
+burn_severity_85_sample <- burn_sev_sampling(burn_severity_85, gde_85)
+```
+
+#### Prepare Samples for Analysis 
+This code chunk prepares ecoregion information for creating a dataframe with results from our analysis, and prepares the sample list for running this analysis. 
+```{r}
+# Prepare ecoregion information
+## Codes for available ecoregions
+eco_region_codes_burnsev <- c(1, 4, 5, 6, 78, 8, 80, 81, 85, 9) # remove 7, 13, and 14 due to insufficient data
+## Names for available ecoregions and for ecoregions with insufficient data
+eco_regions_names_burnsev <- eco_regions_names %>% 
+  filter(us_l3code %in% eco_region_codes_burnsev)
+eco_regions_names_burnsev_insuff <- eco_regions_names %>%
+  filter(!us_l3code %in% eco_region_codes_burnsev)
+## Geometries for available ecoregions and for ecoregions with insufficient data
+eco_regions_geoms_burnsev <- eco_regions_geoms %>%
+  filter(us_l3code %in% eco_region_codes_burnsev)
+eco_regions_geoms_burnsev_insuff <- eco_regions_geoms %>%
+  filter(!us_l3code %in% eco_region_codes_burnsev) %>%
+  inner_join(eco_regions_names_burnsev_insuff) %>%
+  mutate(sample = NA,
+         confidence_interval_lower = NA, 
+         confidence_interval_upper = NA, 
+         p_value = NA, 
+         result = "Insufficient Data"
+         )
+
+# Create list of sample objects for analysis
+## Create a blank list to fill with sample objects 
+burn_severity_sample_list <- list()
+
+## Create list of sample objects 
+for(i in 1:10){
+  obj <- (paste0('burn_severity_', eco_region_codes_burnsev[i], '_sample'))
+  burn_severity_sample_list <- c(burn_severity_sample_list, obj)
+}
+```
+
+### Mann-Whitney U Test 
+This code chunk uses the mann_whitney_result() and the mann_whitney_test() functions in the "Functions" folder. 
+This test compares the distribution of burn severity values within and outside of GDEs in each ecoregion. A p-value below 0.05 indicates that the distributions are significantly different. Using the confidence interval, we can determine if GDEs cause more or less severe fires in areas where the distributions are different. 
+```{r}
+# Create dataframe containing p-values and confidence intervals for each ecoregion. NOT A SPATIAL OBJECT, see directly below. 
+mann_whitney_results <- mann_whitney_result(burn_severity_sample_list) %>% 
+  bind_cols(eco_regions_names_burnsev) %>%
+  inner_join(eco_regions_geoms_burnsev, by = "us_l3code") %>% 
+  mutate(result = case_when(
+    p_value <= 0.05 & confidence_interval_upper <= 0 ~ "Reject H0 - Incr. Burn Severity",
+    p_value <= 0.05 & confidence_interval_lower >= 0 ~ "Reject H0 - Decr. Burn Severity",
+    p_value > 0.05 ~ "Cannot Reject H0")) %>%
+  bind_rows(eco_regions_geoms_burnsev_insuff) %>%
+  mutate(p_value = format(p_value, scientific = FALSE))
+
+# Create a spatial object from this dataframe
+mann_whitney_results_sp <- mann_whitney_results %>%
+  subset(select = c("p_value","result", "geometry", "region")) %>%
+  st_as_sf(crs = crs_ca$wkt) 
+```
+
+## Map Results of Mann-Whitney U Test 
+This code chunk creates a map of California that displays the results of the Mann-Whitney U Test for each ecoregion. 
+```{r}
+# Light Grey: #EDF0F0
+# Red: #9D2A38
+# Teal: #2A9D8F
+# Darker Grey: #C8D5D3
+color_palette <- c("Reject H0 - Incr. Burn Severity" = "#9D2A38",
+                   "Reject H0 - Decr. Burn Severity" = "#2A9D8F",
+                   "Cannot Reject H0" = "#C8D5D3", 
+                   "Insufficient Data" = "#EDF0F0")
+
+tm_shape(mann_whitney_results_sp) + 
+  tm_polygons + 
+  tm_fill(col = "result", palette = color_palette, title = "Result") + 
+  tm_borders(col = "white", 
+             lwd = 0.5) + 
+  tm_layout(main.title = "",
+            main.title.size = 0.8,
+            frame = FALSE) 
+```
+
+# Visualizations
+This code chunk uses the burn_severity_histogram() function in the "Functions" folder. 
+This code chunk loops through objects in the burn severity sample list to save a .png of the histogram showing the distribution of burn severities in GDEs and non-GDEs for each ecoregion. Use just the burn_severity_histogram(sample_data, ecoregion_code = __) function to create and view individual histograms. 
+```{r}
+# Loop through each value in the list and eco region code vector
+for (i in seq_along(burn_severity_sample_list)) {
+  # Get the current object name and eco region code
+  sample <- get(burn_severity_sample_list[[i]])
+  eco_region_code <- eco_region_codes_burnsev[i]
+  
+ # Call the function with the object name and eco region code
+   plot <- burn_severity_histogram(sample, eco_region_code)
+
+
+   ggsave(
+     filename = paste0("burn_severity_histogram_", eco_region_code, ".png"),
+     plot = plot,
+     device = "png",
+     path = "plots/",
+     units = c("in"),
+     width = 12,
+     height = 8
+   )
+}
+```
+
