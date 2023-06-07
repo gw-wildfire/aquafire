@@ -243,6 +243,43 @@ names(names_fire_count_hist) = gsub('_', ' ', names(names_fire_count_hist))
 names(names_fire_count_hist) = names(names_fire_count_hist) %>% stringr::str_to_title()
 
 
+# burn_severity_hist_reactive <- reactive({
+#   
+#   print(input$ecoregion_stats_type_input)
+#   req(!is.null(input$ecoregion_stats_type_input))
+#   
+#   selected_hist_ecoregion <- input$ecoregion_stats_type_input
+#   burn_hist_ecoregion <- burn_severity_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
+#   plot_title <- unique(burn_hist_ecoregion$ecoregion_name)
+#   
+#   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 2] <- 'Low'
+#   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 3] <- 'Medium'
+#   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 4] <- 'High'
+#   
+#   # burn_hist_ecoregion$value <- factor(burn_hist_ecoregion$value, levels = burn_hist_ecoregion$value)
+#   
+#   ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
+#     geom_bar(stat = "identity", position = "dodge") +
+#     scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
+#                       labels = c("Non-GDE", "GDE")) +
+#     labs(x = "Burn Severity",
+#          y = "Relative Frequency (%)",
+#          fill = "GDE Status",
+#          title = str_wrap(paste0("Relative Burn Severity Frequency for ", plot_title), 30)) +
+#     theme_classic() +
+#     theme(legend.position = 'right',
+#           plot.title = element_text(hjust = 0.5,
+#                                     size = 15),
+#           axis.text = element_text(size = 13,
+#                                    color = 'black'),
+#           axis.title = element_text(size = 15,
+#                                     color = 'black'),
+#           axis.title.x = element_text(vjust = -1.1),
+#           axis.text.x = element_text(vjust = -1.5)) +
+#     scale_y_continuous(expand = c(0,0)) + scale_x_discrete(limits=burn_hist_ecoregion$value)
+#   
+# })
+
 
 # names_fire_count_hist <- names(fire_count_hist_list)
 # names(names_fire_count_hist) = gsub('fire_count_histogram', '', names_fire_count_hist)

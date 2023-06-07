@@ -22,7 +22,7 @@ datadir <- path.expand("~/../../capstone/aquafire")
 #   preloaded = FALSE
 # }
 
-preloaded = T
+preloaded = F
 
 if(!preloaded){
   
@@ -47,9 +47,6 @@ if(!preloaded){
   
   # creating california polygon
   california_polygon <- st_union(ca_counties)
-  
-  # reading in tslf of california
-  tslf_raster_masked <- raster("data/tslf_raster_masked.tif")
   
   # subsetting by ecoregion
   coast_range <- eco_regions[1,]
@@ -175,12 +172,6 @@ if(!preloaded){
     }
     
     
-    # gde_shapefile <- gde_shapefile %>%
-    #   filter(area > 10000) %>%  # larger than 2.2 acres
-    #   st_simplify(dTolerance = 5)
-    # gde_shapefile <- st_simplify(gde_shapefile, dTolerance = 5)
-    
-    
     gde_list[[i]] <- st_make_valid(gde_shapefile)
   } # End edit GDE polygons
   
@@ -235,11 +226,6 @@ if(!preloaded){
     # Print the file size
     cat("Layer", file_name, i, "file size:", file_size_mb, "megabytes\n")
   }
-  
-  
-  # raster fire count layer cropped by ecoregion
-  fire_count <- raster("data/fire_count.tif")
-  fire_threat <- raster("data/fire_threat.tif")
   
   # loading FIRE COUNT data----
   print('loading FIRE COUNT data')  
@@ -327,7 +313,7 @@ if(!preloaded){
   names(names_burn_severity) = gsub('_', ' ', names(names_burn_severity))
   names(names_burn_severity) = names(names_burn_severity) %>% stringr::str_to_title()
   
-  
+  # naming fire count histogram list
   fire_count_hist_list <- c(
     "fire_count_histogram_cascades",
     "fire_count_histogram_central_basin",
@@ -345,10 +331,6 @@ if(!preloaded){
   names(names_fire_count_hist) = gsub('fire_count_histogram', '', names_fire_count_hist)
   names(names_fire_count_hist) = gsub('_', ' ', names(names_fire_count_hist))
   names(names_fire_count_hist) = names(names_fire_count_hist) %>% stringr::str_to_title()
-  
-  
-  
-  
   
   # creating data table on main page
   data_df <- data.frame(Data = c("Groundwater-Dependent Ecosystems", "Fire Count", "Time Since Last Fire (TSLF)", "Fire Threat", "Burn Severity"),
@@ -372,13 +354,13 @@ if(!preloaded){
   fire_count_hist_df_messy <- read.table("data/fire_count_shiny_histogram_df.txt", sep = ",", header = TRUE)
   burn_severity_hist_df_messy <- read.table("data/burnsev_shiny_histogram_df.txt", sep = ",", header = TRUE)
   
+  # change values from GDE/NonGDE to 1/0
   fire_count_hist_df_messy$gde_status[fire_count_hist_df_messy$gde_status == 'NonGDE'] <- '0'
   fire_count_hist_df_messy$gde_status[fire_count_hist_df_messy$gde_status == 'GDE'] <- '1'
-  
   burn_severity_hist_df_messy$gde_status[burn_severity_hist_df_messy$gde_status == 'NonGDE'] <- '0'
   burn_severity_hist_df_messy$gde_status[burn_severity_hist_df_messy$gde_status == 'GDE'] <- '1'
   
-  
+  # renaming fire count for histogram
   fire_count_histogram_df <- fire_count_hist_df_messy %>% 
     rename(ecoregion_name = eco_region) %>% 
     mutate(ecoregion = paste0("fire_count_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>% 
@@ -407,6 +389,7 @@ if(!preloaded){
   
   # DID NOT LOAD mojave, central basin and central valley - not enough data
   
+  # renaming burn severity to display with fire count
   burn_severity_histogram_df <- burn_severity_hist_df_messy %>% 
     rename(ecoregion_name = eco_region) %>% 
     mutate(ecoregion = paste0("burn_severity_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>% 

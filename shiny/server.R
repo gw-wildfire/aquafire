@@ -30,7 +30,7 @@ server <- function(input, output, session) {
     eco_selected <- input$ecoregion_type_input
     eco_selected2 = gsub('gde_', '', eco_selected)
     
-    # removing info for interconnectivity
+    # removing info for connectivity between layers
     names_fire2 = gsub('_fire_count', '', names_fire)
     names_tslf2 = gsub('_tslf', '', names_tslf)
     names_fire_threat2 = gsub('_fire_threat', '', names_fire_threat)
@@ -95,9 +95,6 @@ server <- function(input, output, session) {
       tmap_options(check.and.fix = TRUE)
     # tm_borders(col = , lwd = 2) +
     
-    
-    
-    
     # toggle fire count raster layer
     if('Fire Count' %in% input$type_raster){
       print(' FIRE COUNT ')
@@ -148,9 +145,8 @@ server <- function(input, output, session) {
         )
     }
     
+    # displaying map
     tm_level_one
-    
-    # %>%  tmap_leaflet() %>% leaflet::hideGroup("gde_list[[input$ecoregion_type_input]]")
     
   })
   
@@ -381,43 +377,6 @@ server <- function(input, output, session) {
   
   
   # burn severity histogram reactivity
-  # burn_severity_hist_reactive <- reactive({
-  #   
-  #   print(input$ecoregion_stats_type_input)
-  #   req(!is.null(input$ecoregion_stats_type_input))
-  #   
-  #   selected_hist_ecoregion <- input$ecoregion_stats_type_input
-  #   burn_hist_ecoregion <- burn_severity_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
-  #   plot_title <- unique(burn_hist_ecoregion$ecoregion_name)
-  #   
-  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 2] <- 'Low'
-  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 3] <- 'Medium'
-  #   burn_hist_ecoregion$value[burn_hist_ecoregion$value == 4] <- 'High'
-  #   
-  #   # burn_hist_ecoregion$value <- factor(burn_hist_ecoregion$value, levels = burn_hist_ecoregion$value)
-  #   
-  #   ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
-  #     geom_bar(stat = "identity", position = "dodge") +
-  #     scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
-  #                       labels = c("Non-GDE", "GDE")) +
-  #     labs(x = "Burn Severity",
-  #          y = "Relative Frequency (%)",
-  #          fill = "GDE Status",
-  #          title = str_wrap(paste0("Relative Burn Severity Frequency for ", plot_title), 30)) +
-  #     theme_classic() +
-  #     theme(legend.position = 'right',
-  #           plot.title = element_text(hjust = 0.5,
-  #                                     size = 15),
-  #           axis.text = element_text(size = 13,
-  #                                    color = 'black'),
-  #           axis.title = element_text(size = 15,
-  #                                     color = 'black'),
-  #           axis.title.x = element_text(vjust = -1.1),
-  #           axis.text.x = element_text(vjust = -1.5)) +
-  #     scale_y_continuous(expand = c(0,0)) + scale_x_discrete(limits=burn_hist_ecoregion$value)
-  #   
-  # })
-  
   burn_severity_hist_reactive <- reactive({
     print(input$ecoregion_stats_type_input)
     req(!is.null(input$ecoregion_stats_type_input))
@@ -476,24 +435,7 @@ server <- function(input, output, session) {
     
   })
   
-  # output$dataTable <- renderDataTable({
-  #   data_df
-  # })
-  
-  
-  
-  # output for About page data table
-  # output$dataTable <- renderTable(data_df)
-  
-  
-  # output$dataTable <- renderDataTable({
-  #   data_df$Source <- paste0("<a href='", link_addresses, "' target='_blank'>", data_df$Source, "</a>")
-  #   data_df
-  # }, options = list(dom = 't'))
-  
   # render data source data table with hyperlinks
-  
-  
   output$dataTable <- renderDataTable({
     
     data_df$Source <- sprintf(
