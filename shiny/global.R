@@ -22,7 +22,7 @@ datadir <- path.expand("~/../../capstone/aquafire")
 #   preloaded = FALSE
 # }
 
-preloaded = F
+preloaded = T
 
 if(!preloaded){
   

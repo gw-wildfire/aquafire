@@ -135,7 +135,7 @@ crs(gdes_cali) == crs(coast_range)
 for(id in 1:length(gdes_cali)){
   gdes_in_ecoregion <- gdes_cali %>%
     # filter(us_l3code == POLYGON) %>%
-    select(POLYGON, WETLAND, VEGETAT, DOMINANT_S, DOMINANT_C, 
+    # select(POLYGON, WETLAND, VEGETAT, DOMINANT_S, DOMINANT_C, 
            mx_fr_c, mn_tslf, avg_fr_t, avg_fr_s, are_km2, geometry)
   
   output_file <- paste0("raster_output/gde_summary_polygons", id, ".shp")
