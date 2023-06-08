@@ -1,8 +1,8 @@
 #' Mann Whitney Test
 #'
-#' @param sample_data Sample data created using the stratified_sample() function 
+#' @param sample_data Sample data created using the stratified_sample() or burn_sev_sampling() function 
 #'
-#' @return Returns a lost containing the confidence interval and p-value for the test for that ecoregion. 
+#' @return Returns a list containing the confidence interval and p-value for the test for that ecoregion. 
 #' @export
 #'
 #' @examples
