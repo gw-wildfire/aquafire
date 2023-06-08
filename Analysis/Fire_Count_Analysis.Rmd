@@ -43,23 +43,26 @@ library(exactextractr)
 library(dplyr)
 library(gridExtra)
 library(kableExtra)
-source("Functions/remove_ag_urban.R")
-source("Functions/raster_to_ecoregions.R")
-source("Functions/stratified_sample.R")
-source("Functions/fire_count_violin_plot.R")
-source("Functions/fire_count_stats.R")
-source("Functions/diff_in_means_bootstrap.R")
-source("Functions/bootstrap_results.R")
-source("Functions/fire_count_histogram.R")
-source("Functions/burn_sev_sampling.R")
-source("Functions/mann_whitney_result.R")
-source("Functions/mann_whitney_test.R")
-source("Functions/burn_severity_histogram.R")
+source("functions/remove_ag_urban.R")
+source("functions/raster_to_ecoregions.R")
+source("functions/stratified_sample.R")
+source("functions/fire_count_violin_plot.R")
+source("functions/fire_count_stats.R")
+source("functions/diff_in_means_bootstrap.R")
+source("functions/bootstrap_results.R")
+source("functions/fire_count_histogram.R")
+source("functions/burn_sev_sampling.R")
+source("functions/mann_whitney_result.R")
+source("functions/mann_whitney_test.R")
+source("functions/burn_severity_histogram.R")
 ```
 
 ### Necessary Objects 
-To run this code, you will need to run the GDE and Fire Count sections of the "Spatial_Layers.rmd" file in the Spatial_Layers folder in this repository. That code requires the proper datasets- see the project repository on Dangermond's dataone.org repository to access that data. Once you have run that code, you will be able to proceed with this analysis. 
-If you are using new data, you may read in .tif files for GDEs and fire count data if they share the same resolution, CRS, and extent. Use compareRaster() to check if your raster input layers align. 
+To run this code, you will need to either run the chunk directly below, or you'll need to run the GDE and Fire Count sections of the "Spatial_Layers.Rmd" file in the Spatial_Layers folder in this repository. 
+
+The Spatial_Layers.Rmd code requires the proper datasets- see the project repository on Dangermond's dataone.org repository to access that data. Once you have run that code, you will be able to proceed with this analysis. 
+
+If you are using new data, you may either run it through the "Spatial_Layers.Rmd" file to create the necessary objects for this analysis, or you may read in your own .tif files for GDEs and fire count data if they share the same resolution, CRS, and extent. Use compareRaster() to check if your raster input layers align. 
 ```{r}
 # For eco region names / codes 
 crs_ca <- st_crs(3310)
@@ -209,6 +212,7 @@ fire_count_stats_all <- rbind(fire_count_1_stats, fire_count_4_stats,
 
 ### Visualizations
 This code chunk creates a histogram showing the distribution of fire counts in GDEs and non-GDEs for each ecoregion in the sample list, created in the "Obtain Sample Data" section above. 
+These plots are saved in the "plots" folder of this repository
 ```{r}
 # Loop through each value in the list and ecoregion code vector
 for (i in seq_along(fire_count_sample_list)) {

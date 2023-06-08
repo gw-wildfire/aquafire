@@ -1,0 +1,424 @@
+---
+title: "Markdown for Creating Spatial Layers"
+author: "Jillian Allison, Meagan Brown, Andre Dextre, Wade Sedgwick"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Load Libraries and Functions
+
+```{r}
+library(tidyverse)
+library(sf)
+library(here)
+library(janitor)
+library(raster)
+library(rgdal)
+library(fasterize)
+library(exactextractr)
+library(dplyr)
+library(terra)
+library(tmap)
+library(FedData) # for NLCD Data 
+source("functions/remove_ag_urban.R")
+source("functions/raster_to_ecoregions.R")
+source("functions/stratified_sample.R")
+```
+
+### Read in Data
+Download the necessary data from the "Raw_Data" folder on our repository on dataone.org, and store it in the "data" folder in this repository. Leave file names identical to the names in the "Raw_Data" folder. 
+This chunk reads raw data for California Ecoregion Boundaries, County Boundaries, GDE Boundaries, NLCD data from the FedData library, CalFire Fire Perimeters Data, and CalFire/FRAP's Fire Threat raster. The MTBS Burn Severity Data is read in in it's designated code chunk due to special requirements. 
+```{r}
+# Set standard CRS for project
+crs_ca <- crs_ca <- st_crs(3310)
+
+# Ecoregion Shapefile 
+eco_regions <- read_sf(here::here('data', 'ca_eco_l3'))%>% 
+  janitor::clean_names()  %>% 
+  st_transform(crs_ca) %>% 
+  rename(region = us_l3name)  %>%
+  mutate(code = as.numeric(us_l3code))
+
+### Create object containing ecoregion names 
+eco_regions_names <- as.data.frame(eco_regions) %>%
+  subset(select = c("us_l3code", "region"))
+
+
+# CA county boundaries
+ca_counties <- read_sf(here::here('data', 'California_County_Boundaries', 'cnty19_1.shp')) %>% 
+  janitor::clean_names() %>% 
+  st_transform(crs_ca) 
+
+# GDE boundaries
+gde_data <- sf::read_sf(here::here("data", "gde"))
+
+# NLCD - This object may take several minutes to run
+nlcd_data <- FedData::get_nlcd(template = ca_rasterra, year = 2019, label = "ca", dataset = "landcover", landmass = "L48", extraction.dir = "data") 
+
+# CalFire Fire Perimeters 
+fire_perimeters_all <- sf::read_sf(here('data', 
+                                        'California_Fire_Perimeters_all')) %>% 
+  clean_names() %>% 
+  st_transform(crs_ca) %>% # NAD27 / California Albers
+  mutate(val = 1) %>% # Create a column containing a value: this means each fire has a value of 1
+  filter(year >= 1950) # Filter for only fires after 1950: this is when the dataset becomes reliable.
+### Crop Fire Perimeter Data to California
+fires_ca <- st_crop(fire_perimeters_all, ca_counties) 
+
+# CalFire / FRAP Fire Threat Raster 
+fire_threat_data <- raster(here::here("data", "fire_threat.tif"))
+```
+
+### Create an empty raster to use as a template for creating raster layers. 
+This valueless raster has a resolution of 30 x 30. We'll be using it to rasterize the fire perimeters layer.
+
+```{r}
+## Set extent
+ca_ext <- extent(ca_counties)
+## RASTER OBJECT Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rast <- raster(ca_ext, resolution = 30)
+crs(ca_rast) <- crs_ca$wkt
+
+## TERRA OBJECT Create valueless raster layer w/ 30 (unit is something) resolution 
+ca_rasterra <- raster(ca_ext, resolution = 30) %>%
+  terra::rast()
+crs(ca_rasterra) <- crs_ca$wkt 
+```
+
+### NLCD Data 
+Running this code chunk creates a raster layer containing NLCD values and saves it as a .tif file to the "raster_output" folder. Once the .tif file is created, you may run the Objects.Rmd file to obtain this layer without having to re-run this code. 
+This raster layer is essential for running the remaining code, as it is used for removing agricultural and urban areas from our other datasets. This layer is used in the remove_ag_urban() function in the "Functions" folder. 
+```{r}
+# Reproject using terra package for speed. Expect the project() function to take several minutes to run. 
+nlcd <- nlcd_data %>%
+  rast() %>% 
+  terra::project(y = crs_ca$wkt, method = "near") 
+
+# Resample using nearest neighbors approach.
+nlcd_resampled <- terra::resample(nlcd, ca_rasterra, method = "near") # uses nearest neighbors approach for for categorical values 
+
+# Mask to California using the CA Counties data. 
+nlcd_masked <- mask(nlcd_resampled, ca_counties)
+
+# Convert to standard raster type, as opposed to a terra SpatRaster object. 
+nlcd_rasterlayer <- raster(nlcd_masked)
+
+# Write a file in the raster_output folder
+raster::writeRaster(nlcd_rasterlayer, "raster_output/nlcd.tif", overwrite = TRUE)
+
+# nlcd_colors() and pal_nlcd() return legend and color palette
+# nlcd_colors()
+# pal_nlcd()
+```
+
+### GDE Raster Layer
+Running this code chunk will create a raster layer for the GDE data- cell values will equal 1 in cells where there is a GDE and values will equal 0 in cells where there is no GDE. It will also create 13 smaller raster layers for each ecoregion. This raster file will be saved in the "raster_output" folder as a .tif file. After running this code chunk once, you can run the GDE section of the "Objects.Rmd" file to get these .tifs in your environment without having to re-run this code. 
+
+```{r}
+# Create a shapefile to use for rasterizing GDE data
+gde_polygons_raster <- gde_data %>%
+  st_transform(crs_ca) %>%
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # Removes permanently submerged GDEs
+  mutate(gde = 1)
+
+# Fasterize to rasterize, extent to match others 
+gde_raster <- fasterize::fasterize(st_collection_extract(gde_polygons_raster, "POLYGON"), ca_rast, field = "gde", fun = "max", background = 0)
+
+# Mask to california
+gde_masked <- mask(gde_raster, ca_counties)
+
+# Remove agricultural and urban areas
+gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer = nlcd_rasterlayer)
+
+# Create raster file 
+writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
+
+# Create GDE Objects divided into ecoregions 
+raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
+```
+
+### Ecoregion Raster
+```{r}
+# Fasterize to rasterize, extent to match others 
+eco_region_raster <- fasterize(eco_regions, ca_rast, field = "us_l3code")
+```
+
+### Fire Count 
+This code chunk creates a raster layer with each cell value equal to the number of fires that have occured in that cell since 1950 according to CalFire's Wildfire Perimeter data. It creates a .tif file for the entire state of California, and 13 .tif files- one for each ecoregion in California. 
+These raster files will be saved in the "raster_output" folder as .tif files. After running this code chunk once, you can run the GDE section of the "Objects.Rmd" file to get these .tifs in your environment without having to re-run this code. 
+```{r}
+# Use fasterize::fasterize() to convert polygon wildfires to raster layer based on raster template  
+fire_count_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "val", fun = "sum", background = 0)
+# Mask to California's boundary
+fire_count_raster_masked <- mask(fire_count_raster, ca_counties) 
+crs(fire_count_raster_masked) <- crs_ca$wkt
+
+# Remove agricultural and urban areas from this layer. 
+fire_count_final <- remove_ag_urban(fire_count_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+# Write file with data for entire state of CA
+writeRaster(fire_count_final, "raster_output/fire_count_final.tif")
+
+# Write 13 files, one for each ecoregion. 
+raster_to_ecoregions(fire_count_final, "fire_count", write_to_file = TRUE)
+```
+
+### Time Since Last Fire (TSLF)
+This code chunk creates a raster layer with each cell value equal to the number of years since the last fire occured in that cell (until 1950) according to CalFire's Wildfire Perimeter data. It creates a .tif file for the entire state of California, and 13 .tif files- one for each ecoregion in California. 
+These raster files will be saved in the "raster_output" folder as .tif files. After running this code chunk once, you can run the GDE section of the "Objects.Rmd" file to get these .tifs in your environment without having to re-run this code. 
+```{r}
+# Use fasterize::fasterize() to create a raster layer where each cell is equal to the maximum year value for that cell. 
+most_recent_raster <- fasterize(st_collection_extract(fires_ca, "POLYGON"), ca_rast, field = "year", fun = "max", background = NA)
+
+# Subtract the raster layer containing the most recent fire from 2022- this will give the number of years since the most recent fire in each cell. 
+tslf_raster <- 2022 - most_recent_raster
+
+# Mask to California's boundary
+tslf_raster_masked <- mask(tslf_raster, ca_counties)
+crs(tslf_raster_masked) <- crs_ca$wkt
+
+# Remove ag and urban areas 
+tslf_final <- remove_ag_urban(tslf_raster_masked) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI
+
+# Write file for state of CA
+writeRaster(tslf_final, "raster_output/tslf_final.tif")
+
+# Write files for each ecoregion
+raster_to_ecoregions(tslf_final, "tslf", write_to_file = TRUE)
+```
+
+# Fire Threat
+This code chunk creates a raster layer with each cell value equal to the Fire Threat value according to CalFire/FRAP's Fire Threat Data. It creates a .tif file for the entire state of California, and 13 .tif files- one for each ecoregion in California. 
+These raster files will be saved in the "raster_output" folder as .tif files. After running this code chunk once, you can run the GDE section of the "Objects.Rmd" file to get these .tifs in your environment without having to re-run this code.
+```{r}
+# Reproject
+fire_threat <- fire_threat_data %>%
+  terra::rast() %>%
+  terra::project(y = crs_ca$wkt, method = "near")
+
+# Resample using nearest neighbors approach
+fire_threat_resampled <- terra::resample(fire_threat, ca_rasterra, method = "near") # uses nearest neighbors approach for for categorical values 
+
+# Mask to California
+fire_threat_masked <- mask(fire_threat_resampled, ca_counties)
+
+# Convert to standard raster object, as opposed to a terra SpatRaster object. 
+fire_threat_rasterlayer <- raster(fire_threat_masked)
+
+# Remove ag and urban areas 
+fire_threat_final <- remove_ag_urban(fire_threat_rasterlayer) # TAKES BETWEEN 15 - 30 MINUTES TO RUN! FYI 
+
+# Write file for state of CA
+writeRaster(fire_threat_final, "raster_output/fire_threat_final.tif", overwrite = TRUE)
+
+# Write 13 files- one for each ecoregion
+raster_to_ecoregions(fire_threat_final, "fire_threat", write_to_file = TRUE)
+```
+
+### Burn Severity
+The next 3 code chunks create a raster layer with each cell value equal to the mode burn severity across all fires from 1984 to 2021. For example, if one cell burned multiple times since 1984 with burn severity values of 2, 2, and 3, the value in this raster layer would be 2 because that is the most common burn severity value for that cell across our time period. 
+The following code chunks take a significant amount of time to run. 
+The final raster layers are available for download, but if you would like to use updated MTBS mosaics, then you can use this code to create a mode burn severity layer for all of California with urban /ag areas removed, and to divide this layer into 13 different files- one for each ecoregion. 
+
+#### Burn Severity All (1984 - 2021) (3 HOUR RUN TIME) 
+for loop - takes 3 hours to load
+```{r}
+# Define the directory where the raster files are located
+raster_dir <- here::here("data", "MTBS_BSmosaics")
+
+# Define the target CRS
+target_crs <- "EPSG:3310"
+
+# Get a list of .tif files in the directory
+tif_files <- list.files(raster_dir, pattern = "\\.tif$", full.names = TRUE)
+
+# Initialize the raster stack variable
+raster_stack <- NULL
+
+# Loop through the files
+for (file_path in tif_files) {
+  # Print a message to the console
+  message("Processing file: ", file_path)
+
+  # Read the raster file
+  raster <- rast(file_path)
+  
+  # Project the raster to the target CRS
+  raster_new_crs <- project(raster, target_crs)
+  
+  # If this is the first file, initialize the raster stack
+  if (is.null(raster_stack)) {
+    raster_stack <- raster_new_crs
+  } else {
+    # Otherwise, resample the raster to match the first, and add it to the stack
+    raster_resampled <- resample(raster_new_crs, raster_stack, method = "near")
+    raster_stack <- c(raster_stack, raster_resampled)
+  }
+}
+
+# Write file containing raster stack- NOT THE FINAL PRODUCT YET. 
+writeRaster(raster_stack, file.path(here::here('raster_output', 'burn_severity_all.tif')))
+```
+
+#### Reclassify Burn Severity Values Across Raster Stack (3 HOUR RUN TIME)
+
+```{r}
+# Value	Legend
+# 0	Unburnt
+# 1	unburnt/low
+
+# 2	low
+# 3	moderate
+# 4	high
+
+# 5	increased greenness
+# 6	masked
+
+# Define reclassification matrix
+bs_recl <- c(-Inf, 1, NA,   # Unburnt
+             1, 2, NA,      # unburnt/low
+             2, 3, 2,       # low
+             3, 4, 3,       # moderate
+             4, 5, 4,       # high
+             5, 6, NA,      # increased greenness
+             6, Inf, NA)    # masked
+
+# Convert to a matrix with 3 columns
+bs_matrix <- matrix(bs_recl, ncol = 3, byrow = TRUE)
+
+# Apply reclassification to the raster stack
+burn_severity_recl <- classify(burn_severity_stack, rcl = bs_matrix)
+
+burn_severity_recl
+
+# writeRaster(burn_severity_recl, file.path(here::here('raster_output', 'burn_severity_recl.tif')))
+```
+
+#### Burn Severity Mode Across Raster Stack (3 HOUR RUN TIME)
+
+```{r}
+# calculate the mode value for each cell across layers
+mode_value <- function(x) {
+  ux <- unique(x)    
+  ux = ux[!is.na(ux)]
+  mode = ux[which.max(tabulate(match(x, ux)))]
+  mode
+}
+
+burn_severity_mode = terra::app(burn_severity_recl, fun = mode_value)
+
+# Reproject, resample, and mask so that the layer matches the extent of the other layers
+burn_severity_final <- burn_severity_mode %>%
+  terra::rast() %>%
+  terra::project(y = crs_ca$wkt, method = "near") %>%
+  terra::resample(ca_rasterra, method = "near") %>%
+  terra::mask(ca_counties) %>%
+  raster()
+
+# Remove agricultural and urban areas
+burn_severity_final <- remove_ag_urban(burn_severity_final)
+
+# Write file for state of CA
+writeRaster(burn_severity_final, "raster_output/burn_severity_final.tif", overwrite = TRUE)
+
+# Write 13 files, one for each ecoregion
+raster_to_ecoregions(burn_severity_final, "burn_severity", write_to_file = TRUE)
+```
+
+### GDE Polygon Data Summaries 
+This code chunk creates a GDE polygon layer with attributes describing fire count, TSLF, fire threat, and mode burn severity for each GDE. This polygon layer is displayed in our R Shiny Application on the "Map" page, with attributes displayed as users hover over a GDE. 
+
+**Warning: The exact_extract() function takes between 30 minutes and 2 hours to run for each attribute.** 
+
+#### Remove GDEs in Agricultural and Urban Areas 
+```{r}
+# Remove polygons that are in agricultural or urban areas from the GDE polygon data.
+
+# Extract land use data - this takes about an hour to run. 
+gdepoly_nlcd <- exactextractr::exact_extract(nlcd_rasterlayer, gde_polygons_shiny, fun = "majority")
+
+# Join and filter
+nlcd_vals_to_remove <- c(11, 21, 22, 23, 24, 81, 82)
+
+gde_polygons_shiny <- gde_polygons_shiny %>%
+  mutate(nlcd = gdepoly_nlcd) %>%
+  filter(!nlcd %in% nlcd_vals_to_remove)
+
+# Writes a file for GDE polygons without GDEs in agriculutral or urban areas. 
+st_write(gde_polygons_shiny, "raster_output/gde_polygons_rm_ag_urb.shp")
+```
+
+#### Extract values for fire count, TSLF, fire threat, and burn severity (4 HOUR RUN TIME)
+```{r}
+# Find the maximum number of times that a GDE polygon has burned since 1950 using the fire count raster layer. Find maximum number of times a cell has burned in that GDE
+gdepoly_fire_count <- exactextractr::exact_extract(fire_count_final, gde_polygons_shiny, fun = "max")
+
+# Find most recent TSLF in each GDE polygon
+gdepoly_tslf <- exactextractr::exact_extract(tslf_final, gde_polygons_shiny, fun = "min")
+
+
+# Find average modeled fire threat in each GDE polygon
+gdepoly_fire_threat <- exactextractr::exact_extract(fire_threat_final, gde_polygons_shiny, fun = "mean")
+
+
+# Find mode burn severity in GDE polygon 
+gdepoly_burn_severity <- exactextractr::exact_extract(burn_severity_final, gde_polygons_shiny, fun = "mean")
+
+```
+#### Join extracted values to GDE Polygon file 
+```{r}
+# Join data 
+gde_summary_shiny <- gde_polygons_shiny %>%
+  mutate(max_fire_count = gdepoly_fire_count, 
+         min_tslf = gdepoly_tslf, 
+         avg_fire_threat = gdepoly_fire_threat, 
+         avg_fire_severity = gdepoly_burn_severity) %>%
+  mutate(area_km2 = (area_m2 / (1E6)),
+         area_km2 = round(area_km2, digits = 3),
+         max_fire_count = round(max_fire_count, digits = 2), 
+         min_tslf = round(min_tslf, digits = 2), 
+         avg_fire_threat = round(avg_fire_threat, digits = 2), 
+         avg_fire_severity = round(avg_fire_severity, digits = 2), 
+         avg_fire_threat = na_if(avg_fire_threat, NaN),
+         avg_fire_severity = na_if(avg_fire_severity, NaN)) %>%
+  st_as_sf(crs = crs_ca$wkt)
+
+# Write file containing summary data 
+st_write(gde_summary_shiny, "raster_output/gde_summary_shiny.shp", append = F)
+```
+
+#### GDE Polygons with Summary Data by Ecoregion
+This code chunk will write a GDE summary file with ecoregion information for all of California, and 13 different smaller files containing GDE summary data for each of the 13 ecoregions. 
+```{r}
+# Perform spatial join to assign eco region IDs to GDE polygons
+gde_summ_eco <- st_join(gde_summary_shiny, eco_regions) 
+
+gde_summ_eco_df <- as.data.frame(gde_summ_eco)
+
+ecoregion_codes <- as.numeric(unique(gde_summ_eco$us_l3code))
+
+# This for-loop creates 13 polygon files containing GDE summary data for each ecoregion. 
+for(id in ecoregion_codes){
+  gdes_in_ecoregion <- gde_summ_eco %>%
+    filter(us_l3code == id) 
+  
+  output_file <- paste0("raster_output/gde_shiny_summary_ecoregions/gde_summary_", id, ".shp")
+  
+  st_write(gdes_in_ecoregion, output_file)
+}
+
+# Write a polygon file containing GDE polygons with summary data and an attribute for ecoregion information- this is for the entire state of California. 
+st_write(gde_summ_eco, "raster_output/gde_shiny_summary_ecoregions/gde_summary_ALL.shp")
+```
+
+
+
+
+
+
+
+

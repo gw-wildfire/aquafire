@@ -23,14 +23,9 @@ library(exactextractr)
 library(dplyr)
 library(terra)
 library(tmap)
-source("user/jillian/functions/remove_ag_urban.R")
-source("user/jillian/functions/raster_to_ecoregions.R")
-source("user/jillian/functions/stratified_sample.R")
-```
-
-```{r}
-# set working directory
-setwd(here('~/Desktop/MEDS/Capstone/aquafire'))
+source("Functions/remove_ag_urban.R")
+source("Functions/raster_to_ecoregions.R")
+source("Functions/stratified_sample.R")
 ```
 
 # Read in data
@@ -78,12 +73,12 @@ gde_data <- sf::read_sf(here::here("data", "gde") )
 
 gde_polygons_raster <- gde_data %>%
   st_transform(crs_ca) %>%
-  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>%
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # Removes permanently submerged GDEs
   mutate(gde = 1)
 
 gde_polygons_shiny <- gde_data %>%
   st_transform(crs_ca) %>%
-  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # may also want to remove semipermanently flooded or all lacustrine
+  filter(!grepl("Permanently Flooded", WETLAND_NA)) %>% # Removes permanently submerged GDEs
   mutate(area_m2 = as.numeric(st_area(geometry))) %>%
   filter(area_m2 > 8093) %>% # sq meters, 2 acres 
   st_simplify(preserveTopology = TRUE, dTolerance = 5) # Simplify remaining polygons to reduce load time in Shiny App
@@ -122,10 +117,10 @@ gde_masked <- mask(gde_raster, ca_counties)
 gde_final <- remove_ag_urban(input_raster_layer = gde_masked, nlcd_raster_layer = nlcd_rasterlayer)
 
 # Create raster file 
-# writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
+writeRaster(gde_final, here::here("raster_output", "gde_final.tif"))
 
 # Create GDE Objects divided into ecoregions 
-# raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
+raster_to_ecoregions(raster_layer = gde_final, file_name = "gde", write_to_file = TRUE)
 ```
 
 ### GDE Polygons with Summary Data
@@ -142,31 +137,24 @@ gde_polygons_shiny <- gde_polygons_shiny %>%
   mutate(nlcd = gdepoly_nlcd) %>%
   filter(!nlcd %in% nlcd_vals_to_remove)
 
-# st_write(gde_polygons_shiny, "raster_output/gde_polygons_rm_ag_urb.shp")
-
-beep(sound = 3)
+st_write(gde_polygons_shiny, "raster_output/gde_polygons_rm_ag_urb.shp")
 ```
 
 ```{r}
 # Find the maximum number of times that a GDE polygon has burned since 1950 using the fire count raster layer. Find maximum number of times a cell has burned in that GDE
 gdepoly_fire_count <- exactextractr::exact_extract(fire_count_final, gde_polygons_shiny, fun = "max")
-write.csv(gdepoly_fire_count,file="user/jillian/polygon_values/fire_count.csv",row.names=F)
-beep(sound = 3)
 
 # Find most recent TSLF in each GDE polygon
 gdepoly_tslf <- exactextractr::exact_extract(tslf_final, gde_polygons_shiny, fun = "min")
-# write.csv(gdepoly_tslf,file="user/jillian/polygon_values/tslf.csv",row.names=F)
-beep(sound = 3)
+
 
 # Find average modeled fire threat in each GDE polygon
 gdepoly_fire_threat <- exactextractr::exact_extract(fire_threat_final, gde_polygons_shiny, fun = "mean")
-write.csv(gdepoly_fire_threat, file = "user/jillian/polygon_values/fire_threat.csv", row.names = F)
-beep(sound = 3)
+
 
 # Find mode burn severity in GDE polygon 
 gdepoly_burn_severity <- exactextractr::exact_extract(burn_severity_final, gde_polygons_shiny, fun = "mean")
-write.csv(gdepoly_burn_severity, file = "user/jillian/polygon_values/burn_severity.csv", row.names = F)
-beep(sound = 3)
+
 
 
 gdepoly_perc_burned <- exactextractr::exact_extract(perc_burned_final, gde_polygons_shiny, fun = "mean")
