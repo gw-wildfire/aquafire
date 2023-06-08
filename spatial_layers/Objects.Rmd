@@ -1,6 +1,6 @@
 ---
 title: "Objects"
-author: "Jillian Allison"
+author: "Jillian Allison, Meagan Brown, Andre Dextre, Wade Sedgwick"
 date: "`r Sys.Date()`"
 output: html_document
 ---
