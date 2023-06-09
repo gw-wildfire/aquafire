@@ -9,7 +9,7 @@ library(tmap)
 library(rgdal)
 
 
-preloaded = T
+preloaded = F
 
 if(!preloaded){
   
