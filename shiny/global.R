@@ -1,22 +1,53 @@
 # load packages ----
 library(shiny)
-library(lterdatasampler)
 library(tidyverse)
 library(shinycssloaders)
-library(leaflet)
 library(raster)
-library(rgdal)
-library(leafem)
 library(sf)
-library(bslib)
 library(shinyWidgets)
 library(tmap)
-library(kableExtra)
-library(jpeg)
+library(rgdal)
 
-datadir <- path.expand("~/../../capstone/aquafire")
+fire_count_histogram_df <- data.frame(
+  value = c(0, 0, 1, 1, 2, 2, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 0, 0, 1, 1, 2, 2, 3, 3),
+  gde_status = c("GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE",
+                 "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE"),
+  proportion = c(89.7005988023952, 88.6, 9.70059880239521, 10.5, 0.598802395209581, 0.8, 96.7455621301775, 89, 2.51479289940828, 8.8, 0.591715976331361, 2, 0.14792899408284, 0.2, 99.5, 98.6, 0.4, 1.1, 0.1, 0.1, 73, 70.5, 25.1, 27.2, 1.6, 2, 0.3, 0.3, 76.1760242792109, 62.2, 21.3960546282246, 28.1, 2.27617602427921, 8.2, 0.151745068285281, 1.3, 71.2616822429907, 68.7, 20.7943925233645, 21.6, 4.4392523364486, 6.3, 2.80373831775701, 2.3, 0.700934579439252, 0.8, 97.49430523918,
+                 96.2, 2.27790432801822, 3.1, 0.227790432801822, 0.6, 39.6610169491525, 28.8, 35.2542372881356, 39.2, 19.3220338983051, 23.7, 4.74576271186441, 6.4, 0.677966101694915, 1.4, 0.338983050847458, 0.3, 94.3, 66.3, 5.7, 31.5, 94.9, 96.9, 4.5, 2.6, 0.3, 0.4, 42.6548672566372, 56.7, 25.3097345132743, 15.7, 18.7610619469027, 15.1, 8.31858407079646, 7.9, 2.65486725663717, 3, 2.12389380530973, 1, 0.176991150442478, 0.5, 92.6, 76.4, 6.7, 21.2, 0.7, 1.9),
+  eco_region = c("Coast Range", "Coast Range", "Coast Range", "Coast Range", "Coast Range", "Coast Range", 
+                 "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", 
+                 "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range",
+                 "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades",
+                 "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada",
+                 "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains",
+                 "Central California Valley", "Central California Valley", "Central California Valley", "Central California Valley",
+                 "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range",
+                 "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains",
+                 "Northern Basin and Range", "Northern Basin and Range",
+                 "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range",
+                 "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast",
+                 "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills")
+)
 
-preloaded = T
+burn_severity_histogram_df <- data.frame(
+  value = c(2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4),
+  gde_status = c("GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE",
+                 "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE"),
+  proportion = c(64, 52, 36, 48, 80, 46.6666666666667, 16.6666666666667, 53.3333333333333, 40, 50, 56.6666666666667, 50, 60, 46.6666666666667, 40, 53.3333333333333, 36.6666666666667, 43.3333333333333, 63.3333333333333, 56.6666666666667, 43.3333333333333, 36.6666666666667, 53.3333333333333, 63.3333333333333, 66.6666666666667, 83.3333333333333, 30, 13.3333333333333, 3.33333333333333, 3.33333333333333, 40, 93.3333333333333, 53.3333333333333, 6.66666666666667, 73.3333333333333, 63.3333333333333, 26.6666666666667, 33.3333333333333, 76.6666666666667, 70, 20, 26.6666666666667, 3.33333333333333, 3.33333333333333),
+  eco_region = c("Coast Range", "Coast Range", "Coast Range", "Coast Range",
+                 "Cascades", "Cascades", "Cascades", "Cascades",
+                 "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada",
+                 "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains",
+                 "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range",
+                 "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains",
+                 "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range",
+                 "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range",
+                 "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast",
+                 "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills")
+)
+
+
+preloaded = F
 
 if(!preloaded){
   
@@ -34,7 +65,6 @@ if(!preloaded){
   cali_bounds <- st_bbox(eco_regions)
   
   # reading in counties data
-  
   ca_counties <- read_sf("data/CA_Counties") %>%
     janitor::clean_names() %>%
     st_transform(crs_ca)
@@ -71,9 +101,6 @@ if(!preloaded){
                          sonoran_basin = eco_regions[11,],
                          socal_norbaja_coast = eco_regions[12,],
                          eastern_cascades_slopes_foothills = eco_regions[13,])
-  
-  ecoregion_list$cascades <- ecoregion_list$cascades %>%
-    mutate("ecoregion_info" = "In the Cascades ecoregion, groundwater is vital for groundwater-dependent ecosystems (GDEs) due to the mountainous terrain and presence of aquifers. Fire significantly impacts vegetation composition, with some GDEs relying on periodic fires for regeneration. Fire regimes, historically characterized by low- to moderate-intensity fires, have been altered by fire suppression and land use changes. Fires can affect groundwater recharge, potentially impacting GDEs' access to water. After a fire, GDEs undergo recovery influenced by soil, seed availability, and groundwater, supporting post-fire vegetation reestablishment.")
   
   # land cover data frame
   land_cover_df <- data.frame(
@@ -168,6 +195,7 @@ if(!preloaded){
         st_simplify(dTolerance = 5)
     }
     
+    print(i)
     
     gde_list[[i]] <- st_make_valid(gde_shapefile)
   } # End edit GDE polygons
@@ -362,7 +390,10 @@ if(!preloaded){
     "fire_count_histogram_klamath_mountains",
     "fire_count_histogram_mojave_basin",
     "fire_count_histogram_northern_basin",
-    "fire_count_histogram_sierra_nevada"
+    "fire_count_histogram_sierra_nevada",
+    "fire_count_histogram_socal_norbaja_coast",
+    "fire_count_histogram_sonoran_basin",
+    "fire_count_histogram_southern_mountains"
   )
   
   names_fire_count_hist <- fire_count_hist_list
@@ -372,12 +403,14 @@ if(!preloaded){
   
   # creating data table on main page
   data_df <- data.frame(Data = c("Groundwater-Dependent Ecosystems", "Fire Count", "Time Since Last Fire (TSLF)", "Fire Threat", "Burn Severity"),
-                        Source = c("The Nature Conservancy", "Cal Fire (layer produced by us)", "Cal Fire (layer produced by us)", "Cal Fire", "USGS and USFS"),
-                        Information = c("Groundwater-Dependent Ecosystems are from The Nature Conservancy",
-                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the total number of fires that occured since 1950.",
-                                        "This layer was created from the fire perimeter data from Cal Fire, and is a raster layer where each cell is the time in years since the last fire occured since 1950.",
-                                        "Fire Threat is a layer created by Cal Fire that represents the relative vulnerability of an area to wildfires. Some variables that are used in this modeled fire layer are fire occurance, vegetation type and density, topography and weather conditions.",
-                                        "The Burn Severity layer was adapted to apply the mode of the severity (most frequent severity level) of all previous fires in a single cell. The originial layers were derived from satellite data, which uses the difference Normalized Burn Ratio to calculate the severity of each fire. (NIR - SWIR) / (NIR + SWIR)."),
+                        Source = c("The Nature Conservancy (TNC)", "Cal Fire (layer produced by us)", "Cal Fire (layer produced by us)", "Cal Fire", "USGS and USFS"),
+                        Information = c("Groundwater-dependent Ecosystem data comes from the Natural Communities Commonly Associated with Groundwater v.2 dataset produced by The Nature Conservancy (TNC). It is a compilation of 48 publicly available State and federal agency datasets that map vegetation, wetlands, springs, and seeps in California. A working group comprised of DWR, the California Department of Fish and Wildlife (CDFW), and The Nature Conservancy (TNC) reviewed the compiled dataset and conducted a screening process to exclude vegetation and wetland types less likely to be associated with groundwater and retain types commonly associated with groundwater, based on criteria described in Klausmeyer et al., 2018.",
+                                        "This layer was created from the CAL FIRE Wildfire Perimeters and Prescribed Burns. The service includes layers that are data subsets symbolized by size and year.
+It contains raster layers where each cell is the total number of fires that occured since 1950.",
+"This layer was created from the CAL FIRE Wildfire Perimeters and Prescribed Burns. The service includes layers that are data subsets symbolized by size and year.
+It contains raster layers where each cell is the total number of fires that occured since 1950.",
+"Fire Threat is a layer created by Cal Fire that represents the relative vulnerability of an area to wildfires. Some variables that are used in this modeled fire layer are fire occurance, vegetation type and density, topography and weather conditions.",
+"The Burn Severity layer was adapted to apply the mode of the severity (most frequent severity level) of all previous fires in a single cell. The originial layers were derived from satellite data, which uses the difference Normalized Burn Ratio to calculate the severity of each fire. (NIR - SWIR) / (NIR + SWIR)."),
                         link_address = c(
                           "https://www.nature.org/",
                           "https://gis.data.ca.gov/datasets/CALFIRE-Forestry::california-fire-perimeters-all-1/explore",
@@ -385,7 +418,6 @@ if(!preloaded){
                           "https://www.fire.ca.gov/Home/What-We-Do/Fire-Resource-Assessment-Program/GIS-Mapping-and-Data-Analytics",
                           "https://www.mtbs.gov/")
   )
-  
   
   
   # read in fire count txt file for histograms
@@ -415,7 +447,7 @@ if(!preloaded){
            ecoregion = ifelse(ecoregion == "fire_count_histogram_northern_basin_and_range",
                               "fire_count_histogram_northern_basin", ecoregion),
            ecoregion = ifelse(ecoregion == "fire_count_histogram_southern_california/northern_baja_coast",
-                              "fire_count_histogram_nocal_sobaja_coast", ecoregion),
+                              "fire_count_histogram_socal_norbaja_coast", ecoregion),
            ecoregion = ifelse(ecoregion == "fire_count_histogram_eastern_cascades_slopes_and_foothills",
                               "fire_count_histogram_eastern_cascades_slopes_foothills", ecoregion),
            ecoregion = ifelse(ecoregion == "fire_count_histogram_mojave_basin_and_range",
@@ -444,7 +476,7 @@ if(!preloaded){
            ecoregion = ifelse(ecoregion == "burn_severity_histogram_northern_basin_and_range",
                               "fire_count_histogram_northern_basin", ecoregion),
            ecoregion = ifelse(ecoregion == "burn_severity_histogram_southern_california/northern_baja_coast",
-                              "fire_count_histogram_nocal_sobaja_coast", ecoregion),
+                              "fire_count_histogram_socal_norbaja_coast", ecoregion),
            ecoregion = ifelse(ecoregion == "burn_severity_histogram_eastern_cascades_slopes_and_foothills",
                               "fire_count_histogram_eastern_cascades_slopes_foothills", ecoregion),
            ecoregion = ifelse(ecoregion == "burn_severity_histogram_coast_range",
@@ -467,7 +499,10 @@ if(!preloaded){
     "fire_count_histogram_klamath_mountains",
     "fire_count_histogram_mojave_basin",
     "fire_count_histogram_northern_basin",
-    "fire_count_histogram_sierra_nevada"
+    "fire_count_histogram_sierra_nevada",
+    "fire_count_histogram_socal_norbaja_coast",
+    "fire_count_histogram_sonoran_basin",
+    "fire_count_histogram_southern_mountains"
   )
   
   values_fire <- c("The mean fire count for our sample of cells across the entire ecoregion was found to be 0.307. When analyzing GDE cells specifically, the mean fire count was slightly lower at 0.292, while non-GDE cells had a slightly higher mean fire count of 0.321.
@@ -517,7 +552,23 @@ Based on these statistical findings, the study concluded that there is strong ev
 
 Analyzing the maximum number of fires in a single cell, it was observed that GDE cells experienced a maximum count of 3 fires, whereas non-GDE cells had a higher maximum of 4 fires. When excluding cells that did not burn, the mode (most common) fire count for both GDE and non-GDE cells was 1, suggesting that most cells that experienced fires did so only once.
 To assess if there was a significant difference in mean fire counts between GDE and non-GDE cells, a difference in means bootstrapping approach was employed. This involved resampling the data 1000 times and calculating the difference in means (non-GDE mean fire count minus GDE mean fire count) for each sample. The resulting p-value for this difference in means test was remarkably low, at 1 X 10^(-12), and the 95% confidence interval for the difference in means ranged from 0.172 to 0.286.
-Based on these statistical findings, the study concluded that there is strong evidence to reject the null hypothesis, indicating a significant difference in mean fire counts between GDE and non-GDE cells in the Sierra Nevada Ecoregion. Specifically, GDE cells exhibited a lower mean fire count, suggesting that GDEs experienced less frequent fire occurrences compared to non-GDEs since 1950. ")
+Based on these statistical findings, the study concluded that there is strong evidence to reject the null hypothesis, indicating a significant difference in mean fire counts between GDE and non-GDE cells in the Sierra Nevada Ecoregion. Specifically, GDE cells exhibited a lower mean fire count, suggesting that GDEs experienced less frequent fire occurrences compared to non-GDEs since 1950.",
+"The mean fire count for our sample of cells across the entire ecoregion was found to be 0.974. When analyzing GDE cells specifically, the mean fire count was higher at 1.101, whereas non-GDE cells had a slightly lower mean fire count of 0.903.
+
+Examining the maximum number of fires in a single cell, GDE cells experienced a maximum count of 6 fires, while non-GDE cells had a slightly higher maximum of 7 fires. When excluding cells that did not burn, the mode (most common) fire count for both GDE and non-GDE cells was 1, indicating that most cells that experienced fires did so only once.
+To assess if there was a significant difference in mean fire counts between GDE and non-GDE cells, a difference in means bootstrapping approach was employed. Resampling the data 1000 times and calculating the difference in means (non-GDE mean fire count minus GDE mean fire count) for each sample, the resulting p-value for this difference in means test was 1 x 10^(-16). The 95% confidence interval for the difference in means ranged from -0.322 to -0.072.
+Based on these statistical findings, the study concluded that there is substantial evidence to reject the null hypothesis, indicating a significant difference in mean fire counts between GDE and non-GDE cells in the Southern California/Northern Baja Coast ecoregion. Specifically, GDE cells exhibited a higher mean fire count, suggesting that GDEs experienced more frequent fire occurrences compared to non-GDEs since 1950.",
+
+"The mean fire count for our sample of cells across the entire ecoregion was found to be 0.053. When examining GDE cells specifically, the mean fire count was slightly higher at 0.065, while non-GDE cells had a slightly lower mean fire count of 0.041.
+Analyzing the maximum number of fires in a single cell, it was observed that GDE cells experienced a maximum count of 6 fires, whereas non-GDE cells had a slightly higher maximum of 7 fires. When excluding cells that did not burn, the mode (most common) fire count for both GDE and non-GDE cells was 1, indicating that most cells that experienced fires did so only once.
+To assess if there was a significant difference in mean fire counts between GDE and non-GDE cells, a difference in means bootstrapping approach was employed. This involved resampling the data 1000 times and calculating the difference in means (non-GDE mean fire count minus GDE mean fire count) for each sample. The resulting p-value for this difference in means test was 0.100, and the 95% confidence interval for the difference in means ranged from -0.05 to 0.003.
+Based on these statistical findings, the study concluded that there is insufficient evidence to reject the null hypothesis, indicating no significant difference in mean fire counts between GDE and non-GDE cells in the Sonoran Basin and Range ecoregion.",
+
+"The mean fire count for our sample of cells across the entire ecoregion was found to be 1.093. When examining GDE cells specifically, the mean fire count was significantly lower at 0.093, while non-GDE cells had a higher mean fire count of 1.143.
+Analyzing the maximum number of fires in a single cell, it was observed that GDE cells experienced a maximum count of 5 fires, whereas non-GDE cells had a higher maximum of 7 fires. When excluding cells that did not burn, the mode (most common) fire count for both GDE and non-GDE cells was 1, indicating that most cells that experienced fires did so only once.
+To assess if there was a significant difference in mean fire counts between GDE and non-GDE cells, a difference in means bootstrapping approach was employed. This involved resampling the data 1000 times and calculating the difference in means (non-GDE mean fire count minus GDE mean fire count) for each sample. The resulting p-value for this difference in means test was 0.003, and the 95% confidence interval for the difference in means ranged from 0.094 to 0.341.
+Based on these statistical findings, the study concluded that there is strong evidence to reject the null hypothesis, indicating a significant difference in mean fire counts between GDE and non-GDE cells in the Southern California Mountains ecoregion. Specifically, GDE cells exhibited a lower mean fire count, suggesting that GDEs experienced less frequent fire occurrences compared to non-GDEs since 1950."
+)
   
   
   fire_count_text_df <- data.frame(column_names = column_names, values = values_fire)
@@ -554,7 +605,22 @@ To statistically compare the distribution of burn severities between GDEs and no
 
 "Analyzing the burn severity distributions, the maximum severity observed in GDEs was 4, while for non-GDEs it was 3, indicating a potential higher maximum burn severity in GDEs. The minimum severity recorded for both groups was 2.
 Examining the mode burn severity, both GDEs and non-GDEs had a mode severity of 3. This suggests that the most frequently occurring severity value in both groups was the same.
-To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.377. Based on this value, the study concluded that there is insufficient evidence to reject the null hypothesis, which states that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Sierra Nevada ecoregion. Therefore, the analysis suggests that the burn severity distributions in these two groups are similar in this ecoregion.")
+To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.377. Based on this value, the study concluded that there is insufficient evidence to reject the null hypothesis, which states that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Sierra Nevada ecoregion. Therefore, the analysis suggests that the burn severity distributions in these two groups are similar in this ecoregion.",
+
+"Examining the burn severity distributions in the Southern California / Northern Baja Coast ecoregion, the maximum severity observed for GDEs was 4, while for non-GDEs it was 3. This indicates that GDEs experienced a slightly higher maximum burn severity compared to non-GDEs.
+The minimum burn severity recorded for both GDEs and non-GDEs was 2, suggesting that even the least severe burns had a moderate impact in this ecoregion.
+Analyzing the mode burn severity, both GDEs and non-GDEs had a mode severity of 2. This implies that the most frequently occurring severity value in both groups was at a low level, indicating that the majority of cells experienced relatively low burn severity during the observed fires.
+To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.375. Based on this value, the study concluded that there is insufficient evidence to reject the null hypothesis. Therefore, the analysis suggests that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Southern California / Northern Baja Coast ecoregion.",
+
+"Analyzing the burn severity distributions in the Sonoran Basin and Range ecoregion, the maximum severity observed for GDEs was 4, while for non-GDEs it was 3. This suggests that GDEs experienced slightly higher maximum burn severity compared to non-GDEs.
+The minimum burn severity recorded for both GDEs and non-GDEs was 2, indicating that even the least severe burns had a moderate impact in this ecoregion.
+Examining the mode burn severity, GDEs had a mode severity of 3, while non-GDEs had a mode severity of 2. This indicates that the most frequently occurring severity value in GDEs was higher compared to non-GDEs, suggesting that GDEs may have experienced more instances of moderate burn severity.
+To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.00001, which is below the typical threshold for statistical significance (e.g., 0.05). Therefore, the study concluded that there is sufficient evidence to reject the null hypothesis. This implies that there is a significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Sonoran Basin and Range ecoregion. Specifically, the analysis suggests that GDEs tend to experience increased burn severity compared to non-GDEs in this ecoregion.",
+
+"Analyzing the burn severity distributions, the maximum severity observed in GDEs was 4, while for non-GDEs it was 3, indicating a more severe level of burn severity in GDEs compared to non-GDEs. The minimum severity recorded for both groups was 2.
+Examining the mode burn severity, both GDEs and non-GDEs had a mode severity of 2. This suggests that the most frequently occurring severity value in both groups was a low level of burn severity.
+To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.375. Based on this value, the study concluded that there is insufficient evidence to reject the null hypothesis, which states that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Southern California Mountains ecoregion. Therefore, the analysis suggests that the burn severity distributions in these two groups are similar in this ecoregion."
+)
   
   
   burn_severity_text_df <- data.frame(column_names = column_names, values = values_burn)

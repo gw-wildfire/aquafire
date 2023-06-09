@@ -1,5 +1,6 @@
 server <- function(input, output, session) {
   
+  
   tmap_mode("view")
   
   
@@ -80,12 +81,6 @@ server <- function(input, output, session) {
                                  "Average Fire Threat" = "avg_fr_t",
                                  "Average Fire Severity" = "avg_fr_s"
                   )) +
-      tm_layout(title = 'test', title.position = 'right') + 
-      tm_legend(show = TRUE,
-                position = c("right", "bottom"),
-                frame = TRUE,
-                # col = "#0f851e",
-                title = "Ecoregion") +
       tmap_options(check.and.fix = TRUE)
     
     # toggle fire count raster layer
@@ -153,7 +148,7 @@ server <- function(input, output, session) {
   })
   
   
-  # ecoregion map----
+  # render ecoregion map----
   output$main_map <- renderTmap({
     
     # Define the text information for the popup
@@ -184,7 +179,7 @@ server <- function(input, output, session) {
     popup_text <- "85. SOUTHERN CALIFORNIA/NORTHERN BAJA COAST"
     socal_norbaja_coast$popup_text <- popup_text
     
-    # Plot the polygons with interactive click events and custom popup
+    # Map with each ecoregion
     main_cali_map  <- tm_basemap(leaflet::providers$Esri.WorldTerrain) +
       tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
       tm_shape(coast_range) +
@@ -333,6 +328,7 @@ server <- function(input, output, session) {
     
   }) # End ecoregion map tab
   
+  
   # stats histogram page----
   
   # fire count histogram reactivity
@@ -346,13 +342,16 @@ server <- function(input, output, session) {
     fire_hist_ecoregion <- fire_count_histogram_df %>% filter(ecoregion == selected_hist_ecoregion)
     plot_title <- fire_hist_ecoregion$ecoregion_name
     
-    # statistics histogram plot
+    fire_max <- max(fire_hist_ecoregion$value)
+    
+    
+    # fire count histogram
     ggplot(fire_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
       geom_bar(stat = "identity", position = "dodge") +
       geom_text(aes(label = round(proportion, 2)),
                 position = position_dodge(width = 0.9),
                 vjust = -.5,
-                size = 4,
+                size = 3.5,
                 check_overlap = TRUE) +
       scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
                         labels = c("Non-GDE", "GDE")) +
@@ -370,11 +369,9 @@ server <- function(input, output, session) {
                                       color = 'black'),
             axis.title.x = element_text(vjust = -1.1),
             axis.text.x = element_text(vjust = -1.5)) +
-      # scale_y_continuous(expand = c(0,0)) + 
-      scale_x_continuous(expand = c(0,0),
-                         breaks = seq(0, max(fire_hist_ecoregion$value), 1)) +
-      ylim(c(0, 100))
-    
+      scale_x_continuous(expand = c(0,0)) # ,
+      # breaks = seq(0, fire_max, 1))
+      
   })
   
   # render fire count histogram plot
@@ -415,7 +412,7 @@ server <- function(input, output, session) {
         geom_text(aes(label = round(proportion, 2)),
                   position = position_dodge(width = 1.9),
                   vjust = -0.5,
-                  size = 4,
+                  size = 3.5,
                   check_overlap = TRUE) +
         scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
                           labels = c("Non-GDE", "GDE")) +
@@ -431,8 +428,7 @@ server <- function(input, output, session) {
               axis.title.x = element_text(vjust = -1.1),
               axis.text.x = element_text(vjust = -1.5)) +
         # scale_y_continuous(expand = c(0,0)) +
-        scale_x_discrete(limits = burn_hist_ecoregion$value) + 
-        ylim(c(0, 100))
+        scale_x_discrete(limits = burn_hist_ecoregion$value)
       
     }
   })
@@ -463,16 +459,14 @@ server <- function(input, output, session) {
     
   )
   
-  
+  #
   burn_severity_text_reactive <- reactive({
     
     req(!is.null(input$ecoregion_stats_type_input))
     
-    # Selecting ecoregion for histogram
     selected_text_ecoregion <- input$ecoregion_stats_type_input
     burn_text_ecoregion <- burn_severity_text_df$values[burn_severity_text_df$column_names == selected_text_ecoregion]
     
-    # Returning the second column value for the selected ecoregion
     burn_text_ecoregion
     
   })
