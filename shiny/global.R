@@ -8,46 +8,8 @@ library(shinyWidgets)
 library(tmap)
 library(rgdal)
 
-fire_count_histogram_df <- data.frame(
-  value = c(0, 0, 1, 1, 2, 2, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 3, 3, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 0, 0, 1, 1, 2, 2, 3, 3),
-  gde_status = c("GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE",
-                 "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE"),
-  proportion = c(89.7005988023952, 88.6, 9.70059880239521, 10.5, 0.598802395209581, 0.8, 96.7455621301775, 89, 2.51479289940828, 8.8, 0.591715976331361, 2, 0.14792899408284, 0.2, 99.5, 98.6, 0.4, 1.1, 0.1, 0.1, 73, 70.5, 25.1, 27.2, 1.6, 2, 0.3, 0.3, 76.1760242792109, 62.2, 21.3960546282246, 28.1, 2.27617602427921, 8.2, 0.151745068285281, 1.3, 71.2616822429907, 68.7, 20.7943925233645, 21.6, 4.4392523364486, 6.3, 2.80373831775701, 2.3, 0.700934579439252, 0.8, 97.49430523918,
-                 96.2, 2.27790432801822, 3.1, 0.227790432801822, 0.6, 39.6610169491525, 28.8, 35.2542372881356, 39.2, 19.3220338983051, 23.7, 4.74576271186441, 6.4, 0.677966101694915, 1.4, 0.338983050847458, 0.3, 94.3, 66.3, 5.7, 31.5, 94.9, 96.9, 4.5, 2.6, 0.3, 0.4, 42.6548672566372, 56.7, 25.3097345132743, 15.7, 18.7610619469027, 15.1, 8.31858407079646, 7.9, 2.65486725663717, 3, 2.12389380530973, 1, 0.176991150442478, 0.5, 92.6, 76.4, 6.7, 21.2, 0.7, 1.9),
-  eco_region = c("Coast Range", "Coast Range", "Coast Range", "Coast Range", "Coast Range", "Coast Range", 
-                 "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", "Central Basin and Range", 
-                 "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range", "Mojave Basin and Range",
-                 "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades", "Cascades",
-                 "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada",
-                 "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains",
-                 "Central California Valley", "Central California Valley", "Central California Valley", "Central California Valley",
-                 "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range",
-                 "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains",
-                 "Northern Basin and Range", "Northern Basin and Range",
-                 "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range",
-                 "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast",
-                 "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills")
-)
 
-burn_severity_histogram_df <- data.frame(
-  value = c(2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 2, 2, 3, 3, 4, 4),
-  gde_status = c("GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE",
-                 "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE", "GDE", "NonGDE"),
-  proportion = c(64, 52, 36, 48, 80, 46.6666666666667, 16.6666666666667, 53.3333333333333, 40, 50, 56.6666666666667, 50, 60, 46.6666666666667, 40, 53.3333333333333, 36.6666666666667, 43.3333333333333, 63.3333333333333, 56.6666666666667, 43.3333333333333, 36.6666666666667, 53.3333333333333, 63.3333333333333, 66.6666666666667, 83.3333333333333, 30, 13.3333333333333, 3.33333333333333, 3.33333333333333, 40, 93.3333333333333, 53.3333333333333, 6.66666666666667, 73.3333333333333, 63.3333333333333, 26.6666666666667, 33.3333333333333, 76.6666666666667, 70, 20, 26.6666666666667, 3.33333333333333, 3.33333333333333),
-  eco_region = c("Coast Range", "Coast Range", "Coast Range", "Coast Range",
-                 "Cascades", "Cascades", "Cascades", "Cascades",
-                 "Sierra Nevada", "Sierra Nevada", "Sierra Nevada", "Sierra Nevada",
-                 "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains", "Central California Foothills and Coastal Mountains",
-                 "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range", "Klamath Mountains/California High North Coast Range",
-                 "Southern California Mountains", "Southern California Mountains", "Southern California Mountains", "Southern California Mountains",
-                 "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range", "Northern Basin and Range",
-                 "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range", "Sonoran Basin and Range",
-                 "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast", "Southern California/Northern Baja Coast",
-                 "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills", "Eastern Cascades Slopes and Foothills")
-)
-
-
-preloaded = F
+preloaded = T
 
 if(!preloaded){
   
@@ -169,18 +131,7 @@ if(!preloaded){
       merge(land_cover_df, by = 'nlcd') %>% 
       dplyr::select(!c('nlcd', 'ORIGINA', 'SOURCE_', 'MODIFIE', 'us_l3cd', 'na_l3cd', 'na_l3nm', 'na_l2nm', 'na_l1cd', 'l3_key', 'l2_key', 'l1_key'))
     
-    # 2 IF STATEMENT
-    # if(object.size(gde_shapefile) > 80000000) {
-    #   gde_shapefile <- gde_shapefile %>%
-    #     filter(area > 18000) %>%  # larger than 2.2 acres
-    #     st_simplify(dTolerance = 15)
-    # } else {
-    #   gde_shapefile <- gde_shapefile %>%
-    #     filter(area > 10000) %>%  # larger than .22 acres
-    #     st_simplify(dTolerance = 5)
-    # }
-    
-    # 3 IF STATEMENTS for loading the larger files faster
+    # 3 IF statements for loading the larger files faster
     if(object.size(gde_shapefile) > 120000000) {
       gde_shapefile <- gde_shapefile %>%
         filter(area > 25000) %>%  # larger than 2.2 acres
@@ -237,24 +188,6 @@ if(!preloaded){
     # if(file_size_mb > 15) {
     #   tslf_list[[i]] <- aggregate(tslf_list[[i]], fact = 4)
     # }
-  }
-  
-  # just for seeing file sizes!
-  for (i in 1:length(tslf_list)) {
-    # Get the file name of the raster layer
-    file_name <- tslf_list[[i]]@file@name
-    
-    # Get the file size information
-    file_info <- file.info(file_name)
-    
-    # Extract the file size in bytes
-    file_size <- file_info$size
-    
-    # converting from Bytes to MegaBytes
-    file_size_mb <- file_size / 1048576
-    
-    # Print the file size
-    cat("Layer", file_name, i, "file size:", file_size_mb, "megabytes\n")
   }
   
   # loading FIRE COUNT data----
@@ -352,7 +285,6 @@ if(!preloaded){
   
   
   # RENAMING----
-  
   names_gde <- names(gde_list)
   names(names_gde) = gsub('gde_', '', names_gde)
   names(names_gde) = gsub('_', ' ', names(names_gde))
@@ -396,6 +328,7 @@ if(!preloaded){
     "fire_count_histogram_southern_mountains"
   )
   
+  # renaming fire count histograms
   names_fire_count_hist <- fire_count_hist_list
   names(names_fire_count_hist) = gsub('fire_count_histogram', '', names_fire_count_hist)
   names(names_fire_count_hist) = gsub('_', ' ', names(names_fire_count_hist))
@@ -423,17 +356,17 @@ It contains raster layers where each cell is the total number of fires that occu
   # read in fire count txt file for histograms
   fire_count_hist_df_messy <- read.table("data/fire_count_shiny_histogram_df.txt", sep = ",", header = TRUE)
   burn_severity_hist_df_messy <- read.table("data/burnsev_shiny_histogram_df.txt", sep = ",", header = TRUE)
-  
+
   # change values from GDE/NonGDE to 1/0
   fire_count_hist_df_messy$gde_status[fire_count_hist_df_messy$gde_status == 'NonGDE'] <- '0'
   fire_count_hist_df_messy$gde_status[fire_count_hist_df_messy$gde_status == 'GDE'] <- '1'
   burn_severity_hist_df_messy$gde_status[burn_severity_hist_df_messy$gde_status == 'NonGDE'] <- '0'
   burn_severity_hist_df_messy$gde_status[burn_severity_hist_df_messy$gde_status == 'GDE'] <- '1'
-  
+
   # renaming fire count for histogram
-  fire_count_histogram_df <- fire_count_hist_df_messy %>% 
-    rename(ecoregion_name = eco_region) %>% 
-    mutate(ecoregion = paste0("fire_count_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>% 
+  fire_count_histogram_df <- fire_count_hist_df_messy %>%
+    rename(ecoregion_name = eco_region) %>%
+    mutate(ecoregion = paste0("fire_count_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>%
     mutate(ecoregion = ifelse(ecoregion == "fire_count_histogram_central_basin_and_range",
                               "fire_count_histogram_central_basin", ecoregion),
            ecoregion = ifelse(ecoregion == "fire_count_histogram_central_california_foothills_and_coastal_mountains",
@@ -454,15 +387,11 @@ It contains raster layers where each cell is the total number of fires that occu
                               "fire_count_histogram_mojave_basin", ecoregion),
            ecoregion = ifelse(ecoregion == "fire_count_histogram_sonoran_basin_and_range",
                               "fire_count_histogram_sonoran_basin", ecoregion))
-  
-  
-  
-  # DID NOT LOAD mojave, central basin and central valley - not enough data
-  
+
   # renaming burn severity to display with fire count
-  burn_severity_histogram_df <- burn_severity_hist_df_messy %>% 
-    rename(ecoregion_name = eco_region) %>% 
-    mutate(ecoregion = paste0("burn_severity_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>% 
+  burn_severity_histogram_df <- burn_severity_hist_df_messy %>%
+    rename(ecoregion_name = eco_region) %>%
+    mutate(ecoregion = paste0("burn_severity_histogram_", gsub(" ", "_", tolower(ecoregion_name)))) %>%
     mutate(ecoregion = ifelse(ecoregion == "burn_severity_histogram_central_basin_and_range",
                               "fire_count_histogram_central_basin", ecoregion),
            ecoregion = ifelse(ecoregion == "burn_severity_histogram_central_california_foothills_and_coastal_mountains",
@@ -489,6 +418,7 @@ It contains raster layers where each cell is the total number of fires that occu
                               "fire_count_histogram_sonoran_basin", ecoregion)
     )
   
+  # column names for info about histograms
   column_names <- c(
     "fire_count_histogram_cascades",
     "fire_count_histogram_central_basin",
@@ -505,6 +435,7 @@ It contains raster layers where each cell is the total number of fires that occu
     "fire_count_histogram_southern_mountains"
   )
   
+  # text for info about fire count histogram
   values_fire <- c("The mean fire count for our sample of cells across the entire ecoregion was found to be 0.307. When analyzing GDE cells specifically, the mean fire count was slightly lower at 0.292, while non-GDE cells had a slightly higher mean fire count of 0.321.
 Investigating the maximum number of fires in a single cell, it was observed that both GDE and non-GDE cells experienced a maximum count of 3 fires. When excluding cells that did not burn, the mode (most common) fire count for both GDE and non-GDE cells was 1, indicating that most cells that did experience fires did so only once.
 To assess if there was a significant difference in mean fire counts between GDE and non-GDE cells, a difference in means bootstrapping approach was utilized. This involved resampling the data 1000 times and calculating the difference in means (non-GDE mean fire count minus GDE mean fire count) for each sample. The resulting p-value for this difference in means test was 0.204, and the 95% confidence interval for the difference in means ranged from -0.017 to 0.074.
@@ -570,9 +501,10 @@ To assess if there was a significant difference in mean fire counts between GDE 
 Based on these statistical findings, the study concluded that there is strong evidence to reject the null hypothesis, indicating a significant difference in mean fire counts between GDE and non-GDE cells in the Southern California Mountains ecoregion. Specifically, GDE cells exhibited a lower mean fire count, suggesting that GDEs experienced less frequent fire occurrences compared to non-GDEs since 1950."
 )
   
-  
+  # creating fire count histogram info data frame
   fire_count_text_df <- data.frame(column_names = column_names, values = values_fire)
   
+  # text for info about burn severity histogram
   values_burn <- c("Analyzing the burn severity distributions, the maximum severity observed in GDEs was 4, while for non-GDEs it was 3, indicating a higher maximum burn severity in GDEs. The minimum severity recorded for both groups was 2.
 Examining the mode burn severity, GDEs had a mode severity of 2, while non-GDEs had a mode severity of 3. This suggests that the most frequently occurring severity value in GDEs was lower compared to non-GDEs.
 To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.013. Based on this value, the study concluded that there is sufficient evidence to reject the null hypothesis, which states that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Cascades ecoregion. Therefore, the analysis suggests that GDEs experience a decrease in burn severity compared to non-GDEs in this ecoregion.",
@@ -622,13 +554,8 @@ Examining the mode burn severity, both GDEs and non-GDEs had a mode severity of 
 To statistically compare the distribution of burn severities between GDEs and non-GDEs, a Mann-Whitney U test was conducted. The resulting p-value from this test was 0.375. Based on this value, the study concluded that there is insufficient evidence to reject the null hypothesis, which states that there is no significant difference in the distribution of burn severity values between GDEs and non-GDEs in the Southern California Mountains ecoregion. Therefore, the analysis suggests that the burn severity distributions in these two groups are similar in this ecoregion."
 )
   
-  
+  # creating fire count histogram info data frame
   burn_severity_text_df <- data.frame(column_names = column_names, values = values_burn)
-  
-  
-  
-  
-  # central basin, central valley, coast range, klamath, mojave
   
 }
 

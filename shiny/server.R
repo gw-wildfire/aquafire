@@ -53,13 +53,6 @@ server <- function(input, output, session) {
     wecoregion = names_ecoregion2[wecoregion]
     print(wecoregion)
     
-    # stat_selected <- input$ecoregion_stats_type_input
-    # stat_selected2 = gsub('fire_count_histogram_', '', stat_selected)
-    
-    # wfire_count_hist = which(names_fire_count_hist2 == stat_selected2)
-    # wfire_count_hist = names_fire_count_hist[wfire_count_hist]
-    # print(wfire_count_hist)
-    
     # GDE polygon map----
     tm_level_one <- tm_basemap(leaflet::providers$Esri.WorldStreetMap) +
       tm_basemap(leaflet::providers$Esri.WorldTerrain) +
@@ -440,6 +433,7 @@ server <- function(input, output, session) {
     
   })
   
+  # adding fire count info to the histogram
   fire_count_text_reactive <- reactive({
     
     req(!is.null(input$ecoregion_stats_type_input))
@@ -459,7 +453,7 @@ server <- function(input, output, session) {
     
   )
   
-  #
+  # adding burn severity info to the histogram
   burn_severity_text_reactive <- reactive({
     
     req(!is.null(input$ecoregion_stats_type_input))
@@ -478,7 +472,7 @@ server <- function(input, output, session) {
   )
   
   
-  # render data source data table with hyperlinks
+  # render data source data table on About page with hyperlinks
   output$dataTable <- renderDataTable({
     
     data_df$Source <- sprintf(
