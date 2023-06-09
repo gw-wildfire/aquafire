@@ -11,17 +11,11 @@ server <- function(input, output, session) {
     
   })
   
-  # cancel button----
-  observeEvent(input$button, {
-    updateTabsetPanel(session, "About", selected = "Map")
-  })
-  
   # GDE map----
   map_reactive <- reactive({
     
     # print(input$ecoregion_type_input)
     
-    #
     print(input$type_raster)
     
     # req(!is.null(input$ecoregion_type_input))
@@ -55,7 +49,7 @@ server <- function(input, output, session) {
     print(wburn_severity)
     
     wecoregion = which(names_ecoregion2 == eco_selected2)
-    wecoregion = names_ecoregion2[wecoregion] # DELETED 2 AFTER names_ecoregion
+    wecoregion = names_ecoregion2[wecoregion]
     print(wecoregion)
     
     # stat_selected <- input$ecoregion_stats_type_input
@@ -93,7 +87,6 @@ server <- function(input, output, session) {
                 # col = "#0f851e",
                 title = "Ecoregion") +
       tmap_options(check.and.fix = TRUE)
-    # tm_borders(col = , lwd = 2) +
     
     # toggle fire count raster layer
     if('Fire Count' %in% input$type_raster){
@@ -105,7 +98,7 @@ server <- function(input, output, session) {
                   title = 'Fire Count',
                   breaks = seq(0, maxValue(fire_layer), 1),
                   labels = c(as.character(seq(0, maxValue(fire_layer), 1)))
-        ) # breaks = seq(0, length(fire_layer), 1)
+        )
     }
     
     # toggle TSLF raster layer
@@ -209,7 +202,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#8CB369", 
                   title = "Region", 
                   id = "popup_text", 
-                  popup.vars = c("region", "state_name"),
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -220,6 +213,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#C0CB77", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -230,6 +224,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#7FD6CB", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -240,6 +235,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#F4E285", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
                 legend.outside.position = "right") +
@@ -248,7 +244,8 @@ server <- function(input, output, session) {
       tm_shape(eastern_cascades_slopes_foothills) +
       tm_polygons(col = "#F4C26F", 
                   title = "Region", 
-                  id = "popup_text", 
+                  id = "popup_text",
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -258,7 +255,8 @@ server <- function(input, output, session) {
       tm_shape(central_basin) +
       tm_polygons(col = "#F4A259", 
                   title = "Region", 
-                  id = "popup_text", 
+                  id = "popup_text",
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -268,7 +266,8 @@ server <- function(input, output, session) {
       tm_shape(mojave_basin) +
       tm_polygons(col = "#8CB369", 
                   title = "Region", 
-                  id = "popup_text", 
+                  id = "popup_text",
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -279,6 +278,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#A8986B", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -288,7 +288,8 @@ server <- function(input, output, session) {
       tm_shape(northern_basin) +
       tm_polygons(col = "#829374", 
                   title = "Region", 
-                  id = "popup_text", 
+                  id = "popup_text",
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3, lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -299,6 +300,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#5B8E7D", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -309,6 +311,7 @@ server <- function(input, output, session) {
       tm_polygons(col = "#BC4B51", 
                   title = "Region", 
                   id = "popup_text", 
+                  popup.vars = NULL,
                   alpha = 0.55, 
                   border.col = 'white', lwd = 0.3) +
       tm_layout(legend.outside = TRUE, 
@@ -318,7 +321,8 @@ server <- function(input, output, session) {
       tm_shape(central_valley) +
       tm_polygons(col = "lightgrey", 
                   title = "Region", 
-                  id = "popup_text", 
+                  id = "popup_text",
+                  popup.vars = NULL,
                   alpha = 0.5, 
                   border.col = 'white', lwd = 0.3,
                   lwd = 0.3) +
@@ -345,6 +349,11 @@ server <- function(input, output, session) {
     # statistics histogram plot
     ggplot(fire_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
       geom_bar(stat = "identity", position = "dodge") +
+      geom_text(aes(label = round(proportion, 2)),
+                position = position_dodge(width = 0.9),
+                vjust = -.5,
+                size = 4,
+                check_overlap = TRUE) +
       scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
                         labels = c("Non-GDE", "GDE")) +
       labs(x = "Fire Count",
@@ -361,8 +370,10 @@ server <- function(input, output, session) {
                                       color = 'black'),
             axis.title.x = element_text(vjust = -1.1),
             axis.text.x = element_text(vjust = -1.5)) +
-      scale_y_continuous(expand = c(0,0)) + scale_x_continuous(expand = c(0,0),
-                                                               breaks = seq(0, max(fire_hist_ecoregion$value), 1))
+      # scale_y_continuous(expand = c(0,0)) + 
+      scale_x_continuous(expand = c(0,0),
+                         breaks = seq(0, max(fire_hist_ecoregion$value), 1)) +
+      ylim(c(0, 100))
     
   })
   
@@ -373,8 +384,6 @@ server <- function(input, output, session) {
     fire_count_hist_reactive()
     
   })
-  
-  
   
   # burn severity histogram reactivity
   burn_severity_hist_reactive <- reactive({
@@ -403,11 +412,10 @@ server <- function(input, output, session) {
       
       ggplot(burn_hist_ecoregion, aes(x = value, y = proportion, fill = as.factor(gde_status))) +
         geom_col(position = "dodge") +
-        # geom_text(aes(label = round(proportion, 2)), position = position_stack( vjust = 0.5), check_overlap = TRUE) + # , position = position_dodge(width = 1), vjust = -0.5, angle = 45, hjust = -0.5
         geom_text(aes(label = round(proportion, 2)),
-                  position = position_dodge(width = 0.9),
+                  position = position_dodge(width = 1.9),
                   vjust = -0.5,
-                  size = 3,
+                  size = 4,
                   check_overlap = TRUE) +
         scale_fill_manual(values = c("#A3B18A", "#DDA15E"),
                           labels = c("Non-GDE", "GDE")) +
@@ -422,8 +430,9 @@ server <- function(input, output, session) {
               axis.title = element_text(size = 15, color = 'black'),
               axis.title.x = element_text(vjust = -1.1),
               axis.text.x = element_text(vjust = -1.5)) +
-        scale_y_continuous(expand = c(0,0)) +
-        scale_x_discrete(limits = burn_hist_ecoregion$value) + lims(y = c(0, 100))
+        # scale_y_continuous(expand = c(0,0)) +
+        scale_x_discrete(limits = burn_hist_ecoregion$value) + 
+        ylim(c(0, 100))
       
     }
   })
@@ -434,6 +443,46 @@ server <- function(input, output, session) {
     burn_severity_hist_reactive()
     
   })
+  
+  fire_count_text_reactive <- reactive({
+    
+    req(!is.null(input$ecoregion_stats_type_input))
+    
+    # Selecting ecoregion for histogram
+    selected_text_ecoregion <- input$ecoregion_stats_type_input
+    fire_text_ecoregion <- fire_count_text_df$values[fire_count_text_df$column_names == selected_text_ecoregion]
+    
+    # Returning the second column value for the selected ecoregion
+    fire_text_ecoregion
+    
+  })
+  
+  output$fire_count_text <- renderText(
+    
+    fire_count_text_reactive()
+    
+  )
+  
+  
+  burn_severity_text_reactive <- reactive({
+    
+    req(!is.null(input$ecoregion_stats_type_input))
+    
+    # Selecting ecoregion for histogram
+    selected_text_ecoregion <- input$ecoregion_stats_type_input
+    burn_text_ecoregion <- burn_severity_text_df$values[burn_severity_text_df$column_names == selected_text_ecoregion]
+    
+    # Returning the second column value for the selected ecoregion
+    burn_text_ecoregion
+    
+  })
+  
+  output$burn_severity_text <- renderText(
+    
+    burn_severity_text_reactive()
+    
+  )
+  
   
   # render data source data table with hyperlinks
   output$dataTable <- renderDataTable({
@@ -450,4 +499,3 @@ server <- function(input, output, session) {
   }, escape = FALSE, options = list(paging = FALSE, info = FALSE, searching = FALSE))
   
 }
-
