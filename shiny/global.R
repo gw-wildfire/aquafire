@@ -132,19 +132,20 @@ if(!preloaded){
       dplyr::select(!c('nlcd', 'ORIGINA', 'SOURCE_', 'MODIFIE', 'us_l3cd', 'na_l3cd', 'na_l3nm', 'na_l2nm', 'na_l1cd', 'l3_key', 'l2_key', 'l1_key'))
     
     # 3 IF statements for loading the larger files faster
-    if(object.size(gde_shapefile) > 120000000) {
-      gde_shapefile <- gde_shapefile %>%
-        filter(area > 25000) %>%  # larger than 2.2 acres
-        st_simplify(dTolerance = 40)
-    } else if(object.size(gde_shapefile) <= 120000000 & object.size(gde_shapefile) > 50000000) {
-      gde_shapefile <- gde_shapefile %>%
-        filter(area > 15000) %>%  # larger than .22 acres
-        st_simplify(dTolerance = 20)
-    } else {
-      gde_shapefile <- gde_shapefile %>%
-        filter(area > 10000) %>%  # larger than .22 acres
-        st_simplify(dTolerance = 5)
-    }
+    
+    # if(object.size(gde_shapefile) > 120000000) {
+    #   gde_shapefile <- gde_shapefile %>%
+    #     filter(area > 25000) %>%  # larger than 2.2 acres
+    #     st_simplify(dTolerance = 40)
+    # } else if(object.size(gde_shapefile) <= 120000000 & object.size(gde_shapefile) > 50000000) {
+    #   gde_shapefile <- gde_shapefile %>%
+    #     filter(area > 15000) %>%  # larger than .22 acres
+    #     st_simplify(dTolerance = 20)
+    # } else {
+    #   gde_shapefile <- gde_shapefile %>%
+    #     filter(area > 10000) %>%  # larger than .22 acres
+    #     st_simplify(dTolerance = 5)
+    # }
     
     print(i)
     
